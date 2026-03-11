@@ -65,6 +65,23 @@ const SearchShelfVisibility = () => {
     },
   ];
 
+  // ── Rank distribution ────────────────────────────────────────────────────
+  const rankRaw: Record<string, { top3: number; top10: number; top20: number; total: number }> = {};
+  searchData.forEach((row) => {
+    if (!rankRaw[row.platform]) rankRaw[row.platform] = { top3: 0, top10: 0, top20: 0, total: 0 };
+    rankRaw[row.platform].total++;
+    if (row.search_rank <= 3)  rankRaw[row.platform].top3++;
+    if (row.search_rank <= 10) rankRaw[row.platform].top10++;
+    if (row.search_rank <= 20) rankRaw[row.platform].top20++;
+  });
+
+  const rankDistribution = Object.entries(rankRaw).map(([platform, d]) => ({
+    platform,
+    "Top 3":  d.total > 0 ? parseFloat(((d.top3  / d.total) * 100).toFixed(1)) : 0,
+    "Top 10": d.total > 0 ? parseFloat(((d.top10 / d.total) * 100).toFixed(1)) : 0,
+    "Top 20": d.total > 0 ? parseFloat(((d.top20 / d.total) * 100).toFixed(1)) : 0,
+  }));
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
