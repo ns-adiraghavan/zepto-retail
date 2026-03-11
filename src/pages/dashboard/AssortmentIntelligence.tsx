@@ -58,6 +58,36 @@ const AssortmentIntelligence = () => {
     },
   ];
 
+  // ── Category SKU Coverage Grid ─────────────────────────────────────────────
+  const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
+
+  const coverageRaw: Record<string, Record<string, number>> = {};
+  assortmentData.forEach((row) => {
+    if (row.listing_status !== 1) return;
+    if (!coverageRaw[row.category]) coverageRaw[row.category] = {};
+    coverageRaw[row.category][row.platform] = (coverageRaw[row.category][row.platform] ?? 0) + 1;
+  });
+
+  const coverageGrid = Object.entries(coverageRaw)
+    .map(([category, platforms]) => ({ category, ...platforms }))
+    .sort((a, b) => a.category.localeCompare(b.category));
+
+  // Determine max count for relative cell intensity
+  const maxCount = Math.max(
+    1,
+    ...coverageGrid.flatMap((row) =>
+      PLATFORMS.map((p) => (row as Record<string, number | string>)[p] as number ?? 0)
+    )
+  );
+
+  const getCellIntensity = (count: number) => {
+    if (!count) return "bg-muted/20 text-muted-foreground/40 border-border/20";
+    const pct = count / maxCount;
+    if (pct >= 0.66) return "bg-status-low/20 text-status-low border-status-low/30";
+    if (pct >= 0.33) return "bg-status-medium/20 text-status-medium border-status-medium/30";
+    return "bg-status-high/10 text-status-high border-status-high/20";
+  };
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
