@@ -64,8 +64,7 @@ const PricingPromoIntelligence = () => {
   ];
 
   // ── Heatmap computation ────────────────────────────────────────────────────
-  // gap = (sale_price - mrp) / mrp * 100
-  // negative = competitive (selling below MRP), positive = overpriced (above MRP)
+  // Raw gap = (sale_price - mrp) / mrp * 100
   const heatmapRaw: Record<string, Record<string, number[]>> = {};
   priceData.forEach((row) => {
     const gap = row.mrp > 0 ? ((row.sale_price - row.mrp) / row.mrp) * 100 : 0;
@@ -74,27 +73,38 @@ const PricingPromoIntelligence = () => {
     heatmapRaw[row.category][row.platform].push(gap);
   });
 
+  // Category-level average gap (across all platforms) for normalization
+  const categoryAvgGap: Record<string, number> = {};
+  Object.entries(heatmapRaw).forEach(([category, platforms]) => {
+    const allGaps = Object.values(platforms).flat();
+    categoryAvgGap[category] = allGaps.length > 0
+      ? allGaps.reduce((a, b) => a + b, 0) / allGaps.length
+      : 0;
+  });
+
+  // Normalized gap = platform avg gap - category avg gap
   const heatmap = Object.entries(heatmapRaw).map(([category, platforms]) => ({
     category,
-    platforms: Object.entries(platforms).map(([platform, gaps]) => ({
-      platform,
-      avgGap: gaps.reduce((a, b) => a + b, 0) / gaps.length,
-    })),
+    platforms: Object.entries(platforms).map(([platform, gaps]) => {
+      const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+      const normalizedGap = avgGap - (categoryAvgGap[category] ?? 0);
+      return { platform, avgGap, normalizedGap };
+    }),
   }));
 
   const allPlatforms = Array.from(
     new Set(heatmap.flatMap((row) => row.platforms.map((p) => p.platform)))
   ).sort();
 
-  const getCellStyle = (gap: number) => {
-    if (gap <= -5) return "bg-status-low/20 text-status-low border border-status-low/30";
-    if (gap <= 5)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
+  const getCellStyle = (normalizedGap: number) => {
+    if (normalizedGap <= -3) return "bg-status-low/20 text-status-low border border-status-low/30";
+    if (normalizedGap <= 3)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
     return "bg-status-critical/20 text-status-critical border border-status-critical/30";
   };
 
-  const getCellLabel = (gap: number) => {
-    if (gap <= -5) return "Competitive";
-    if (gap <= 5)  return "Neutral";
+  const getCellLabel = (normalizedGap: number) => {
+    if (normalizedGap <= -3) return "Competitive";
+    if (normalizedGap <= 3)  return "Neutral";
     return "Overpriced";
   };
 
@@ -170,27 +180,30 @@ const PricingPromoIntelligence = () => {
                   </thead>
                   <tbody>
                     {heatmap.map((row) => {
-                      const gapMap = Object.fromEntries(row.platforms.map((p) => [p.platform, p.avgGap]));
+                      const cellMap = Object.fromEntries(
+                        row.platforms.map((p) => [p.platform, p])
+                      );
                       return (
                         <tr key={row.category} className="border-b border-border/40">
                           <td className="py-2 px-3 font-medium">{row.category}</td>
                           {allPlatforms.map((platform) => {
-                            const gap = gapMap[platform];
-                            if (gap === undefined) {
+                            const cell = cellMap[platform];
+                            if (!cell) {
                               return (
                                 <td key={platform} className="p-2 text-center">
                                   <div className="rounded-md px-2 py-2 text-xs text-muted-foreground bg-muted/30 border border-border/30">—</div>
                                 </td>
                               );
                             }
+                            const { normalizedGap } = cell;
                             return (
                               <td key={platform} className="p-2 text-center">
                                 <div
-                                  className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(gap)}`}
-                                  title={getCellLabel(gap)}
+                                  className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(normalizedGap)}`}
+                                  title={`${getCellLabel(normalizedGap)} — normalized gap: ${normalizedGap > 0 ? "+" : ""}${normalizedGap.toFixed(1)}%`}
                                 >
-                                  <div className="font-bold">{gap > 0 ? "+" : ""}{gap.toFixed(1)}%</div>
-                                  <div className="text-[10px] opacity-75 mt-0.5">{getCellLabel(gap)}</div>
+                                  <div className="font-bold">{normalizedGap > 0 ? "+" : ""}{normalizedGap.toFixed(1)}%</div>
+                                  <div className="text-[10px] opacity-75 mt-0.5">{getCellLabel(normalizedGap)}</div>
                                 </div>
                               </td>
                             );
