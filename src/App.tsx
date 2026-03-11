@@ -12,6 +12,7 @@ import SearchShelfVisibility from "./pages/dashboard/SearchShelfVisibility";
 import AssortmentIntelligence from "./pages/dashboard/AssortmentIntelligence";
 import AvailabilityIntelligence from "./pages/dashboard/AvailabilityIntelligence";
 import LocalMarketIntelligence from "./pages/dashboard/LocalMarketIntelligence";
+import CompetitiveEvents from "./pages/dashboard/CompetitiveEvents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
