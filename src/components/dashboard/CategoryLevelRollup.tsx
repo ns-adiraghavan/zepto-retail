@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import type { PriceRecord, AvailabilityRecord } from "@/data/dataLoader";
 
 interface CategoryLevelRollupProps {
-  priceData: PriceRecord[];
-  availData: AvailabilityRecord[];
+  priceData?: PriceRecord[];
+  availData?: AvailabilityRecord[];
 }
 
 export const CategoryLevelRollup = ({ priceData, availData }: CategoryLevelRollupProps) => {
