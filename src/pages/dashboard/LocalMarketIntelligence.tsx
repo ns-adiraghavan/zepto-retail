@@ -70,6 +70,14 @@ const LocalMarketIntelligence = () => {
     },
   ];
 
+  const cityChartData = cityScores.map((c) => ({
+    city: c.city,
+    Score: c.score,
+    Availability: parseFloat(c.availability.toFixed(1)),
+    "Search Visibility": parseFloat(c.search.toFixed(1)),
+    "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
+  }));
+
   const barColor = (score: number) =>
     score >= 80 ? "bg-status-low" : score >= 70 ? "bg-status-medium" : "bg-status-high";
 
