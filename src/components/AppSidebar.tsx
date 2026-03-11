@@ -59,6 +59,11 @@ const navItems = [
     url: "/dashboard/local",
     icon: MapPin,
   },
+  {
+    title: "Competitive Events",
+    url: "/dashboard/events",
+    icon: Activity,
+  },
 ];
 
 export function AppSidebar() {
