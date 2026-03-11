@@ -1,9 +1,10 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getAvailabilityByPlatform } from "@/data/dataLoader";
+import { getAvailabilityByPlatform, getAvailabilityData } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const stockoutRows = [
   { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR", duration: "4h 12m", severity: "High" as const },
@@ -22,6 +23,22 @@ const AvailabilityIntelligence = () => {
   const { selectedCity } = useOutletContext<DashboardContext>();
 
   const availabilityByPlatform = getAvailabilityByPlatform(selectedCity);
+  const availabilityData = getAvailabilityData(selectedCity, "All Platforms");
+
+  // ── Reliability chart data ─────────────────────────────────────────────────
+  const reliabilityRaw: Record<string, { available: number; stockout: number; total: number }> = {};
+  availabilityData.forEach((row) => {
+    if (!reliabilityRaw[row.platform]) reliabilityRaw[row.platform] = { available: 0, stockout: 0, total: 0 };
+    reliabilityRaw[row.platform].total++;
+    if (row.availability_flag === 1) reliabilityRaw[row.platform].available++;
+    else reliabilityRaw[row.platform].stockout++;
+  });
+
+  const reliabilityData = Object.entries(reliabilityRaw).map(([platform, d]) => ({
+    platform,
+    "Availability %": parseFloat(((d.available / d.total) * 100).toFixed(1)),
+    "Stockout %": parseFloat(((d.stockout / d.total) * 100).toFixed(1)),
+  }));
 
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
@@ -93,6 +110,37 @@ const AvailabilityIntelligence = () => {
             <KPICard key={i} {...kpi} />
           ))}
         </div>
+      </section>
+
+      {/* Platform Reliability Comparison chart */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Reliability Comparison</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Platform Reliability Comparison</CardTitle>
+            <CardDescription>Availability vs stockout rate per platform across all cities</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reliabilityData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={reliabilityData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value}%`, name]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  <Bar dataKey="Availability %" fill="hsl(var(--status-low))"      radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Stockout %"     fill="hsl(var(--status-critical))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       {/* Platform Availability Rates */}
