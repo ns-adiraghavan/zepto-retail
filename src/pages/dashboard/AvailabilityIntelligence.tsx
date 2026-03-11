@@ -23,6 +23,22 @@ const AvailabilityIntelligence = () => {
   const { selectedCity } = useOutletContext<DashboardContext>();
 
   const availabilityByPlatform = getAvailabilityByPlatform(selectedCity);
+  const availabilityData = getAvailabilityData(selectedCity, "All Platforms");
+
+  // ── Reliability chart data ─────────────────────────────────────────────────
+  const reliabilityRaw: Record<string, { available: number; stockout: number; total: number }> = {};
+  availabilityData.forEach((row) => {
+    if (!reliabilityRaw[row.platform]) reliabilityRaw[row.platform] = { available: 0, stockout: 0, total: 0 };
+    reliabilityRaw[row.platform].total++;
+    if (row.availability_flag === 1) reliabilityRaw[row.platform].available++;
+    else reliabilityRaw[row.platform].stockout++;
+  });
+
+  const reliabilityData = Object.entries(reliabilityRaw).map(([platform, d]) => ({
+    platform,
+    "Availability %": parseFloat(((d.available / d.total) * 100).toFixed(1)),
+    "Stockout %": parseFloat(((d.stockout / d.total) * 100).toFixed(1)),
+  }));
 
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
