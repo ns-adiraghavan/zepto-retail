@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
