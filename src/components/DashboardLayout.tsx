@@ -1,9 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cities, platforms } from "@/data/platformData";
-import { useState } from "react";
 
 export function DashboardLayout() {
   const [selectedCity, setSelectedCity] = useState<string>("Bangalore");
