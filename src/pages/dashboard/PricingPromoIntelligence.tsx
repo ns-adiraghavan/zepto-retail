@@ -1,9 +1,6 @@
 import { KPICard } from "@/components/dashboard/KPICard";
 import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
+import { platformHeatmapData } from "@/data/platformData";
 import { getDiscountByPlatform, getPriceData } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tag } from "lucide-react";
@@ -96,24 +93,16 @@ const PricingPromoIntelligence = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Category Price Competitiveness Heatmap */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData.filter((a) => a.type === "competitor")} />
-          </div>
-        </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Price Competitiveness</h2>
+        <PriceHeatmap data={platformHeatmapData} />
       </section>
 
-      {/* Competitive Comparison */}
+      {/* Platform Discount Comparison + Active Promotions */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Discount Comparison</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>Platform Average Discount</CardTitle>
@@ -138,14 +127,7 @@ const PricingPromoIntelligence = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
 
-      {/* Detailed Insights */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopRiskSKUs skus={topPriceGapItems} />
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>Active Promotions Tracker</CardTitle>

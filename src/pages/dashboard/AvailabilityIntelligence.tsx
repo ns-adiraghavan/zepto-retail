@@ -1,8 +1,4 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData } from "@/data/platformData";
 import { getAvailabilityByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
@@ -99,54 +95,38 @@ const AvailabilityIntelligence = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Platform Availability Rates */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData.filter((a) => a.type === "inventory")} />
-          </div>
-        </div>
-      </section>
-
-      {/* Competitive Comparison */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Platform Availability Rates</CardTitle>
-              <CardDescription>% of tracked SKUs currently in stock</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {availabilityByPlatform.map((p) => (
-                  <div key={p.platform} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium">{p.platform}</span>
-                      <span className="text-muted-foreground">{p.rate}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${barColor(p.rate)}`}
-                        style={{ width: `${p.rate}%` }}
-                      />
-                    </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Availability Rates</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Platform Availability Rates</CardTitle>
+            <CardDescription>% of tracked SKUs currently in stock</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {availabilityByPlatform.map((p) => (
+                <div key={p.platform} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium">{p.platform}</span>
+                    <span className="text-muted-foreground">{p.rate}%</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barColor(p.rate)}`}
+                      style={{ width: `${p.rate}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      {/* Detailed Insights */}
+      {/* Active Stockout Events */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Stockout Events</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Active Stockout Events</CardTitle>

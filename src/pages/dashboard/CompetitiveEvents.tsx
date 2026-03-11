@@ -1,7 +1,4 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData } from "@/data/platformData";
 import { getEvents } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -114,22 +111,9 @@ const CompetitiveEvents = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Event Feed */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData.filter((a) => a.type === "competitor")} />
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Insights — Event Feed */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Event Feed</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Live Event Feed</CardTitle>
