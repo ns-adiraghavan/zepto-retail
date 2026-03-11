@@ -10,6 +10,7 @@ import {
   platformAlertsData,
   topPriceGapItems,
 } from "@/data/platformData";
+import { getPlatformSummary } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutDashboard } from "lucide-react";
 
