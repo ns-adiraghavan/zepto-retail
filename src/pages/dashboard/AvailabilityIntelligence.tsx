@@ -2,16 +2,12 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import {
-  availabilityKPIs,
-  platformHeatmapData,
-  platformAlertsData,
-  platforms,
-  categories,
-} from "@/data/platformData";
+import { platformHeatmapData, platformAlertsData } from "@/data/platformData";
+import { getAvailabilityByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useOutletContext } from "react-router-dom";
 
 const stockoutRows = [
   { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR", duration: "4h 12m", severity: "High" as const },
@@ -21,9 +17,62 @@ const stockoutRows = [
   { sku: "HPC-HHD-500", name: "Head & Shoulders 500ml", platform: "Zepto", city: "Bangalore", duration: "55m", severity: "Medium" as const },
 ];
 
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
+
 const AvailabilityIntelligence = () => {
+  const { selectedCity } = useOutletContext<DashboardContext>();
+
+  const availabilityByPlatform = getAvailabilityByPlatform(selectedCity);
+
+  const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
+  const avgAvailability =
+    availabilityByPlatform.length > 0
+      ? availabilityByPlatform.reduce((s, p) => s + p.rate, 0) / availabilityByPlatform.length
+      : 0;
+  const lowestPlatform = sorted[0];
+  const highestPlatform = sorted[sorted.length - 1];
+  const availabilityGap =
+    highestPlatform && lowestPlatform ? highestPlatform.rate - lowestPlatform.rate : 0;
+
+  const kpis = [
+    {
+      title: "Avg Availability Rate",
+      value: `${avgAvailability.toFixed(1)}%`,
+      change: "+0.4%",
+      trend: "up" as const,
+      description: "Across all tracked platforms",
+    },
+    {
+      title: "Best Platform",
+      value: highestPlatform ? `${highestPlatform.platform}` : "—",
+      change: highestPlatform ? `${highestPlatform.rate}%` : "—",
+      trend: "up" as const,
+      description: "Highest availability rate",
+    },
+    {
+      title: "Lowest Platform",
+      value: lowestPlatform ? `${lowestPlatform.platform}` : "—",
+      change: lowestPlatform ? `${lowestPlatform.rate}%` : "—",
+      trend: "down" as const,
+      description: "Most stockout risk",
+    },
+    {
+      title: "Availability Gap",
+      value: `${availabilityGap.toFixed(1)}pp`,
+      change: availabilityGap > 5 ? "Wide gap" : "Narrow gap",
+      trend: availabilityGap > 5 ? ("down" as const) : ("up" as const),
+      description: "Best vs. worst platform spread",
+    },
+  ];
+
   const severityVariant = (s: "High" | "Medium" | "Low") =>
     s === "High" ? "destructive" : s === "Medium" ? "secondary" : "outline";
+
+  const barColor = (rate: number) =>
+    rate >= 95 ? "bg-status-low" : rate >= 90 ? "bg-status-medium" : "bg-status-high";
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -44,7 +93,7 @@ const AvailabilityIntelligence = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {availabilityKPIs.map((kpi, i) => (
+          {kpis.map((kpi, i) => (
             <KPICard key={i} {...kpi} />
           ))}
         </div>
@@ -75,20 +124,15 @@ const AvailabilityIntelligence = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { name: "Zepto", rate: 97.1 },
-                  { name: "Blinkit", rate: 94.8 },
-                  { name: "Swiggy Instamart", rate: 91.3 },
-                  { name: "BigBasket Now", rate: 96.2 },
-                ].map((p) => (
-                  <div key={p.name} className="space-y-1">
+                {availabilityByPlatform.map((p) => (
+                  <div key={p.platform} className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="font-medium">{p.name}</span>
+                      <span className="font-medium">{p.platform}</span>
                       <span className="text-muted-foreground">{p.rate}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${p.rate >= 95 ? "bg-status-low" : p.rate >= 92 ? "bg-status-medium" : "bg-status-high"}`}
+                        className={`h-full rounded-full ${barColor(p.rate)}`}
                         style={{ width: `${p.rate}%` }}
                       />
                     </div>
