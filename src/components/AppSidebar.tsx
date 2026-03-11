@@ -22,6 +22,7 @@ import {
   BarChart3,
   Moon,
   Sun,
+  Activity,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,11 @@ const navItems = [
     title: "Local Market Intelligence",
     url: "/dashboard/local",
     icon: MapPin,
+  },
+  {
+    title: "Competitive Events",
+    url: "/dashboard/events",
+    icon: Activity,
   },
 ];
 

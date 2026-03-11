@@ -12,6 +12,7 @@ import SearchShelfVisibility from "./pages/dashboard/SearchShelfVisibility";
 import AssortmentIntelligence from "./pages/dashboard/AssortmentIntelligence";
 import AvailabilityIntelligence from "./pages/dashboard/AvailabilityIntelligence";
 import LocalMarketIntelligence from "./pages/dashboard/LocalMarketIntelligence";
+import CompetitiveEvents from "./pages/dashboard/CompetitiveEvents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="assortment" element={<AssortmentIntelligence />} />
               <Route path="availability" element={<AvailabilityIntelligence />} />
               <Route path="local" element={<LocalMarketIntelligence />} />
+              <Route path="events" element={<CompetitiveEvents />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
