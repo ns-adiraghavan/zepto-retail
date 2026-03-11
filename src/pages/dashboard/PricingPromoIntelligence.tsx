@@ -64,8 +64,7 @@ const PricingPromoIntelligence = () => {
   ];
 
   // ── Heatmap computation ────────────────────────────────────────────────────
-  // gap = (sale_price - mrp) / mrp * 100
-  // negative = competitive (selling below MRP), positive = overpriced (above MRP)
+  // Raw gap = (sale_price - mrp) / mrp * 100
   const heatmapRaw: Record<string, Record<string, number[]>> = {};
   priceData.forEach((row) => {
     const gap = row.mrp > 0 ? ((row.sale_price - row.mrp) / row.mrp) * 100 : 0;
@@ -74,27 +73,38 @@ const PricingPromoIntelligence = () => {
     heatmapRaw[row.category][row.platform].push(gap);
   });
 
+  // Category-level average gap (across all platforms) for normalization
+  const categoryAvgGap: Record<string, number> = {};
+  Object.entries(heatmapRaw).forEach(([category, platforms]) => {
+    const allGaps = Object.values(platforms).flat();
+    categoryAvgGap[category] = allGaps.length > 0
+      ? allGaps.reduce((a, b) => a + b, 0) / allGaps.length
+      : 0;
+  });
+
+  // Normalized gap = platform avg gap - category avg gap
   const heatmap = Object.entries(heatmapRaw).map(([category, platforms]) => ({
     category,
-    platforms: Object.entries(platforms).map(([platform, gaps]) => ({
-      platform,
-      avgGap: gaps.reduce((a, b) => a + b, 0) / gaps.length,
-    })),
+    platforms: Object.entries(platforms).map(([platform, gaps]) => {
+      const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+      const normalizedGap = avgGap - (categoryAvgGap[category] ?? 0);
+      return { platform, avgGap, normalizedGap };
+    }),
   }));
 
   const allPlatforms = Array.from(
     new Set(heatmap.flatMap((row) => row.platforms.map((p) => p.platform)))
   ).sort();
 
-  const getCellStyle = (gap: number) => {
-    if (gap <= -5) return "bg-status-low/20 text-status-low border border-status-low/30";
-    if (gap <= 5)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
+  const getCellStyle = (normalizedGap: number) => {
+    if (normalizedGap <= -3) return "bg-status-low/20 text-status-low border border-status-low/30";
+    if (normalizedGap <= 3)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
     return "bg-status-critical/20 text-status-critical border border-status-critical/30";
   };
 
-  const getCellLabel = (gap: number) => {
-    if (gap <= -5) return "Competitive";
-    if (gap <= 5)  return "Neutral";
+  const getCellLabel = (normalizedGap: number) => {
+    if (normalizedGap <= -3) return "Competitive";
+    if (normalizedGap <= 3)  return "Neutral";
     return "Overpriced";
   };
 
