@@ -3,15 +3,17 @@ import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import {
-  pricingKPIs,
-  platformHeatmapData,
-  platformAlertsData,
-  topPriceGapItems,
-} from "@/data/platformData";
+import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
+import { getDiscountByPlatform, getPriceData } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useOutletContext } from "react-router-dom";
+
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
 
 const promoRows = [
   { platform: "Blinkit", category: "Snacks & Beverages", type: "Flash Sale", discount: "40%", city: "Bangalore", status: "Active" as const },
@@ -22,6 +24,53 @@ const promoRows = [
 ];
 
 const PricingPromoIntelligence = () => {
+  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+
+  const priceData = getPriceData(selectedCity, selectedPlatform);
+  const discountByPlatform = getDiscountByPlatform(selectedCity, selectedPlatform);
+
+  const avgDiscount =
+    priceData.length > 0
+      ? priceData.reduce((s, r) => s + r.discount_percent, 0) / priceData.length
+      : 0;
+
+  const promoCount = priceData.filter((r) => r.promotion_flag === 1).length;
+  const promoRate = priceData.length > 0 ? (promoCount / priceData.length) * 100 : 0;
+
+  const kpis = [
+    {
+      title: "Average Discount",
+      value: `${avgDiscount.toFixed(1)}%`,
+      change: avgDiscount,
+      changeType: "percentage" as const,
+      trend: "neutral" as const,
+      tooltip: "Mean discount % across all price observations",
+    },
+    {
+      title: "Promotion Intensity",
+      value: `${promoRate.toFixed(1)}%`,
+      change: promoRate,
+      changeType: "percentage" as const,
+      trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
+      tooltip: "Share of observations with an active promotion flag",
+    },
+    {
+      title: "SKUs Under Promotion",
+      value: promoCount.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Number of price observations with promotion_flag = 1",
+    },
+    {
+      title: "Price Observations",
+      value: priceData.length.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Total rows in the filtered price tracking dataset",
+    },
+  ];
+
+  const barColor = (discount: number) =>
+    discount >= 20 ? "bg-status-high" : discount >= 10 ? "bg-status-medium" : "bg-status-low";
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
@@ -41,7 +90,7 @@ const PricingPromoIntelligence = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {pricingKPIs.map((kpi, i) => (
+          {kpis.map((kpi, i) => (
             <KPICard key={i} {...kpi} />
           ))}
         </div>
@@ -67,23 +116,23 @@ const PricingPromoIntelligence = () => {
           <CategoryLevelRollup />
           <Card className="bg-gradient-card">
             <CardHeader>
-              <CardTitle>Platform Avg Price Index</CardTitle>
-              <CardDescription>Index relative to category median (100 = parity)</CardDescription>
+              <CardTitle>Platform Average Discount</CardTitle>
+              <CardDescription>Mean discount % per platform from price tracking data</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: "Zepto", index: 97.4, diff: -2.6 },
-                  { name: "Blinkit", index: 102.3, diff: +2.3 },
-                  { name: "Swiggy Instamart", index: 99.1, diff: -0.9 },
-                  { name: "BigBasket Now", index: 95.8, diff: -4.2 },
-                ].map((p) => (
-                  <div key={p.name} className="flex items-center justify-between text-sm">
-                    <span className="w-36 font-medium">{p.name}</span>
-                    <span className="font-bold">{p.index}</span>
-                    <span className={p.diff < 0 ? "text-status-low" : "text-status-high"}>
-                      {p.diff > 0 ? "+" : ""}{p.diff}%
-                    </span>
+              <div className="space-y-4">
+                {discountByPlatform.map((p) => (
+                  <div key={p.platform} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium">{p.platform}</span>
+                      <span className="text-muted-foreground">{p.avgDiscount}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${barColor(p.avgDiscount)}`}
+                        style={{ width: `${Math.min(p.avgDiscount * 2.5, 100)}%` }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
