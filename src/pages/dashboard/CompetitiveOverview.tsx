@@ -5,7 +5,6 @@ import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import {
-  competitiveOverviewKPIs,
   platformHeatmapData,
   platformAlertsData,
   topPriceGapItems,
