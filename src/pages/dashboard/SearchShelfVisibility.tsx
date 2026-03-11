@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface DashboardContext {
   selectedCity: string;
@@ -64,6 +65,23 @@ const SearchShelfVisibility = () => {
     },
   ];
 
+  // ── Rank distribution ────────────────────────────────────────────────────
+  const rankRaw: Record<string, { top3: number; top10: number; top20: number; total: number }> = {};
+  searchData.forEach((row) => {
+    if (!rankRaw[row.platform]) rankRaw[row.platform] = { top3: 0, top10: 0, top20: 0, total: 0 };
+    rankRaw[row.platform].total++;
+    if (row.search_rank <= 3)  rankRaw[row.platform].top3++;
+    if (row.search_rank <= 10) rankRaw[row.platform].top10++;
+    if (row.search_rank <= 20) rankRaw[row.platform].top20++;
+  });
+
+  const rankDistribution = Object.entries(rankRaw).map(([platform, d]) => ({
+    platform,
+    "Top 3":  d.total > 0 ? parseFloat(((d.top3  / d.total) * 100).toFixed(1)) : 0,
+    "Top 10": d.total > 0 ? parseFloat(((d.top10 / d.total) * 100).toFixed(1)) : 0,
+    "Top 20": d.total > 0 ? parseFloat(((d.top20 / d.total) * 100).toFixed(1)) : 0,
+  }));
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
@@ -87,6 +105,38 @@ const SearchShelfVisibility = () => {
             <KPICard key={i} {...kpi} />
           ))}
         </div>
+      </section>
+
+      {/* Search Rank Distribution */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Rank Distribution</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Search Rank Distribution</CardTitle>
+            <CardDescription>Share of observations ranked in Top 3 / Top 10 / Top 20 per platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {rankDistribution.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={rankDistribution} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value}%`, name]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  <Bar dataKey="Top 3"  stackId="a" fill="hsl(var(--status-low))"    radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Top 10" stackId="a" fill="hsl(var(--status-medium))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Top 20" stackId="a" fill="hsl(var(--status-high))"   radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       {/* Sponsored vs Organic Share */}
