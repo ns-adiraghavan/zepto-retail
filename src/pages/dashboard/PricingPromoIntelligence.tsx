@@ -180,27 +180,30 @@ const PricingPromoIntelligence = () => {
                   </thead>
                   <tbody>
                     {heatmap.map((row) => {
-                      const gapMap = Object.fromEntries(row.platforms.map((p) => [p.platform, p.avgGap]));
+                      const cellMap = Object.fromEntries(
+                        row.platforms.map((p) => [p.platform, p])
+                      );
                       return (
                         <tr key={row.category} className="border-b border-border/40">
                           <td className="py-2 px-3 font-medium">{row.category}</td>
                           {allPlatforms.map((platform) => {
-                            const gap = gapMap[platform];
-                            if (gap === undefined) {
+                            const cell = cellMap[platform];
+                            if (!cell) {
                               return (
                                 <td key={platform} className="p-2 text-center">
                                   <div className="rounded-md px-2 py-2 text-xs text-muted-foreground bg-muted/30 border border-border/30">—</div>
                                 </td>
                               );
                             }
+                            const { normalizedGap } = cell;
                             return (
                               <td key={platform} className="p-2 text-center">
                                 <div
-                                  className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(gap)}`}
-                                  title={getCellLabel(gap)}
+                                  className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(normalizedGap)}`}
+                                  title={`${getCellLabel(normalizedGap)} — normalized gap: ${normalizedGap > 0 ? "+" : ""}${normalizedGap.toFixed(1)}%`}
                                 >
-                                  <div className="font-bold">{gap > 0 ? "+" : ""}{gap.toFixed(1)}%</div>
-                                  <div className="text-[10px] opacity-75 mt-0.5">{getCellLabel(gap)}</div>
+                                  <div className="font-bold">{normalizedGap > 0 ? "+" : ""}{normalizedGap.toFixed(1)}%</div>
+                                  <div className="text-[10px] opacity-75 mt-0.5">{getCellLabel(normalizedGap)}</div>
                                 </div>
                               </td>
                             );
