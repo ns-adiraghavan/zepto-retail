@@ -1,9 +1,4 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
 import { getAssortmentData, getListingCountByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Package } from "lucide-react";
@@ -88,24 +83,10 @@ const AssortmentIntelligence = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Listed vs Missing SKUs by Platform + Platform Exclusives */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData.filter((a) => a.type === "inventory")} />
-          </div>
-        </div>
-      </section>
-
-      {/* Competitive Comparison */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Assortment Analysis</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>Listed vs Missing SKUs by Platform</CardTitle>
@@ -141,14 +122,7 @@ const AssortmentIntelligence = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
 
-      {/* Detailed Insights */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopRiskSKUs skus={topPriceGapItems} />
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>Platform-Exclusive SKUs</CardTitle>

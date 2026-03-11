@@ -1,8 +1,4 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData } from "@/data/platformData";
 import { getSearchData, getSponsoredShareByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
@@ -93,56 +89,40 @@ const SearchShelfVisibility = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Sponsored vs Organic Share */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData.slice(0, 3)} />
-          </div>
-        </div>
-      </section>
-
-      {/* Competitive Comparison */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Sponsored vs Organic Share</CardTitle>
-              <CardDescription>Top-10 search results composition by platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sponsoredByPlatform.map((p) => (
-                  <div key={p.platform} className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{p.platform}</span>
-                      <span>{p.sponsoredShare}% sponsored</span>
-                    </div>
-                    <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                      <div className="bg-status-high h-full" style={{ width: `${p.sponsoredShare}%` }} />
-                      <div className="bg-status-low h-full flex-1" />
-                    </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Sponsored vs Organic Share</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Sponsored vs Organic Share</CardTitle>
+            <CardDescription>Top-10 search results composition by platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {sponsoredByPlatform.map((p) => (
+                <div key={p.platform} className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{p.platform}</span>
+                    <span>{p.sponsoredShare}% sponsored</span>
                   </div>
-                ))}
-                <div className="flex gap-4 text-xs text-muted-foreground pt-1">
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Sponsored</div>
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Organic</div>
+                  <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                    <div className="bg-status-high h-full" style={{ width: `${p.sponsoredShare}%` }} />
+                    <div className="bg-status-low h-full flex-1" />
+                  </div>
                 </div>
+              ))}
+              <div className="flex gap-4 text-xs text-muted-foreground pt-1">
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Sponsored</div>
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Organic</div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      {/* Detailed Insights */}
+      {/* Keyword Shelf Position Tracker */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Keyword Shelf Position Tracker</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Keyword Shelf Position Tracker</CardTitle>

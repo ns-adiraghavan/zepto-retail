@@ -1,9 +1,4 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
 import {
   getAvailabilityByPlatform,
   getDiscountByPlatform,
@@ -102,100 +97,81 @@ const LocalMarketIntelligence = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* City Intelligence Score Comparison */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData} />
-          </div>
-        </div>
-      </section>
-
-      {/* Competitive Comparison */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>City Intelligence Scores</CardTitle>
-              <CardDescription>Composite score: availability + search visibility − discount intensity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {cityScores.map((c) => (
-                  <div key={c.city} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{c.city}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>Avail {c.availability.toFixed(0)}%</span>
-                        <span>Disc {c.discount.toFixed(1)}%</span>
-                        <span className="font-semibold text-foreground">{c.score}/100</span>
-                      </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Intelligence Scores</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>City Intelligence Scores</CardTitle>
+            <CardDescription>Composite score: availability + search visibility − discount intensity</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {cityScores.map((c) => (
+                <div key={c.city} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-medium">{c.city}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${barColor(c.score)}`}
-                        style={{ width: `${c.score}%` }}
-                      />
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>Avail {c.availability.toFixed(0)}%</span>
+                      <span>Disc {c.discount.toFixed(1)}%</span>
+                      <span className="font-semibold text-foreground">{c.score}/100</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barColor(c.score)}`}
+                      style={{ width: `${c.score}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      {/* Detailed Insights */}
+      {/* Hyper-local Promotions */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopRiskSKUs skus={topPriceGapItems} />
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Hyper-local Promotions</CardTitle>
-              <CardDescription>City-specific offers not available nationally</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left">
-                      <th className="py-2 pr-3 font-medium text-muted-foreground">City</th>
-                      <th className="py-2 pr-3 font-medium text-muted-foreground">Platform</th>
-                      <th className="py-2 pr-3 font-medium text-muted-foreground">Category</th>
-                      <th className="py-2 font-medium text-muted-foreground">Discount</th>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Hyper-local Promotions</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Hyper-local Promotions</CardTitle>
+            <CardDescription>City-specific offers not available nationally</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 pr-3 font-medium text-muted-foreground">City</th>
+                    <th className="py-2 pr-3 font-medium text-muted-foreground">Platform</th>
+                    <th className="py-2 pr-3 font-medium text-muted-foreground">Category</th>
+                    <th className="py-2 font-medium text-muted-foreground">Discount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { city: "Bangalore", platform: "Zepto", category: "Fruits & Vegetables", discount: "20%" },
+                    { city: "Mumbai", platform: "Blinkit", category: "Dairy & Eggs", discount: "15%" },
+                    { city: "Delhi NCR", platform: "Swiggy Instamart", category: "Snacks & Beverages", discount: "25%" },
+                    { city: "Pune", platform: "BigBasket Now", category: "Staples & Grains", discount: "10%" },
+                    { city: "Hyderabad", platform: "Zepto", category: "Personal Care", discount: "18%" },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-border/50 last:border-0">
+                      <td className="py-2 pr-3 font-medium">{row.city}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{row.platform}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{row.category}</td>
+                      <td className="py-2 font-semibold text-status-high">{row.discount}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { city: "Bangalore", platform: "Zepto", category: "Fruits & Vegetables", discount: "20%" },
-                      { city: "Mumbai", platform: "Blinkit", category: "Dairy & Eggs", discount: "15%" },
-                      { city: "Delhi NCR", platform: "Swiggy Instamart", category: "Snacks & Beverages", discount: "25%" },
-                      { city: "Pune", platform: "BigBasket Now", category: "Staples & Grains", discount: "10%" },
-                      { city: "Hyderabad", platform: "Zepto", category: "Personal Care", discount: "18%" },
-                    ].map((row, i) => (
-                      <tr key={i} className="border-b border-border/50 last:border-0">
-                        <td className="py-2 pr-3 font-medium">{row.city}</td>
-                        <td className="py-2 pr-3 text-muted-foreground">{row.platform}</td>
-                        <td className="py-2 pr-3 text-muted-foreground">{row.category}</td>
-                        <td className="py-2 font-semibold text-status-high">{row.discount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

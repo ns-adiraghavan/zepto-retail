@@ -1,14 +1,8 @@
 import { KPICard } from "@/components/dashboard/KPICard";
 import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
-import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import {
-  platformHeatmapData,
-  platformAlertsData,
-  topPriceGapItems,
-} from "@/data/platformData";
+import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
+import { platformHeatmapData, topPriceGapItems } from "@/data/platformData";
 import { getPlatformSummary } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutDashboard } from "lucide-react";
@@ -22,7 +16,6 @@ const SCORE_COLOR = (score: number) => {
 const CompetitiveOverview = () => {
   const platformScores = getPlatformSummary();
 
-  // Derive KPIs from real data
   const avgCompetitiveness = Math.round(
     platformScores.reduce((s, p) => s + p.competitiveness_score, 0) / platformScores.length
   );
@@ -97,24 +90,16 @@ const CompetitiveOverview = () => {
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Category Price Competitiveness Heatmap */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Trend Analysis</h2>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="xl:col-span-2">
-            <PriceHeatmap data={platformHeatmapData} />
-          </div>
-          <div className="xl:col-span-1">
-            <AlertsPanel alerts={platformAlertsData} />
-          </div>
-        </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Price Competitiveness</h2>
+        <PriceHeatmap data={platformHeatmapData} />
       </section>
 
-      {/* Competitive Comparison */}
+      {/* Platform Competitiveness Summary + Category Rollup */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CategoryLevelRollup />
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>Platform Competitiveness Summary</CardTitle>
@@ -138,18 +123,14 @@ const CompetitiveOverview = () => {
               </div>
             </CardContent>
           </Card>
+          <CategoryLevelRollup />
         </div>
       </section>
 
-      {/* Detailed Insights */}
+      {/* Top Price Gap Items */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Detailed Insights</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopRiskSKUs skus={topPriceGapItems} />
-          <div className="bg-card p-4 lg:p-6 rounded-lg border border-border">
-            <QuickActions />
-          </div>
-        </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top Price Gap Items</h2>
+        <TopRiskSKUs skus={topPriceGapItems} />
       </section>
     </div>
   );
