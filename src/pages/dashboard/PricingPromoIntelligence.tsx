@@ -97,14 +97,14 @@ const PricingPromoIntelligence = () => {
   ).sort();
 
   const getCellStyle = (normalizedGap: number) => {
-    if (normalizedGap <= -3) return "bg-status-low/20 text-status-low border border-status-low/30";
-    if (normalizedGap <= 3)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
+    if (normalizedGap <= -0.8) return "bg-status-low/20 text-status-low border border-status-low/30";
+    if (normalizedGap <= 0.8)  return "bg-status-medium/20 text-status-medium border border-status-medium/30";
     return "bg-status-critical/20 text-status-critical border border-status-critical/30";
   };
 
   const getCellLabel = (normalizedGap: number) => {
-    if (normalizedGap <= -3) return "Competitive";
-    if (normalizedGap <= 3)  return "Neutral";
+    if (normalizedGap <= -0.8) return "Competitive";
+    if (normalizedGap <= 0.8)  return "Neutral";
     return "Overpriced";
   };
 
