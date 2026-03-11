@@ -8,7 +8,7 @@ interface CategoryLevelRollupProps {
   availData?: AvailabilityRecord[];
 }
 
-export const CategoryLevelRollup = ({ priceData, availData }: CategoryLevelRollupProps) => {
+export const CategoryLevelRollup = ({ priceData = [], availData = [] }: CategoryLevelRollupProps) => {
   const rollup = useMemo(() => {
     // Avg discount per category (proxy for promo response)
     const discountMap: Record<string, { sum: number; count: number }> = {};
