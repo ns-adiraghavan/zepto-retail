@@ -3,17 +3,17 @@ import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import {
-  assortmentKPIs,
-  platformHeatmapData,
-  platformAlertsData,
-  topPriceGapItems,
-  platforms,
-  categories,
-} from "@/data/platformData";
+import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
+import { getAssortmentData, getListingCountByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useOutletContext } from "react-router-dom";
+
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
 
 const exclusiveItems = [
   { platform: "BigBasket Now", sku: "BB-PVTLBL-RICE-5KG", name: "BB Organics Basmati Rice 5kg", category: "Staples & Grains" },
@@ -23,6 +23,46 @@ const exclusiveItems = [
 ];
 
 const AssortmentIntelligence = () => {
+  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+
+  const assortmentData = getAssortmentData(selectedCity, selectedPlatform);
+  const listingByPlatform = getListingCountByPlatform(selectedCity, selectedPlatform);
+
+  const listedCount = assortmentData.filter((r) => r.listing_status === 1).length;
+  const missingCount = assortmentData.filter((r) => r.listing_status === 0).length;
+  const coverageRate =
+    assortmentData.length > 0 ? (listedCount / assortmentData.length) * 100 : 0;
+  const categoryCount = new Set(assortmentData.map((r) => r.category)).size;
+
+  const kpis = [
+    {
+      title: "SKU Coverage",
+      value: `${coverageRate.toFixed(1)}%`,
+      change: coverageRate,
+      changeType: "percentage" as const,
+      trend: coverageRate > 80 ? ("up" as const) : ("neutral" as const),
+      tooltip: "Share of SKUs listed across tracked platforms",
+    },
+    {
+      title: "Listed SKUs",
+      value: listedCount.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Total SKUs currently listed",
+    },
+    {
+      title: "Missing SKUs",
+      value: missingCount.toLocaleString(),
+      trend: "down" as const,
+      tooltip: "SKUs not carried by the platform",
+    },
+    {
+      title: "Categories Covered",
+      value: categoryCount.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Distinct product categories tracked",
+    },
+  ];
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
@@ -42,7 +82,7 @@ const AssortmentIntelligence = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {assortmentKPIs.map((kpi, i) => (
+          {kpis.map((kpi, i) => (
             <KPICard key={i} {...kpi} />
           ))}
         </div>
@@ -68,38 +108,36 @@ const AssortmentIntelligence = () => {
           <CategoryLevelRollup />
           <Card className="bg-gradient-card">
             <CardHeader>
-              <CardTitle>SKU Count by Platform × Category</CardTitle>
-              <CardDescription>Approximate listed SKUs per category</CardDescription>
+              <CardTitle>Listed vs Missing SKUs by Platform</CardTitle>
+              <CardDescription>Share of tracked SKUs currently listed per platform</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 pr-3 font-medium text-muted-foreground">Category</th>
-                      {platforms.map((p) => (
-                        <th key={p} className="text-center py-2 px-2 font-medium text-muted-foreground whitespace-nowrap">
-                          {p.split(" ")[0]}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.slice(0, 5).map((cat) => (
-                      <tr key={cat} className="border-b border-border/50 last:border-0">
-                        <td className="py-2 pr-3 font-medium">{cat}</td>
-                        {platforms.map((p) => {
-                          const count = Math.floor(Math.random() * 300) + 80;
-                          return (
-                            <td key={p} className="py-2 px-2 text-center text-muted-foreground">
-                              {count}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-4">
+                {listingByPlatform.map((p) => {
+                  const total = p.listed + p.notListed;
+                  const listedPct = total > 0 ? (p.listed / total) * 100 : 0;
+                  return (
+                    <div key={p.platform} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium">{p.platform}</span>
+                        <span className="text-muted-foreground">
+                          {p.listed.toLocaleString()} listed · {p.notListed.toLocaleString()} missing
+                        </span>
+                      </div>
+                      <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                        <div
+                          className="bg-status-low h-full"
+                          style={{ width: `${listedPct}%` }}
+                        />
+                        <div className="bg-status-high h-full flex-1" />
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex gap-4 text-xs text-muted-foreground pt-1">
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Listed</div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Missing</div>
+                </div>
               </div>
             </CardContent>
           </Card>
