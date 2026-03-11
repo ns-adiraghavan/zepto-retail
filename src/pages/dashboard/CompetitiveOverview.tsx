@@ -23,47 +23,52 @@ const CompetitiveOverview = () => {
   const platformScores = getPlatformSummary();
 
   // Derive KPIs from real data
-  const avgAvailability =
-    (platformScores.reduce((s, p) => s + p.availability_rate, 0) / platformScores.length).toFixed(1);
-  const avgPriceIndex =
-    (platformScores.reduce((s, p) => s + p.price_index, 0) / platformScores.length).toFixed(1);
-  const totalSKUs = platformScores.reduce((s, p) => s + p.sku_count, 0);
   const avgCompetitiveness = Math.round(
     platformScores.reduce((s, p) => s + p.competitiveness_score, 0) / platformScores.length
   );
 
+  const avgPriceGap =
+    platformScores.reduce((s, p) => s + (p.price_index - 100), 0) / platformScores.length;
+
+  const availRates = platformScores.map((p) => p.availability_rate);
+  const availabilityGap = Math.max(...availRates) - Math.min(...availRates);
+
+  const searchLeader = [...platformScores].sort(
+    (a, b) => b.search_visibility - a.search_visibility
+  )[0];
+
   const liveKPIs = [
     {
-      title: "Platforms Tracked",
-      value: String(platformScores.length),
-      change: 0,
-      trend: "neutral" as const,
-      status: "low" as const,
-      tooltip: "Number of quick-commerce platforms actively monitored.",
-    },
-    {
-      title: "Avg Availability Rate",
-      value: `${avgAvailability}%`,
-      change: 0,
-      trend: "neutral" as const,
-      status: "low" as const,
-      tooltip: "Average SKU availability rate across all tracked platforms.",
-    },
-    {
-      title: "Avg Price Index",
-      value: avgPriceIndex,
-      change: 0,
-      trend: "neutral" as const,
-      status: "medium" as const,
-      tooltip: "Average price index across platforms (100 = category parity).",
-    },
-    {
-      title: "Overall Index Score",
+      title: "Competitive Score",
       value: `${avgCompetitiveness}/100`,
       change: 0,
       trend: "neutral" as const,
       status: avgCompetitiveness >= 70 ? ("low" as const) : ("medium" as const),
       tooltip: "Weighted composite competitiveness score across all platforms.",
+    },
+    {
+      title: "Price Gap vs Market",
+      value: `${avgPriceGap.toFixed(1)}%`,
+      change: 0,
+      trend: avgPriceGap > 0 ? ("down" as const) : ("up" as const),
+      status: avgPriceGap > 0 ? ("medium" as const) : ("low" as const),
+      tooltip: "Average deviation of platform price index from market parity (100).",
+    },
+    {
+      title: "Availability Gap",
+      value: `${availabilityGap.toFixed(1)}pp`,
+      change: 0,
+      trend: availabilityGap > 5 ? ("down" as const) : ("neutral" as const),
+      status: availabilityGap > 5 ? ("medium" as const) : ("low" as const),
+      tooltip: "Percentage-point spread between best and worst availability rates across platforms.",
+    },
+    {
+      title: "Search Visibility Leader",
+      value: searchLeader.platform,
+      change: searchLeader.search_visibility,
+      trend: "up" as const,
+      status: "low" as const,
+      tooltip: "Platform with the highest sponsored search visibility share.",
     },
   ];
 
