@@ -2,16 +2,17 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
-import {
-  searchKPIs,
-  platformHeatmapData,
-  platformAlertsData,
-  platforms,
-  categories,
-} from "@/data/platformData";
+import { platformHeatmapData, platformAlertsData } from "@/data/platformData";
+import { getSearchData, getSponsoredShareByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useOutletContext } from "react-router-dom";
+
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
 
 const shelfRows = [
   { keyword: "milk 1 litre", platform: "Zepto", rank: 1, sponsored: false, brand: "Amul" },
@@ -23,6 +24,50 @@ const shelfRows = [
 ];
 
 const SearchShelfVisibility = () => {
+  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+
+  const searchData = getSearchData(selectedCity, selectedPlatform);
+  const sponsoredByPlatform = getSponsoredShareByPlatform(selectedCity, selectedPlatform);
+
+  const avgRank =
+    searchData.length > 0
+      ? searchData.reduce((s, r) => s + r.search_rank, 0) / searchData.length
+      : 0;
+
+  const pageOneCount = searchData.filter((r) => r.search_rank <= 10).length;
+  const pageOneShare = searchData.length > 0 ? (pageOneCount / searchData.length) * 100 : 0;
+
+  const keywordCount = new Set(searchData.map((r) => r.keyword)).size;
+
+  const kpis = [
+    {
+      title: "Average Rank",
+      value: avgRank.toFixed(1),
+      trend: "neutral" as const,
+      tooltip: "Average product search rank across tracked keywords",
+    },
+    {
+      title: "Page-1 Presence",
+      value: `${pageOneShare.toFixed(1)}%`,
+      change: pageOneShare,
+      changeType: "percentage" as const,
+      trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const),
+      tooltip: "Share of products appearing in top-10 results",
+    },
+    {
+      title: "Keywords Tracked",
+      value: keywordCount.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Unique keywords monitored in the dataset",
+    },
+    {
+      title: "Search Observations",
+      value: searchData.length.toLocaleString(),
+      trend: "neutral" as const,
+      tooltip: "Total captured search ranking observations",
+    },
+  ];
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
@@ -42,7 +87,7 @@ const SearchShelfVisibility = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {searchKPIs.map((kpi, i) => (
+          {kpis.map((kpi, i) => (
             <KPICard key={i} {...kpi} />
           ))}
         </div>
@@ -73,21 +118,18 @@ const SearchShelfVisibility = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {platforms.map((p) => {
-                  const sponsored = Math.floor(Math.random() * 30) + 25;
-                  return (
-                    <div key={p} className="space-y-1">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{p}</span>
-                        <span>{sponsored}% sponsored</span>
-                      </div>
-                      <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                        <div className="bg-status-high h-full" style={{ width: `${sponsored}%` }} />
-                        <div className="bg-status-low h-full flex-1" />
-                      </div>
+                {sponsoredByPlatform.map((p) => (
+                  <div key={p.platform} className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{p.platform}</span>
+                      <span>{p.sponsoredShare}% sponsored</span>
                     </div>
-                  );
-                })}
+                    <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                      <div className="bg-status-high h-full" style={{ width: `${p.sponsoredShare}%` }} />
+                      <div className="bg-status-low h-full flex-1" />
+                    </div>
+                  </div>
+                ))}
                 <div className="flex gap-4 text-xs text-muted-foreground pt-1">
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Sponsored</div>
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Organic</div>
