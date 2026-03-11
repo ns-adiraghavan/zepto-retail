@@ -3,27 +3,80 @@ import { PriceHeatmap } from "@/components/dashboard/PriceHeatmap";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { TopRiskSKUs } from "@/components/dashboard/TopRiskSKUs";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
+import { platformHeatmapData, platformAlertsData, topPriceGapItems } from "@/data/platformData";
 import {
-  localMarketKPIs,
-  platformHeatmapData,
-  platformAlertsData,
-  topPriceGapItems,
-  cities,
-  platforms,
-} from "@/data/platformData";
+  getAvailabilityByPlatform,
+  getDiscountByPlatform,
+  getSponsoredShareByPlatform,
+  getListingCountByPlatform,
+} from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 
-const cityScores = [
-  { city: "Bangalore", score: 82, leader: "Zepto", insight: "Highest promo density" },
-  { city: "Mumbai", score: 76, leader: "Blinkit", insight: "Fastest delivery SLA" },
-  { city: "Delhi NCR", score: 71, leader: "Swiggy Instamart", insight: "Most stockout events" },
-  { city: "Pune", score: 68, leader: "BigBasket Now", insight: "Lowest price variance" },
-  { city: "Hyderabad", score: 74, leader: "Zepto", insight: "Growing platform share" },
-];
+const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
+
+function avg(arr: number[]) {
+  return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
+}
 
 const LocalMarketIntelligence = () => {
+  const cityScores = useMemo(() =>
+    CITIES.map((city) => {
+      const availPlatforms = getAvailabilityByPlatform(city);
+      const discountPlatforms = getDiscountByPlatform(city);
+      const searchPlatforms = getSponsoredShareByPlatform(city);
+      const listingPlatforms = getListingCountByPlatform(city);
+
+      const availability = avg(availPlatforms.map((p) => p.rate));
+      const discount = avg(discountPlatforms.map((p) => p.avgDiscount));
+      const search = avg(searchPlatforms.map((p) => p.sponsoredShare));
+      const assortment = listingPlatforms.reduce((s, p) => s + p.listed, 0);
+      const score = Math.round((availability + search + (100 - discount)) / 3);
+
+      return { city, availability, discount, search, assortment, score };
+    }),
+  []);
+
+  const sortedByScore = [...cityScores].sort((a, b) => b.score - a.score);
+  const bestCity = sortedByScore[0];
+  const worstCity = sortedByScore[sortedByScore.length - 1];
+  const avgScore = avg(cityScores.map((c) => c.score));
+
+  const kpis = [
+    {
+      title: "Avg City Score",
+      value: avgScore.toFixed(1),
+      trend: "neutral" as const,
+      tooltip: "Composite score averaged across all five cities",
+    },
+    {
+      title: "Best Performing City",
+      value: bestCity?.city ?? "—",
+      change: bestCity?.score,
+      changeType: "absolute" as const,
+      trend: "up" as const,
+      tooltip: "City with the highest composite intelligence score",
+    },
+    {
+      title: "Lowest Performing City",
+      value: worstCity?.city ?? "—",
+      change: worstCity?.score,
+      changeType: "absolute" as const,
+      trend: "down" as const,
+      tooltip: "City with the lowest composite intelligence score",
+    },
+    {
+      title: "Cities Tracked",
+      value: CITIES.length.toString(),
+      trend: "neutral" as const,
+      tooltip: "Number of cities included in this intelligence module",
+    },
+  ];
+
+  const barColor = (score: number) =>
+    score >= 80 ? "bg-status-low" : score >= 70 ? "bg-status-medium" : "bg-status-high";
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Page Header */}
@@ -43,7 +96,7 @@ const LocalMarketIntelligence = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {localMarketKPIs.map((kpi, i) => (
+          {kpis.map((kpi, i) => (
             <KPICard key={i} {...kpi} />
           ))}
         </div>
@@ -70,10 +123,10 @@ const LocalMarketIntelligence = () => {
           <Card className="bg-gradient-card">
             <CardHeader>
               <CardTitle>City Intelligence Scores</CardTitle>
-              <CardDescription>Composite market intelligence score per city</CardDescription>
+              <CardDescription>Composite score: availability + search visibility − discount intensity</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {cityScores.map((c) => (
                   <div key={c.city} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
@@ -81,19 +134,17 @@ const LocalMarketIntelligence = () => {
                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="font-medium">{c.city}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{c.insight}</span>
-                        <Badge variant="outline" className="text-xs">{c.score}/100</Badge>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>Avail {c.availability.toFixed(0)}%</span>
+                        <span>Disc {c.discount.toFixed(1)}%</span>
+                        <span className="font-semibold text-foreground">{c.score}/100</span>
                       </div>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${c.score >= 80 ? "bg-status-low" : c.score >= 70 ? "bg-status-medium" : "bg-status-high"}`}
+                        className={`h-full rounded-full ${barColor(c.score)}`}
                         style={{ width: `${c.score}%` }}
                       />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Market leader: <span className="font-medium text-foreground">{c.leader}</span>
                     </div>
                   </div>
                 ))}
