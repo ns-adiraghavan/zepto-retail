@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
@@ -69,6 +70,14 @@ const LocalMarketIntelligence = () => {
     },
   ];
 
+  const cityChartData = cityScores.map((c) => ({
+    city: c.city,
+    Score: c.score,
+    Availability: parseFloat(c.availability.toFixed(1)),
+    "Search Visibility": parseFloat(c.search.toFixed(1)),
+    "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
+  }));
+
   const barColor = (score: number) =>
     score >= 80 ? "bg-status-low" : score >= 70 ? "bg-status-medium" : "bg-status-high";
 
@@ -95,6 +104,35 @@ const LocalMarketIntelligence = () => {
             <KPICard key={i} {...kpi} />
           ))}
         </div>
+      </section>
+
+      {/* City Competitiveness Comparison chart */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Competitiveness Comparison</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>City Competitiveness Comparison</CardTitle>
+            <CardDescription>Score, availability, search visibility, and price competitiveness per city</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={cityChartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="city" tick={{ fontSize: 11 }} />
+                <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                <Tooltip
+                  formatter={(value: number, name: string) => [`${value}%`, name]}
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                />
+                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                <Bar dataKey="Score"                fill="hsl(var(--status-low))"    radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Availability"         fill="hsl(221 83% 53%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Search Visibility"    fill="hsl(270 70% 55%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Price Competitiveness" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </section>
 
       {/* City Intelligence Score Comparison */}
