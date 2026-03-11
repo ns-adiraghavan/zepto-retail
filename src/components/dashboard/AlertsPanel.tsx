@@ -7,15 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertTriangle, TrendingDown, Package, Shield, Filter, Check, MessageSquare, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
-import { categories, dateRanges } from "@/data/skuData";
+import { categories } from "@/data/platformData";
 import { useToast } from "@/hooks/use-toast";
+
+const alertCategories = ["All Categories", ...categories];
+
+const dateRanges = [
+  { label: "Last 7 days", value: "7d" },
+  { label: "Last 30 days", value: "30d" },
+  { label: "Last 90 days", value: "90d" },
+];
 
 interface Alert {
   id: string;
-  type: 'competitor' | 'inventory' | 'compliance';
+  type: "competitor" | "inventory" | "compliance";
   title: string;
   description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   timestamp: string;
   date: string;
   category: string;
@@ -44,19 +52,17 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
     let filtered = alerts;
 
     if (selectedCategory !== "All Categories") {
-      filtered = filtered.filter(alert => alert.category === selectedCategory);
+      filtered = filtered.filter((alert) => alert.category === selectedCategory);
     }
 
     const now = new Date();
     const daysBack = selectedDateRange === "7d" ? 7 : selectedDateRange === "30d" ? 30 : 90;
-    const cutoffDate = new Date(now.getTime() - (daysBack * 24 * 60 * 60 * 1000));
-    
-    filtered = filtered.filter(alert => new Date(alert.date) >= cutoffDate);
+    const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    filtered = filtered.filter((alert) => new Date(alert.date) >= cutoffDate);
 
-    // Filter by threshold setting for competitor alerts
     if (showSettings) {
-      filtered = filtered.filter(alert => {
-        if (alert.type === 'competitor' && alert.averageDropPercent) {
+      filtered = filtered.filter((alert) => {
+        if (alert.type === "competitor" && alert.averageDropPercent) {
           return alert.averageDropPercent >= alertThreshold;
         }
         return true;
@@ -67,9 +73,9 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
   }, [alerts, selectedCategory, selectedDateRange, showSettings, alertThreshold]);
 
   const handleAcknowledgeAlert = (alert: Alert) => {
-    setAcknowledgedAlerts(prev => ({
+    setAcknowledgedAlerts((prev) => ({
       ...prev,
-      [alert.id]: { acknowledged: true, note: acknowledgeNote }
+      [alert.id]: { acknowledged: true, note: acknowledgeNote },
     }));
     setSelectedAlert(null);
     setAcknowledgeNote("");
@@ -78,41 +84,42 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
       description: `Alert "${alert.title}" has been acknowledged.`,
     });
   };
-  const getAlertIcon = (type: Alert['type']) => {
+
+  const getAlertIcon = (type: Alert["type"]) => {
     switch (type) {
-      case 'competitor':
+      case "competitor":
         return <TrendingDown className="h-4 w-4" />;
-      case 'inventory':
+      case "inventory":
         return <Package className="h-4 w-4" />;
-      case 'compliance':
+      case "compliance":
         return <Shield className="h-4 w-4" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
   };
 
-  const getSeverityColor = (severity: Alert['severity']) => {
+  const getSeverityColor = (severity: Alert["severity"]) => {
     switch (severity) {
-      case 'critical':
-        return 'text-status-critical bg-status-critical/10 border-status-critical/20';
-      case 'high':
-        return 'text-status-high bg-status-high/10 border-status-high/20';
-      case 'medium':
-        return 'text-status-medium bg-status-medium/10 border-status-medium/20';
+      case "critical":
+        return "text-status-critical bg-status-critical/10 border-status-critical/20";
+      case "high":
+        return "text-status-high bg-status-high/10 border-status-high/20";
+      case "medium":
+        return "text-status-medium bg-status-medium/10 border-status-medium/20";
       default:
-        return 'text-status-low bg-status-low/10 border-status-low/20';
+        return "text-status-low bg-status-low/10 border-status-low/20";
     }
   };
 
-  const getSeverityBadgeVariant = (severity: Alert['severity']) => {
+  const getSeverityBadgeVariant = (severity: Alert["severity"]) => {
     switch (severity) {
-      case 'critical':
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'secondary';
+      case "critical":
+      case "high":
+        return "destructive" as const;
+      case "medium":
+        return "secondary" as const;
       default:
-        return 'outline';
+        return "outline" as const;
     }
   };
 
@@ -136,27 +143,26 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
             <Badge variant="secondary">{filteredAlerts.length}</Badge>
           </div>
         </div>
-        
+
         {/* Filters */}
-        <div className="flex items-center gap-3 pt-4">
-          <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 pt-4">
+          <div className="flex items-center gap-1 text-sm">
             <Filter className="h-4 w-4" />
-            <span>Filters:</span>
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[160px] h-8">
+            <SelectTrigger className="w-[150px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
+              {alertCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
-            <SelectTrigger className="w-[140px] h-8">
+            <SelectTrigger className="w-[130px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -175,7 +181,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Alert Threshold</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Show price gaps ≥</span>
+                <span className="text-xs text-muted-foreground">Show drops ≥</span>
                 <input
                   type="number"
                   value={alertThreshold}
@@ -190,6 +196,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
           </div>
         )}
       </CardHeader>
+
       <CardContent className="space-y-3">
         {filteredAlerts.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
@@ -217,10 +224,12 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h4 className={cn(
-                        "font-medium text-sm truncate",
-                        isAcknowledged && "line-through"
-                      )}>
+                      <h4
+                        className={cn(
+                          "font-medium text-sm truncate",
+                          isAcknowledged && "line-through"
+                        )}
+                      >
                         {alert.title}
                       </h4>
                       <div className="flex items-center gap-1">
@@ -229,10 +238,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                             Acknowledged
                           </Badge>
                         )}
-                        <Badge 
-                          variant={getSeverityBadgeVariant(alert.severity)}
-                          className="text-xs"
-                        >
+                        <Badge variant={getSeverityBadgeVariant(alert.severity)} className="text-xs">
                           {alert.severity}
                         </Badge>
                       </div>
@@ -250,9 +256,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                       </div>
                     )}
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">
-                        {alert.timestamp}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{alert.timestamp}</div>
                       {!isAcknowledged && (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -275,7 +279,9 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
                                 <p className="text-muted-foreground">{alert.description}</p>
                               </div>
                               <div>
-                                <label className="text-sm font-medium">Add a note (optional):</label>
+                                <label className="text-sm font-medium">
+                                  Add a note (optional):
+                                </label>
                                 <Textarea
                                   value={acknowledgeNote}
                                   onChange={(e) => setAcknowledgeNote(e.target.value)}

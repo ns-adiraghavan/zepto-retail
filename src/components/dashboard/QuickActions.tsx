@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, Users, Globe, BarChart3, Settings, Download } from "lucide-react";
+import { Tag, Search, Package, CheckCircle2, MapPin, Download } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface QuickAction {
   label: string;
@@ -11,48 +12,48 @@ interface QuickAction {
 
 const quickActions: QuickAction[] = [
   {
-    label: "SKU Analysis",
+    label: "Pricing",
+    icon: Tag,
+    href: "/dashboard/pricing",
+    description: "Pricing & Promotion Intelligence",
+  },
+  {
+    label: "Search",
+    icon: Search,
+    href: "/dashboard/search",
+    description: "Search & Shelf Visibility",
+  },
+  {
+    label: "Assortment",
     icon: Package,
-    href: "/sku-analysis",
-    description: "Detailed product-level pricing insights"
+    href: "/dashboard/assortment",
+    description: "Assortment & Product Mix",
   },
   {
-    label: "Competitor View",
-    icon: Users,
-    href: "/competitors",
-    description: "Competitor pricing strategies & trends"
+    label: "Availability",
+    icon: CheckCircle2,
+    href: "/dashboard/availability",
+    description: "Availability Intelligence",
   },
   {
-    label: "Regional Analysis",
-    icon: Globe,
-    href: "/regions",
-    description: "Geographic pricing variations"
+    label: "Local Markets",
+    icon: MapPin,
+    href: "/dashboard/local",
+    description: "City-level intelligence",
   },
   {
-    label: "Reports",
-    icon: BarChart3,
-    href: "/reports",
-    description: "Custom reports & analytics"
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    href: "/settings",
-    description: "Configure alerts & preferences"
-  },
-  {
-    label: "Export Data",
+    label: "Export",
     icon: Download,
-    href: "/export",
-    description: "Download pricing data & insights"
-  }
+    href: "#",
+    description: "Download intelligence reports",
+  },
 ];
 
 export function QuickActions() {
   return (
     <Card className="bg-gradient-card">
       <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
+        <CardTitle>Quick Navigation</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -61,19 +62,18 @@ export function QuickActions() {
               key={action.label}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-accent/50 transition-colors group relative"
-              onClick={() => {
-                // In a real app, this would navigate to the appropriate page
-                console.log(`Navigate to ${action.href}`);
-              }}
+              asChild
             >
-              <action.icon className="h-6 w-6 text-primary" />
-              <div className="text-center">
-                <div className="font-medium text-sm">{action.label}</div>
-              </div>
-              {/* Hover tooltip */}
-              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap pointer-events-none">
-                {action.description}
-              </div>
+              <Link to={action.href}>
+                <action.icon className="h-6 w-6 text-primary" />
+                <div className="text-center">
+                  <div className="font-medium text-sm">{action.label}</div>
+                </div>
+                {/* Hover tooltip */}
+                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap pointer-events-none">
+                  {action.description}
+                </div>
+              </Link>
             </Button>
           ))}
         </div>
