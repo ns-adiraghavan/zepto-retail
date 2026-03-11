@@ -112,6 +112,37 @@ const AvailabilityIntelligence = () => {
         </div>
       </section>
 
+      {/* Platform Reliability Comparison chart */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Reliability Comparison</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Platform Reliability Comparison</CardTitle>
+            <CardDescription>Availability vs stockout rate per platform across all cities</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reliabilityData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={reliabilityData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value}%`, name]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  <Bar dataKey="Availability %" fill="hsl(var(--status-low))"      radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Stockout %"     fill="hsl(var(--status-critical))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Platform Availability Rates */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Availability Rates</h2>
