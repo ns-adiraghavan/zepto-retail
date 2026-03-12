@@ -1,9 +1,10 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getAssortmentData, getListingCountByPlatform } from "@/data/dataLoader";
+import { getAssortmentData, getListingCountByPlatform, datasets } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface DashboardContext {
   selectedCity: string;
@@ -68,6 +69,42 @@ const AssortmentIntelligence = () => {
     coverageRaw[row.category][row.platform] = (coverageRaw[row.category][row.platform] ?? 0) + 1;
   });
 
+  // ── Category Assortment Coverage (Grouped Bar Chart) ──────────────────────
+  const PLATFORMS_ALL = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
+  const PLATFORM_COLORS: Record<string, string> = {
+    "Zepto": "hsl(var(--chart-1))",
+    "Blinkit": "hsl(var(--chart-2))",
+    "Swiggy Instamart": "hsl(var(--chart-3))",
+    "BigBasket Now": "hsl(var(--chart-4))",
+  };
+
+  // Build platform+category SKU counts from full dataset (not city/platform filtered)
+  const categoryPlatformRaw: Record<string, Record<string, Set<string>>> = {};
+  datasets.assortmentTracking
+    .filter((r) => r.listing_status === 1)
+    .forEach((r) => {
+      if (!categoryPlatformRaw[r.category]) categoryPlatformRaw[r.category] = {};
+      if (!categoryPlatformRaw[r.category][r.platform]) categoryPlatformRaw[r.category][r.platform] = new Set();
+      categoryPlatformRaw[r.category][r.platform].add(r.sku_id);
+    });
+
+  // Convert to chart-friendly rows, compute total for sorting
+  const categoryPlatformRows = Object.entries(categoryPlatformRaw)
+    .map(([category, platformMap]) => {
+      const row: Record<string, string | number> = { category };
+      let total = 0;
+      PLATFORMS_ALL.forEach((p) => {
+        const cnt = platformMap[p]?.size ?? 0;
+        row[p] = cnt;
+        total += cnt;
+      });
+      row._total = total;
+      return row;
+    })
+    .sort((a, b) => (b._total as number) - (a._total as number))
+    .slice(0, 8)
+    .map(({ _total, ...rest }) => rest);
+
   const coverageGrid = Object.entries(coverageRaw)
     .map(([category, platforms]) => ({ category, ...platforms }))
     .sort((a, b) => a.category.localeCompare(b.category));
@@ -111,6 +148,49 @@ const AssortmentIntelligence = () => {
             <KPICard key={i} {...kpi} />
           ))}
         </div>
+      </section>
+
+      {/* Category Assortment Coverage – Grouped Bar Chart */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Assortment Coverage</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Category Assortment Coverage</CardTitle>
+            <CardDescription>
+              Distinct listed SKUs per category by platform — top 8 categories by total SKU count
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {categoryPlatformRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data available.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={categoryPlatformRows} margin={{ top: 4, right: 16, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="category"
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    angle={-35}
+                    textAnchor="end"
+                    interval={0}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    label={{ value: "Listed SKUs", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }}
+                  />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    formatter={(value: number, name: string) => [`${value} SKUs`, name]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                  {PLATFORMS_ALL.map((platform) => (
+                    <Bar key={platform} dataKey={platform} fill={PLATFORM_COLORS[platform]} radius={[3, 3, 0, 0]} maxBarSize={20} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       {/* Category Assortment Depth Grid */}
