@@ -108,6 +108,37 @@ const SearchShelfVisibility = () => {
         </div>
       </section>
 
+      {/* Top-10 Presence by Platform */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Visibility (Top-10 Presence)</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Top-10 Search Presence by Platform</CardTitle>
+            <CardDescription>
+              % of search observations where the platform appeared in the top 10 results — higher = stronger digital shelf visibility
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {top10Presence.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={top10Presence} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Top-10 Presence"]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Bar dataKey="top10_presence_pct" name="Top-10 Presence %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Search Rank Distribution */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Rank Distribution</h2>
