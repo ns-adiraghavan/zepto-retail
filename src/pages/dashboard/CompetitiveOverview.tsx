@@ -1,4 +1,15 @@
 import { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Cell,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 import { useOutletContext } from "react-router-dom";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
