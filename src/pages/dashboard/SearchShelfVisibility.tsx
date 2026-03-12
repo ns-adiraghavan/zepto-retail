@@ -1,5 +1,5 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform } from "@/data/dataLoader";
+import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform, getEliteRankShareByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ const SearchShelfVisibility = () => {
   const searchData = getSearchData(selectedCity, selectedPlatform);
   const sponsoredByPlatform = getSponsoredShareByPlatform(selectedCity, selectedPlatform);
   const top10Presence = getTop10PresenceByPlatform(selectedCity, selectedPlatform);
+  const eliteRankShare = getEliteRankShareByPlatform(selectedCity, selectedPlatform);
 
   const avgRank =
     searchData.length > 0
@@ -132,6 +133,37 @@ const SearchShelfVisibility = () => {
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                   />
                   <Bar dataKey="top10_presence_pct" name="Top-10 Presence %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Elite Rank Share */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Elite Rank Share (Top-3 Positions)</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Elite Rank Share by Platform</CardTitle>
+            <CardDescription>
+              % of search observations where the platform captured a top-3 position — indicates dominance in high-conversion placements
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {eliteRankShare.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={eliteRankShare} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Elite Rank Share"]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Bar dataKey="elite_rank_share_pct" name="Elite Rank Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
