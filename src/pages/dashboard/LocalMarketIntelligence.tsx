@@ -42,7 +42,7 @@ const LocalMarketIntelligence = () => {
 
       return { city, availability, discount, search, assortment, score };
     }),
-  []);
+  [selectedPlatform]);
 
   const sortedByScore = [...cityScores].sort((a, b) => b.score - a.score);
   const bestCity = sortedByScore[0];
