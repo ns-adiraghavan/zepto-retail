@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { DataProvider } from "@/contexts/DataContext";
 import Landing from "./pages/Landing";
 import { DashboardLayout } from "./components/DashboardLayout";
 import CompetitiveOverview from "./pages/dashboard/CompetitiveOverview";
