@@ -40,6 +40,22 @@ const AvailabilityIntelligence = () => {
     "Stockout %": parseFloat(((d.stockout / d.total) * 100).toFixed(1)),
   }));
 
+  // ── Must-Have SKU Availability ─────────────────────────────────────────────
+  const mustHaveRaw: Record<string, { sum: number; count: number }> = {};
+  availabilityData.forEach((row) => {
+    if ((row as any).must_have_flag !== 1) return;
+    if (!mustHaveRaw[row.platform]) mustHaveRaw[row.platform] = { sum: 0, count: 0 };
+    mustHaveRaw[row.platform].sum += row.availability_flag;
+    mustHaveRaw[row.platform].count++;
+  });
+
+  const mustHaveData = Object.entries(mustHaveRaw)
+    .map(([platform, { sum, count }]) => ({
+      platform,
+      "Must-Have Availability %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Must-Have Availability %"] - a["Must-Have Availability %"]);
+
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
     availabilityByPlatform.length > 0
@@ -136,6 +152,35 @@ const AvailabilityIntelligence = () => {
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Bar dataKey="Availability %" fill="hsl(var(--status-low))"      radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Stockout %"     fill="hsl(var(--status-critical))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Must-Have SKU Availability */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Must-Have SKU Availability</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Must-Have SKU Availability</CardTitle>
+            <CardDescription>Avg availability rate for critical SKUs (must_have_flag = 1) per platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {mustHaveData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No must-have SKU data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={mustHaveData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                  <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Must-Have Availability"]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Bar dataKey="Must-Have Availability %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
