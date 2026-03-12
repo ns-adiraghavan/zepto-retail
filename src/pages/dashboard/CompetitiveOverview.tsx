@@ -502,8 +502,7 @@ const CompetitiveOverview = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart
-                  data={[...platformSummaryRaw]
-                    .sort((a, b) => b.competitiveness_score - a.competitiveness_score)}
+                  data={[...platformScores].sort((a, b) => b.score - a.score)}
                   margin={{ top: 8, right: 16, left: 0, bottom: 4 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -530,16 +529,16 @@ const CompetitiveOverview = () => {
                     }}
                     formatter={(value: number) => [`${value}`, "Competitiveness Score"]}
                   />
-                  <Bar dataKey="competitiveness_score" radius={[6, 6, 0, 0]} maxBarSize={72}>
-                    {[...platformSummaryRaw]
-                      .sort((a, b) => b.competitiveness_score - a.competitiveness_score)
+                  <Bar dataKey="score" radius={[6, 6, 0, 0]} maxBarSize={72}>
+                    {[...platformScores]
+                      .sort((a, b) => b.score - a.score)
                       .map((entry) => (
                         <Cell
                           key={entry.platform}
                           fill={
-                            entry.competitiveness_score >= 65
+                            entry.score >= 65
                               ? "hsl(var(--status-low))"
-                              : entry.competitiveness_score >= 55
+                              : entry.score >= 55
                               ? "hsl(var(--status-medium))"
                               : "hsl(var(--status-high))"
                           }
