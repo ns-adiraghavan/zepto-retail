@@ -56,6 +56,22 @@ const AvailabilityIntelligence = () => {
     }))
     .sort((a, b) => b["Must-Have Availability %"] - a["Must-Have Availability %"]);
 
+  // ── Category Availability Health ──────────────────────────────────────────
+  const categoryRaw: Record<string, { sum: number; count: number }> = {};
+  availabilityData.forEach((row) => {
+    if (!categoryRaw[row.category]) categoryRaw[row.category] = { sum: 0, count: 0 };
+    categoryRaw[row.category].sum += row.availability_flag;
+    categoryRaw[row.category].count++;
+  });
+
+  const categoryAvailData = Object.entries(categoryRaw)
+    .map(([category, { sum, count }]) => ({
+      category,
+      "Availability %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Availability %"] - a["Availability %"])
+    .slice(0, 8);
+
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
     availabilityByPlatform.length > 0
@@ -181,6 +197,39 @@ const AvailabilityIntelligence = () => {
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                   />
                   <Bar dataKey="Must-Have Availability %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Category Availability Health */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Availability Health</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Category Availability Health</CardTitle>
+            <CardDescription>Top 8 categories by avg availability rate — higher % = stronger inventory stability</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {categoryAvailData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart
+                  layout="vertical"
+                  data={categoryAvailData}
+                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal={false} />
+                  <XAxis type="number" unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
+                  <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={120} />
+                  <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Availability"]}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                  />
+                  <Bar dataKey="Availability %" fill="hsl(var(--status-low))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
