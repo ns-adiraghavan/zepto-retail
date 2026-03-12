@@ -1,8 +1,4 @@
 import skuMaster from "./sku_master.json";
-import assortmentTracking from "./assortment_tracking.json";
-import priceTracking from "./price_tracking.json";
-import availabilityTracking from "./availability_tracking.json";
-import searchRankTracking from "./search_rank_tracking.json";
 import platformSummary from "./platform_summary.json";
 import competitorEvents from "./competitor_events.json";
 
@@ -86,17 +82,30 @@ export interface CompetitorEvent {
   discount_percent: number;
 }
 
-// ─── Raw dataset bundle ───────────────────────────────────────────────────────
+// ─── Mutable dataset bundle (populated by DataContext at runtime) ─────────────
 
 export const datasets = {
   skuMaster: skuMaster as SKUMaster[],
-  assortmentTracking: assortmentTracking as AssortmentRecord[],
-  priceTracking: priceTracking as PriceRecord[],
-  availabilityTracking: availabilityTracking as AvailabilityRecord[],
-  searchRankTracking: searchRankTracking as SearchRankRecord[],
+  assortmentTracking: [] as AssortmentRecord[],
+  priceTracking: [] as PriceRecord[],
+  availabilityTracking: [] as AvailabilityRecord[],
+  searchRankTracking: [] as SearchRankRecord[],
   platformSummary: platformSummary as PlatformSummary[],
   competitorEvents: competitorEvents as CompetitorEvent[],
 };
+
+/** Called once by DataContext after all fetches complete */
+export function hydrateDatasets(data: {
+  priceTracking: PriceRecord[];
+  availabilityTracking: AvailabilityRecord[];
+  searchRankTracking: SearchRankRecord[];
+  assortmentTracking: AssortmentRecord[];
+}) {
+  datasets.priceTracking = data.priceTracking;
+  datasets.availabilityTracking = data.availabilityTracking;
+  datasets.searchRankTracking = data.searchRankTracking;
+  datasets.assortmentTracking = data.assortmentTracking;
+}
 
 // ─── Generic context filter ───────────────────────────────────────────────────
 
