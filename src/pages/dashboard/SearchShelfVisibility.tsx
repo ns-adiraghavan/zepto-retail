@@ -52,7 +52,7 @@ const SearchShelfVisibility = () => {
       change: pageOneShare,
       changeType: "percentage" as const,
       trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Share of products appearing in top-10 results",
+      tooltip: "Percentage of search results where a product appears in the top 10 positions. Higher values mean stronger digital shelf presence.",
     },
     {
       title: "Keywords Tracked",

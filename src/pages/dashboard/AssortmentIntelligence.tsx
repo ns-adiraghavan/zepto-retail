@@ -44,13 +44,13 @@ const AssortmentIntelligence = () => {
       title: "Listed SKUs",
       value: listedCount.toLocaleString(),
       trend: "neutral" as const,
-      tooltip: "Total SKUs currently listed",
+      tooltip: "Number of SKUs currently listed on the platform. Counts all observations where listing_status = 1.",
     },
     {
       title: "Missing SKUs",
       value: missingCount.toLocaleString(),
       trend: "down" as const,
-      tooltip: "SKUs not carried by the platform",
+      tooltip: "Number of SKUs present on competitors but missing from the selected platform. Indicates assortment gaps.",
     },
     {
       title: "Categories Covered",

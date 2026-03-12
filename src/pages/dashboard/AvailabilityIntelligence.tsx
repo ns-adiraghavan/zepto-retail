@@ -89,28 +89,28 @@ const AvailabilityIntelligence = () => {
       value: `${avgAvailability.toFixed(1)}%`,
       change: 0.4,
       trend: "up" as const,
-      tooltip: "Across all tracked platforms",
+      tooltip: "Average share of time a SKU remains in stock, computed across all tracked platforms and categories.",
     },
     {
       title: "Best Platform",
       value: highestPlatform ? highestPlatform.platform : "—",
       change: highestPlatform ? highestPlatform.rate : undefined,
       trend: "up" as const,
-      tooltip: "Highest availability rate",
+      tooltip: "Platform with the highest average availability rate across all tracked SKUs and cities.",
     },
     {
       title: "Lowest Platform",
       value: lowestPlatform ? lowestPlatform.platform : "—",
       change: lowestPlatform ? lowestPlatform.rate : undefined,
       trend: "down" as const,
-      tooltip: "Most stockout risk",
+      tooltip: "Platform with the lowest average availability rate, indicating the highest stockout risk.",
     },
     {
       title: "Availability Gap",
       value: `${availabilityGap.toFixed(1)}pp`,
       change: availabilityGap,
       trend: availabilityGap > 5 ? ("down" as const) : ("up" as const),
-      tooltip: "Best vs. worst platform spread",
+      tooltip: "Difference between the highest and lowest availability rate among platforms. A larger gap indicates uneven inventory performance.",
     },
   ];
 

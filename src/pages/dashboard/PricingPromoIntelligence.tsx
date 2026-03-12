@@ -57,7 +57,7 @@ const PricingPromoIntelligence = () => {
       change: avgDiscount,
       changeType: "percentage" as const,
       trend: "neutral" as const,
-      tooltip: "Mean discount % across all price observations",
+      tooltip: "Mean discount percentage across all SKUs with active promotions. Computed from the price tracking dataset.",
     },
     {
       title: "Promotion Intensity",
@@ -65,7 +65,7 @@ const PricingPromoIntelligence = () => {
       change: promoRate,
       changeType: "percentage" as const,
       trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Share of observations with an active promotion flag",
+      tooltip: "Share of SKU observations currently running a promotion. A higher value signals more aggressive promotional activity.",
     },
     {
       title: "SKUs Under Promotion",
