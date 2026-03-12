@@ -30,9 +30,9 @@ const LocalMarketIntelligence = () => {
   const cityScores = useMemo(() =>
     CITIES.map((city) => {
       const availPlatforms = getAvailabilityByPlatform(city);
-      const discountPlatforms = getDiscountByPlatform(city);
-      const searchPlatforms = getSponsoredShareByPlatform(city);
-      const listingPlatforms = getListingCountByPlatform(city);
+      const discountPlatforms = getDiscountByPlatform(city, selectedPlatform);
+      const searchPlatforms = getSponsoredShareByPlatform(city, selectedPlatform);
+      const listingPlatforms = getListingCountByPlatform(city, selectedPlatform);
 
       const availability = avg(availPlatforms.map((p) => p.rate));
       const discount = avg(discountPlatforms.map((p) => p.avgDiscount));
