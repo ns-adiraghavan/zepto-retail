@@ -56,6 +56,22 @@ const AvailabilityIntelligence = () => {
     }))
     .sort((a, b) => b["Must-Have Availability %"] - a["Must-Have Availability %"]);
 
+  // ── Category Availability Health ──────────────────────────────────────────
+  const categoryRaw: Record<string, { sum: number; count: number }> = {};
+  availabilityData.forEach((row) => {
+    if (!categoryRaw[row.category]) categoryRaw[row.category] = { sum: 0, count: 0 };
+    categoryRaw[row.category].sum += row.availability_flag;
+    categoryRaw[row.category].count++;
+  });
+
+  const categoryAvailData = Object.entries(categoryRaw)
+    .map(([category, { sum, count }]) => ({
+      category,
+      "Availability %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Availability %"] - a["Availability %"])
+    .slice(0, 8);
+
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
     availabilityByPlatform.length > 0
