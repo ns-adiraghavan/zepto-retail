@@ -40,6 +40,22 @@ const AvailabilityIntelligence = () => {
     "Stockout %": parseFloat(((d.stockout / d.total) * 100).toFixed(1)),
   }));
 
+  // ── Must-Have SKU Availability ─────────────────────────────────────────────
+  const mustHaveRaw: Record<string, { sum: number; count: number }> = {};
+  availabilityData.forEach((row) => {
+    if ((row as any).must_have_flag !== 1) return;
+    if (!mustHaveRaw[row.platform]) mustHaveRaw[row.platform] = { sum: 0, count: 0 };
+    mustHaveRaw[row.platform].sum += row.availability_flag;
+    mustHaveRaw[row.platform].count++;
+  });
+
+  const mustHaveData = Object.entries(mustHaveRaw)
+    .map(([platform, { sum, count }]) => ({
+      platform,
+      "Must-Have Availability %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Must-Have Availability %"] - a["Must-Have Availability %"]);
+
   const sorted = [...availabilityByPlatform].sort((a, b) => a.rate - b.rate);
   const avgAvailability =
     availabilityByPlatform.length > 0
