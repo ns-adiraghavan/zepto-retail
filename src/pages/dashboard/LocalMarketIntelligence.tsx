@@ -8,8 +8,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
+import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
