@@ -236,6 +236,36 @@ const PricingPromoIntelligence = () => {
         </Card>
       </section>
 
+      {/* Promotion Activity by Platform */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Promotion Activity by Platform</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Promotion Activity by Platform</CardTitle>
+            <CardDescription>Share of SKU observations with an active promotion flag, per platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {promoActivityData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={promoActivityData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "Promotion Rate"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "hsl(var(--muted)/0.3)" }} />
+                  <Bar dataKey="Promotion Rate %" radius={[4, 4, 0, 0]}>
+                    {promoActivityData.map((_, i) => (
+                      <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Platform Discount Comparison + Active Promotions */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Discount Comparison</h2>
