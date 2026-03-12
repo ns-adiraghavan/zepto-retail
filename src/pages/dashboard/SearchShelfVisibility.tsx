@@ -25,6 +25,7 @@ const SearchShelfVisibility = () => {
 
   const searchData = getSearchData(selectedCity, selectedPlatform);
   const sponsoredByPlatform = getSponsoredShareByPlatform(selectedCity, selectedPlatform);
+  const top10Presence = getTop10PresenceByPlatform(selectedCity, selectedPlatform);
 
   const avgRank =
     searchData.length > 0
