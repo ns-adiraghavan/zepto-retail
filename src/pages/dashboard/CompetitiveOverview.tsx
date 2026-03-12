@@ -223,28 +223,28 @@ const CompetitiveOverview = () => {
       value: `${avgPriceGap >= 0 ? "+" : ""}${avgPriceGap.toFixed(1)}%`,
       trend: avgPriceGap > 2 ? ("down" as const) : avgPriceGap < -2 ? ("up" as const) : ("neutral" as const),
       status: Math.abs(avgPriceGap) > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Average % difference between competitor prices and Zepto's price across matched SKU/city pairs. Positive = competitors are pricier; negative = Zepto is pricier.",
+      tooltip: "Average percentage difference between Zepto prices and competitor prices across tracked SKUs. Positive values indicate Zepto is priced higher.",
     },
     {
       title: "Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
       status: avgAvailabilityRate >= 85 ? ("low" as const) : avgAvailabilityRate >= 70 ? ("medium" as const) : ("high" as const),
-      tooltip: "Average availability rate (% of time SKUs are in stock) across all platforms.",
+      tooltip: "Percentage of tracked SKUs currently in stock. Aggregated across all platforms in the selected filter.",
     },
     {
       title: "Search Visibility",
       value: `${avgSearchVisibility.toFixed(1)}%`,
       trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
       status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
-      tooltip: "Average share of search observations appearing in top-10 results across all platforms.",
+      tooltip: "Percentage of product listings appearing in the top 10 search results for tracked keywords. Averaged across all platforms.",
     },
     {
       title: "SKU Coverage",
       value: skuCoverage.toLocaleString(),
       trend: "neutral" as const,
       status: "low" as const,
-      tooltip: "Total distinct SKUs with listing_status = 1 across all platforms in the current filter.",
+      tooltip: "Number of distinct SKUs listed by the platform across tracked categories. Only counts SKUs with listing_status = 1.",
     },
   ];
 
