@@ -203,6 +203,11 @@ const CompetitiveOverview = () => {
   );
   const searchLeaderScore = searchByPlatform[searchLeader] ?? 0;
 
+  // ── Insights: top10 presence per platform sorted ─────────────────────────
+  const top10PresenceForInsights = PLATFORMS
+    .map((p) => ({ platform: p, pct: searchByPlatform[p] ?? 0 }))
+    .sort((a, b) => b.pct - a.pct)[0] ?? { platform: "—", pct: 0 };
+
   const liveKPIs = [
     {
       title: "Competitive Score",
