@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import platformSummaryRaw from "@/data/platform_summary.json";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
 interface DashboardContext {
@@ -161,47 +160,57 @@ const CompetitiveOverview = () => {
     });
   }, [priceGapByPlatform, availByPlatform, searchByPlatform, assortByPlatform]);
 
-  // ── KPI 1: Competitive Score ──────────────────────────────────────────────
-  const avgCompetitiveness =
-    platformScores.length > 0
-      ? Math.round(platformScores.reduce((s, p) => s + p.score, 0) / platformScores.length)
-      : 0;
-
-  // ── KPI 2: Price Gap vs Market ────────────────────────────────────────────
+  // ── KPI 1: Avg Price Gap — competitor avg vs Zepto price ─────────────────
+  // For each (sku_id, city): compare Zepto sale price to avg of competitor prices.
+  // Then average gap_pct across all such observations.
   const avgPriceGap = useMemo(() => {
-    const all = priceData;
-    if (all.length === 0) return 0;
-    const skuAvg: Record<string, { sum: number; count: number }> = {};
-    for (const row of all) {
-      if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0 };
-      skuAvg[row.sku_id].sum += row.sale_price;
-      skuAvg[row.sku_id].count++;
+    // Group by (sku_id, city) → collect zepto price and competitor prices
+    type SkuCityKey = string;
+    const zeptoPrices: Record<SkuCityKey, number[]> = {};
+    const compPrices: Record<SkuCityKey, number[]> = {};
+    for (const row of priceData) {
+      const key = `${row.sku_id}__${row.city ?? ""}`;
+      if (row.platform === "Zepto") {
+        if (!zeptoPrices[key]) zeptoPrices[key] = [];
+        zeptoPrices[key].push(row.sale_price);
+      } else {
+        if (!compPrices[key]) compPrices[key] = [];
+        compPrices[key].push(row.sale_price);
+      }
     }
     let gapSum = 0;
     let gapCount = 0;
-    for (const row of all) {
-      const avg = skuAvg[row.sku_id];
-      if (!avg || avg.count < 2) continue;
-      const avgPrice = avg.sum / avg.count;
-      if (avgPrice === 0) continue;
-      gapSum += ((row.sale_price - avgPrice) / avgPrice) * 100;
+    for (const key of Object.keys(zeptoPrices)) {
+      if (!compPrices[key] || compPrices[key].length === 0) continue;
+      const zeptoAvg = zeptoPrices[key].reduce((a, b) => a + b, 0) / zeptoPrices[key].length;
+      const compAvg = compPrices[key].reduce((a, b) => a + b, 0) / compPrices[key].length;
+      if (zeptoAvg === 0) continue;
+      gapSum += ((compAvg - zeptoAvg) / zeptoAvg) * 100;
       gapCount++;
     }
     return gapCount > 0 ? gapSum / gapCount : 0;
   }, [priceData]);
 
-  // ── KPI 3: Availability Gap ───────────────────────────────────────────────
-  const availRates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
-  const availabilityGap =
-    availRates.length > 1 ? Math.max(...availRates) - Math.min(...availRates) : 0;
+  // ── KPI 2: Availability Rate — avg per platform, then overall avg ─────────
+  const avgAvailabilityRate = useMemo(() => {
+    const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
+    return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+  }, [availByPlatform]);
 
-  // ── KPI 4: Search Visibility Leader ──────────────────────────────────────
-  const searchLeader = PLATFORMS.reduce(
-    (best, p) =>
-      (searchByPlatform[p] ?? 0) > (searchByPlatform[best] ?? 0) ? p : best,
-    PLATFORMS[0]
-  );
-  const searchLeaderScore = searchByPlatform[searchLeader] ?? 0;
+  // ── KPI 3: Search Visibility — avg page-1 presence across platforms ───────
+  const avgSearchVisibility = useMemo(() => {
+    const rates = PLATFORMS.map((p) => searchByPlatform[p] ?? 0).filter((r) => r > 0);
+    return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+  }, [searchByPlatform]);
+
+  // ── KPI 4: SKU Coverage — total distinct listed SKUs across platforms ──────
+  const skuCoverage = useMemo(() => {
+    const listedIds = new Set<string>();
+    for (const row of assortmentData) {
+      if (row.listing_status === 1) listedIds.add(row.sku_id);
+    }
+    return listedIds.size;
+  }, [assortmentData]);
 
   // ── Insights: top10 presence per platform sorted ─────────────────────────
   const top10PresenceForInsights = PLATFORMS
@@ -210,37 +219,32 @@ const CompetitiveOverview = () => {
 
   const liveKPIs = [
     {
-      title: "Competitive Score",
-      value: `${avgCompetitiveness}/100`,
-      change: 0,
-      trend: "neutral" as const,
-      status: avgCompetitiveness >= 70 ? ("low" as const) : ("medium" as const),
-      tooltip:
-        "Weighted composite (price 35%, availability 25%, search 20%, assortment 20%) across platforms.",
-    },
-    {
-      title: "Price Gap vs Market",
+      title: "Avg Price Gap vs Competitors",
       value: `${avgPriceGap >= 0 ? "+" : ""}${avgPriceGap.toFixed(1)}%`,
-      change: 0,
-      trend: avgPriceGap > 0 ? ("down" as const) : ("up" as const),
+      trend: avgPriceGap > 2 ? ("down" as const) : avgPriceGap < -2 ? ("up" as const) : ("neutral" as const),
       status: Math.abs(avgPriceGap) > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Avg % deviation of each platform's sale price from the cross-platform SKU mean.",
+      tooltip: "Average % difference between competitor prices and Zepto's price across matched SKU/city pairs. Positive = competitors are pricier; negative = Zepto is pricier.",
     },
     {
-      title: "Availability Gap",
-      value: `${availabilityGap.toFixed(1)}pp`,
-      change: 0,
-      trend: availabilityGap > 5 ? ("down" as const) : ("neutral" as const),
-      status: availabilityGap > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Percentage-point spread between best and worst platform availability rates.",
+      title: "Availability Rate",
+      value: `${avgAvailabilityRate.toFixed(1)}%`,
+      trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
+      status: avgAvailabilityRate >= 85 ? ("low" as const) : avgAvailabilityRate >= 70 ? ("medium" as const) : ("high" as const),
+      tooltip: "Average availability rate (% of time SKUs are in stock) across all platforms.",
     },
     {
-      title: "Search Visibility Leader",
-      value: searchLeader,
-      change: parseFloat(searchLeaderScore.toFixed(1)),
-      trend: "up" as const,
+      title: "Search Visibility",
+      value: `${avgSearchVisibility.toFixed(1)}%`,
+      trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
+      status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
+      tooltip: "Average share of search observations appearing in top-10 results across all platforms.",
+    },
+    {
+      title: "SKU Coverage",
+      value: skuCoverage.toLocaleString(),
+      trend: "neutral" as const,
       status: "low" as const,
-      tooltip: `Platform with the highest share of page-1 search results (rank ≤ 10). Score: ${searchLeaderScore.toFixed(1)}%`,
+      tooltip: "Total distinct SKUs with listing_status = 1 across all platforms in the current filter.",
     },
   ];
 
@@ -498,8 +502,7 @@ const CompetitiveOverview = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart
-                  data={[...platformSummaryRaw]
-                    .sort((a, b) => b.competitiveness_score - a.competitiveness_score)}
+                  data={[...platformScores].sort((a, b) => b.score - a.score)}
                   margin={{ top: 8, right: 16, left: 0, bottom: 4 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -526,16 +529,16 @@ const CompetitiveOverview = () => {
                     }}
                     formatter={(value: number) => [`${value}`, "Competitiveness Score"]}
                   />
-                  <Bar dataKey="competitiveness_score" radius={[6, 6, 0, 0]} maxBarSize={72}>
-                    {[...platformSummaryRaw]
-                      .sort((a, b) => b.competitiveness_score - a.competitiveness_score)
+                  <Bar dataKey="score" radius={[6, 6, 0, 0]} maxBarSize={72}>
+                    {[...platformScores]
+                      .sort((a, b) => b.score - a.score)
                       .map((entry) => (
                         <Cell
                           key={entry.platform}
                           fill={
-                            entry.competitiveness_score >= 65
+                            entry.score >= 65
                               ? "hsl(var(--status-low))"
-                              : entry.competitiveness_score >= 55
+                              : entry.score >= 55
                               ? "hsl(var(--status-medium))"
                               : "hsl(var(--status-high))"
                           }
