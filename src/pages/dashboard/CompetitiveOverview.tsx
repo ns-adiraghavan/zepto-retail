@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import platformSummaryRaw from "@/data/platform_summary.json";
 
 interface DashboardContext {
   selectedCity: string;
@@ -432,6 +433,71 @@ const CompetitiveOverview = () => {
               <KPICard key={i} {...kpi} />
             ))}
           </div>
+        </section>
+
+        {/* Platform Competitiveness Score */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Platform Competitiveness Score
+          </h2>
+          <Card className="bg-gradient-card">
+            <CardHeader>
+              <CardTitle>Platform Competitiveness Score</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Overall competitive performance across pricing, availability, and search visibility.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={[...platformSummaryRaw]
+                    .sort((a, b) => b.competitiveness_score - a.competitiveness_score)}
+                  margin={{ top: 8, right: 16, left: 0, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="platform"
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={36}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--popover-foreground))",
+                      fontSize: 13,
+                    }}
+                    formatter={(value: number) => [`${value}`, "Competitiveness Score"]}
+                  />
+                  <Bar dataKey="competitiveness_score" radius={[6, 6, 0, 0]} maxBarSize={72}>
+                    {[...platformSummaryRaw]
+                      .sort((a, b) => b.competitiveness_score - a.competitiveness_score)
+                      .map((entry) => (
+                        <Cell
+                          key={entry.platform}
+                          fill={
+                            entry.competitiveness_score >= 65
+                              ? "hsl(var(--status-low))"
+                              : entry.competitiveness_score >= 55
+                              ? "hsl(var(--status-medium))"
+                              : "hsl(var(--status-high))"
+                          }
+                        />
+                      ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Category Price Competitiveness Heatmap */}
