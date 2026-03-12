@@ -1,5 +1,5 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getSearchData, getSponsoredShareByPlatform } from "@/data/dataLoader";
+import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
