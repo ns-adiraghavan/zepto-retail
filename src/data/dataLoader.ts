@@ -190,6 +190,26 @@ export function getDiscountByPlatform(
   }));
 }
 
+/** Elite rank share (top-3 positions) % per platform for a given city/platform filter */
+export function getEliteRankShareByPlatform(
+  city: string,
+  platform = "All Platforms"
+): { platform: string; elite_rank_share_pct: number }[] {
+  const data = filterByContext(datasets.searchRankTracking, city, platform);
+  const totals: Record<string, { elite: number; total: number }> = {};
+  for (const row of data) {
+    if (!totals[row.platform]) totals[row.platform] = { elite: 0, total: 0 };
+    totals[row.platform].total += 1;
+    if (row.search_rank <= 3) totals[row.platform].elite += 1;
+  }
+  return Object.entries(totals)
+    .map(([p, { elite, total }]) => ({
+      platform: p,
+      elite_rank_share_pct: parseFloat(((elite / total) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.elite_rank_share_pct - a.elite_rank_share_pct);
+}
+
 /** Top-10 search presence % per platform for a given city/platform filter */
 export function getTop10PresenceByPlatform(
   city: string,
