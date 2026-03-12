@@ -19,6 +19,8 @@ const promoRows = [
   { platform: "Zepto", category: "Fruits & Vegetables", type: "Loyalty Discount", discount: "12%", city: "Hyderabad", status: "Ending Soon" as const },
 ];
 
+const PLATFORM_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+
 const PricingPromoIntelligence = () => {
   const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
 
@@ -32,6 +34,20 @@ const PricingPromoIntelligence = () => {
 
   const promoCount = priceData.filter((r) => r.promotion_flag === 1).length;
   const promoRate = priceData.length > 0 ? (promoCount / priceData.length) * 100 : 0;
+
+  // ── Promotion Activity by Platform ────────────────────────────────────────
+  const promoByPlatformRaw: Record<string, { sum: number; count: number }> = {};
+  priceData.forEach((row) => {
+    if (!promoByPlatformRaw[row.platform]) promoByPlatformRaw[row.platform] = { sum: 0, count: 0 };
+    promoByPlatformRaw[row.platform].sum += row.promotion_flag;
+    promoByPlatformRaw[row.platform].count += 1;
+  });
+  const promoActivityData = Object.entries(promoByPlatformRaw)
+    .map(([platform, { sum, count }]) => ({
+      platform,
+      "Promotion Rate %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Promotion Rate %"] - a["Promotion Rate %"]);
 
   const kpis = [
     {
