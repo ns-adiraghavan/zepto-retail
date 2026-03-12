@@ -1,4 +1,15 @@
 import { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Cell,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 import { useOutletContext } from "react-router-dom";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
@@ -341,6 +352,43 @@ const CompetitiveOverview = () => {
     return items.sort((a, b) => b.gapPct - a.gapPct).slice(0, 10);
   }, [priceData]);
 
+  // ── Category Price Pressure vs Market (Zepto vs competitors) ─────────────
+  const categoryPricePressure = useMemo(() => {
+    const catData: Record<
+      string,
+      { zeptoSum: number; zeptoCount: number; compSum: number; compCount: number }
+    > = {};
+
+    for (const row of priceData) {
+      if (!catData[row.category]) {
+        catData[row.category] = { zeptoSum: 0, zeptoCount: 0, compSum: 0, compCount: 0 };
+      }
+      if (row.platform === "Zepto") {
+        catData[row.category].zeptoSum += row.sale_price;
+        catData[row.category].zeptoCount++;
+      } else {
+        catData[row.category].compSum += row.sale_price;
+        catData[row.category].compCount++;
+      }
+    }
+
+    return Object.entries(catData)
+      .filter(([, d]) => d.zeptoCount > 0 && d.compCount > 0)
+      .map(([category, d]) => {
+        const zeptoAvg = d.zeptoSum / d.zeptoCount;
+        const compAvg = d.compSum / d.compCount;
+        const gapPct = parseFloat(((compAvg - zeptoAvg) / zeptoAvg * 100).toFixed(1));
+        return {
+          category,
+          zepto_avg_price: parseFloat(zeptoAvg.toFixed(2)),
+          competitor_avg_price: parseFloat(compAvg.toFixed(2)),
+          price_gap_pct: gapPct,
+        };
+      })
+      .sort((a, b) => Math.abs(b.price_gap_pct) - Math.abs(a.price_gap_pct))
+      .slice(0, 6);
+  }, [priceData]);
+
   const getRiskLevel = (gap: number): "Critical" | "High" | "Medium" | "Low" => {
     if (gap > 15) return "Critical";
     if (gap > 10) return "High";
@@ -457,6 +505,97 @@ const CompetitiveOverview = () => {
                     </tbody>
                   </table>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Category Price Pressure vs Market */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Category Price Pressure vs Market
+          </h2>
+          <Card className="bg-gradient-card">
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <CardTitle>Category Price Pressure vs Market</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Zepto vs competitor avg — positive = Zepto cheaper, negative = Zepto pricier
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-status-low" />
+                    <span className="text-muted-foreground">Zepto cheaper</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-status-high" />
+                    <span className="text-muted-foreground">Zepto pricier</span>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {categoryPricePressure.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={categoryPricePressure.length * 52 + 40}>
+                  <BarChart
+                    data={categoryPricePressure}
+                    layout="vertical"
+                    margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis
+                      type="number"
+                      tickFormatter={(v) => `${v > 0 ? "+" : ""}${v}%`}
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="category"
+                      width={160}
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <ReferenceLine x={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
+                    <RechartsTooltip
+                      cursor={{ fill: "hsl(var(--muted)/0.3)" }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-card border border-border rounded-lg p-3 text-xs shadow-lg space-y-1.5">
+                            <div className="font-semibold text-foreground">{d.category}</div>
+                            <div className="text-muted-foreground">
+                              Zepto avg: <span className="font-medium text-foreground">₹{d.zepto_avg_price.toFixed(2)}</span>
+                            </div>
+                            <div className="text-muted-foreground">
+                              Competitor avg: <span className="font-medium text-foreground">₹{d.competitor_avg_price.toFixed(2)}</span>
+                            </div>
+                            <div className={`font-semibold ${d.price_gap_pct >= 0 ? "text-status-low" : "text-status-high"}`}>
+                              Gap: {d.price_gap_pct > 0 ? "+" : ""}{d.price_gap_pct}%
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="price_gap_pct" radius={[0, 4, 4, 0]} maxBarSize={24}>
+                      {categoryPricePressure.map((entry) => (
+                        <Cell
+                          key={entry.category}
+                          fill={entry.price_gap_pct >= 0
+                            ? "hsl(var(--status-low))"
+                            : "hsl(var(--status-high))"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
