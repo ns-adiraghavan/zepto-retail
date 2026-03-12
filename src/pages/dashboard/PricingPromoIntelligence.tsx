@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface DashboardContext {
   selectedCity: string;
@@ -18,6 +19,8 @@ const promoRows = [
   { platform: "Zepto", category: "Fruits & Vegetables", type: "Loyalty Discount", discount: "12%", city: "Hyderabad", status: "Ending Soon" as const },
 ];
 
+const PLATFORM_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+
 const PricingPromoIntelligence = () => {
   const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
 
@@ -31,6 +34,20 @@ const PricingPromoIntelligence = () => {
 
   const promoCount = priceData.filter((r) => r.promotion_flag === 1).length;
   const promoRate = priceData.length > 0 ? (promoCount / priceData.length) * 100 : 0;
+
+  // ── Promotion Activity by Platform ────────────────────────────────────────
+  const promoByPlatformRaw: Record<string, { sum: number; count: number }> = {};
+  priceData.forEach((row) => {
+    if (!promoByPlatformRaw[row.platform]) promoByPlatformRaw[row.platform] = { sum: 0, count: 0 };
+    promoByPlatformRaw[row.platform].sum += row.promotion_flag;
+    promoByPlatformRaw[row.platform].count += 1;
+  });
+  const promoActivityData = Object.entries(promoByPlatformRaw)
+    .map(([platform, { sum, count }]) => ({
+      platform,
+      "Promotion Rate %": parseFloat(((sum / count) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b["Promotion Rate %"] - a["Promotion Rate %"]);
 
   const kpis = [
     {
@@ -214,6 +231,36 @@ const PricingPromoIntelligence = () => {
                   </tbody>
                 </table>
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Promotion Activity by Platform */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Promotion Activity by Platform</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Promotion Activity by Platform</CardTitle>
+            <CardDescription>Share of SKU observations with an active promotion flag, per platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {promoActivityData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={promoActivityData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "Promotion Rate"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "hsl(var(--muted)/0.3)" }} />
+                  <Bar dataKey="Promotion Rate %" radius={[4, 4, 0, 0]}>
+                    {promoActivityData.map((_, i) => (
+                      <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
