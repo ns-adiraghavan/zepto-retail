@@ -24,6 +24,9 @@ function avg(arr: number[]) {
 }
 
 const LocalMarketIntelligence = () => {
+  // City filter intentionally not applied — this module compares cities
+  const { selectedPlatform } = useOutletContext<DashboardContext>();
+
   const cityScores = useMemo(() =>
     CITIES.map((city) => {
       const availPlatforms = getAvailabilityByPlatform(city);
