@@ -352,6 +352,43 @@ const CompetitiveOverview = () => {
     return items.sort((a, b) => b.gapPct - a.gapPct).slice(0, 10);
   }, [priceData]);
 
+  // ── Category Price Pressure vs Market (Zepto vs competitors) ─────────────
+  const categoryPricePressure = useMemo(() => {
+    const catData: Record<
+      string,
+      { zeptoSum: number; zeptoCount: number; compSum: number; compCount: number }
+    > = {};
+
+    for (const row of priceData) {
+      if (!catData[row.category]) {
+        catData[row.category] = { zeptoSum: 0, zeptoCount: 0, compSum: 0, compCount: 0 };
+      }
+      if (row.platform === "Zepto") {
+        catData[row.category].zeptoSum += row.sale_price;
+        catData[row.category].zeptoCount++;
+      } else {
+        catData[row.category].compSum += row.sale_price;
+        catData[row.category].compCount++;
+      }
+    }
+
+    return Object.entries(catData)
+      .filter(([, d]) => d.zeptoCount > 0 && d.compCount > 0)
+      .map(([category, d]) => {
+        const zeptoAvg = d.zeptoSum / d.zeptoCount;
+        const compAvg = d.compSum / d.compCount;
+        const gapPct = parseFloat(((compAvg - zeptoAvg) / zeptoAvg * 100).toFixed(1));
+        return {
+          category,
+          zepto_avg_price: parseFloat(zeptoAvg.toFixed(2)),
+          competitor_avg_price: parseFloat(compAvg.toFixed(2)),
+          price_gap_pct: gapPct,
+        };
+      })
+      .sort((a, b) => Math.abs(b.price_gap_pct) - Math.abs(a.price_gap_pct))
+      .slice(0, 6);
+  }, [priceData]);
+
   const getRiskLevel = (gap: number): "Critical" | "High" | "Medium" | "Low" => {
     if (gap > 15) return "Critical";
     if (gap > 10) return "High";
