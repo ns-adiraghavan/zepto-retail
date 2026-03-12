@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
 interface DashboardContext {
   selectedCity: string;
@@ -149,6 +150,74 @@ const AssortmentIntelligence = () => {
           ))}
         </div>
       </section>
+
+      {/* Strategic Insights */}
+      {(() => {
+        // Insight 1 — SKU Coverage Leader: platform with most listed SKUs
+        const platformListTotals = listingByPlatform.map((p) => ({ platform: p.platform, total: p.listed }))
+          .sort((a, b) => b.total - a.total);
+        const skuLeader = platformListTotals[0];
+
+        // Insight 2 — Category Assortment Gap: category where Zepto has fewest SKUs vs competitor avg
+        const catZeptoRaw: Record<string, number> = {};
+        const catCompRaw: Record<string, { sum: number; count: number }> = {};
+        assortmentData.filter((r) => r.listing_status === 1).forEach((r) => {
+          if (r.platform === "Zepto") {
+            catZeptoRaw[r.category] = (catZeptoRaw[r.category] ?? 0) + 1;
+          } else {
+            if (!catCompRaw[r.category]) catCompRaw[r.category] = { sum: 0, count: 0 };
+            catCompRaw[r.category].sum += 1;
+            catCompRaw[r.category].count++;
+          }
+        });
+        const catGapItems = Object.keys(catZeptoRaw)
+          .filter((cat) => catCompRaw[cat])
+          .map((cat) => ({
+            cat,
+            zepto: catZeptoRaw[cat],
+            compAvg: catCompRaw[cat].sum / 3, // 3 other platforms
+            gap: catCompRaw[cat].sum / 3 - catZeptoRaw[cat],
+          }))
+          .sort((a, b) => b.gap - a.gap);
+        const worstCatGap = catGapItems[0];
+
+        // Insight 3 — Assortment Depth: category with highest total SKU listings
+        const catTotals = Object.entries(coverageRaw)
+          .map(([category, platMap]) => ({
+            category,
+            total: Object.values(platMap).reduce((s, v) => s + v, 0),
+          }))
+          .sort((a, b) => b.total - a.total);
+        const deepestCat = catTotals[0];
+
+        const insights: Insight[] = [
+          skuLeader
+            ? {
+                icon: "package",
+                title: "SKU Coverage Leader",
+                body: `${skuLeader.platform} has the broadest assortment with ${skuLeader.total.toLocaleString()} listed SKUs — the strongest product depth across all tracked platforms.`,
+                type: "positive",
+              }
+            : { icon: "package", title: "SKU Coverage Leader", body: "No listing data available.", type: "neutral" },
+          worstCatGap
+            ? {
+                icon: "trend-down",
+                title: "Category Assortment Gap",
+                body: `Zepto carries ${worstCatGap.zepto} SKUs in ${worstCatGap.cat} versus a competitor average of ${worstCatGap.compAvg.toFixed(0)} — the widest assortment gap.`,
+                type: "warning",
+              }
+            : { icon: "trend-down", title: "Category Assortment Gap", body: "No gap data available.", type: "neutral" },
+          deepestCat
+            ? {
+                icon: "chart",
+                title: "Assortment Depth",
+                body: `${deepestCat.category} has the highest total SKU listings across platforms (${deepestCat.total.toLocaleString()} listings), reflecting the deepest product selection.`,
+                type: "positive",
+              }
+            : { icon: "chart", title: "Assortment Depth", body: "No depth data available.", type: "neutral" },
+        ];
+        return <StrategicInsightsPanel insights={insights} />;
+      })()}
 
       {/* Category Assortment Coverage – Grouped Bar Chart */}
       <section className="space-y-2">

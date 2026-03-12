@@ -5,6 +5,7 @@ import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
 interface DashboardContext {
   selectedCity: string;
@@ -152,6 +153,52 @@ const PricingPromoIntelligence = () => {
           ))}
         </div>
       </section>
+
+      {/* Strategic Insights */}
+      {(() => {
+        // Insight 1 — Promotion Intensity
+        const topPromo = promoActivityData[0];
+        // Insight 2 — Category Price Gap: category with highest avg discount_percent
+        const catDiscountRaw: Record<string, { sum: number; count: number }> = {};
+        priceData.forEach((row) => {
+          if (!catDiscountRaw[row.category]) catDiscountRaw[row.category] = { sum: 0, count: 0 };
+          catDiscountRaw[row.category].sum += row.discount_percent;
+          catDiscountRaw[row.category].count++;
+        });
+        const topCatDiscount = Object.entries(catDiscountRaw)
+          .map(([cat, { sum, count }]) => ({ cat, avg: sum / count }))
+          .sort((a, b) => b.avg - a.avg)[0];
+        // Insight 3 — Discount Depth
+        const topDiscount = [...discountByPlatform].sort((a, b) => b.avgDiscount - a.avgDiscount)[0];
+
+        const insights: Insight[] = [
+          topPromo
+            ? {
+                icon: "zap",
+                title: "Promotion Intensity",
+                body: `${topPromo.platform} is currently running the most aggressive promotions, with ${topPromo["Promotion Rate %"]}% of tracked SKUs under active promotion.`,
+                type: "warning",
+              }
+            : { icon: "zap", title: "Promotion Intensity", body: "No promotion data available for the selected filters.", type: "neutral" },
+          topCatDiscount
+            ? {
+                icon: "tag",
+                title: "Category Price Gap",
+                body: `${topCatDiscount.cat} shows the highest average discount at ${topCatDiscount.avg.toFixed(1)}%, signalling strong promotional pressure in this category.`,
+                type: "warning",
+              }
+            : { icon: "tag", title: "Category Price Gap", body: "No category discount data available.", type: "neutral" },
+          topDiscount
+            ? {
+                icon: "trend-down",
+                title: "Discount Depth",
+                body: `${topDiscount.platform} offers the deepest average discount at ${topDiscount.avgDiscount.toFixed(1)}%, indicating the most aggressive pricing strategy across platforms.`,
+                type: "critical",
+              }
+            : { icon: "trend-down", title: "Discount Depth", body: "No discount data available.", type: "neutral" },
+        ];
+        return <StrategicInsightsPanel insights={insights} />;
+      })()}
 
       {/* Category Price Competitiveness Heatmap */}
       <section className="space-y-2">

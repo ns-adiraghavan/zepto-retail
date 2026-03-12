@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
 const stockoutRows = [
   { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR", duration: "4h 12m", severity: "High" as const },
@@ -143,6 +144,44 @@ const AvailabilityIntelligence = () => {
           ))}
         </div>
       </section>
+
+      {/* Strategic Insights */}
+      {(() => {
+        // Insight 1 — Platform Reliability: highest availability rate
+        const reliabilityTop = [...availabilityByPlatform].sort((a, b) => b.rate - a.rate)[0];
+        // Insight 2 — Category Risk: lowest availability
+        const catRiskBottom = [...categoryAvailData].sort((a, b) => a["Availability %"] - b["Availability %"])[0];
+        // Insight 3 — Must-Have SKU Health
+        const mustHaveTop = mustHaveData[0];
+
+        const insights: Insight[] = [
+          reliabilityTop
+            ? {
+                icon: "shield",
+                title: "Platform Reliability",
+                body: `${reliabilityTop.platform} is the most reliable platform with a ${reliabilityTop.rate}% availability rate — the lowest risk of stockouts for shoppers.`,
+                type: "positive",
+              }
+            : { icon: "shield", title: "Platform Reliability", body: "No availability data available.", type: "neutral" },
+          catRiskBottom
+            ? {
+                icon: "trend-down",
+                title: "Category Risk",
+                body: `${catRiskBottom.category} has the lowest availability at ${catRiskBottom["Availability %"]}%, flagging it as the highest-risk category for stockouts across platforms.`,
+                type: catRiskBottom["Availability %"] < 80 ? "critical" : "warning",
+              }
+            : { icon: "trend-down", title: "Category Risk", body: "No category availability data.", type: "neutral" },
+          mustHaveTop
+            ? {
+                icon: "target",
+                title: "Must-Have SKU Health",
+                body: `${mustHaveTop.platform} maintains the strongest availability on must-have SKUs at ${mustHaveTop["Must-Have Availability %"]}%, ensuring critical items remain in stock.`,
+                type: "positive",
+              }
+            : { icon: "target", title: "Must-Have SKU Health", body: "No must-have SKU data for this filter.", type: "neutral" },
+        ];
+        return <StrategicInsightsPanel insights={insights} />;
+      })()}
 
       {/* Platform Reliability Comparison chart */}
       <section className="space-y-2">
