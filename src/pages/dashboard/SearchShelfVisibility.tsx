@@ -110,6 +110,48 @@ const SearchShelfVisibility = () => {
         </div>
       </section>
 
+      {/* Strategic Insights */}
+      {(() => {
+        // Insight 1 — Search Leader
+        const searchLeader = top10Presence[0];
+        // Insight 2 — Elite Rank Share leader
+        const eliteLeader = eliteRankShare[0];
+        // Insight 3 — Visibility Gap
+        const presenceSorted = [...top10Presence].sort((a, b) => b.top10_presence_pct - a.top10_presence_pct);
+        const visGap = presenceSorted.length >= 2
+          ? presenceSorted[0].top10_presence_pct - presenceSorted[presenceSorted.length - 1].top10_presence_pct
+          : 0;
+        const gapLow = presenceSorted[presenceSorted.length - 1];
+
+        const insights: Insight[] = [
+          searchLeader
+            ? {
+                icon: "search",
+                title: "Search Leader",
+                body: `${searchLeader.platform} leads Top-10 search visibility with ${searchLeader.top10_presence_pct}% presence — highest across all tracked platforms.`,
+                type: "positive",
+              }
+            : { icon: "search", title: "Search Leader", body: "No search data available.", type: "neutral" },
+          eliteLeader
+            ? {
+                icon: "target",
+                title: "Elite Rank Share",
+                body: `${eliteLeader.platform} dominates elite positions (Top 3) with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`,
+                type: "positive",
+              }
+            : { icon: "target", title: "Elite Rank Share", body: "No elite rank data available.", type: "neutral" },
+          visGap > 0 && gapLow
+            ? {
+                icon: "chart",
+                title: "Visibility Gap",
+                body: `There is a ${visGap.toFixed(1)}pp gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%), revealing an uneven search landscape.`,
+                type: visGap > 10 ? "warning" : "neutral",
+              }
+            : { icon: "chart", title: "Visibility Gap", body: "Insufficient data to compute visibility gap.", type: "neutral" },
+        ];
+        return <StrategicInsightsPanel insights={insights} />;
+      })()}
+
       {/* Top-10 Presence by Platform */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Visibility (Top-10 Presence)</h2>

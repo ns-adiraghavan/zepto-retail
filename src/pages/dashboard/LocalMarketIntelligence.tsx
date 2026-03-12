@@ -107,6 +107,46 @@ const LocalMarketIntelligence = () => {
         </div>
       </section>
 
+      {/* Strategic Insights */}
+      {(() => {
+        // Insight 1 — Most Competitive City
+        const topCity = sortedByScore[0];
+        // Insight 2 — City Price Gap: city with highest discount variance (max - min)
+        const cityDiscounts = cityScores.map((c) => ({ city: c.city, discount: c.discount }))
+          .sort((a, b) => b.discount - a.discount);
+        const highDiscCity = cityDiscounts[0];
+        // Insight 3 — Regional Availability: lowest availability_rate city
+        const lowestAvailCity = [...cityScores].sort((a, b) => a.availability - b.availability)[0];
+
+        const insights: Insight[] = [
+          topCity
+            ? {
+                icon: "pin",
+                title: "Most Competitive City",
+                body: `${topCity.city} is the most competitive market with a composite intelligence score of ${topCity.score}/100, leading in availability and search metrics.`,
+                type: "positive",
+              }
+            : { icon: "pin", title: "Most Competitive City", body: "No city data available.", type: "neutral" },
+          highDiscCity
+            ? {
+                icon: "tag",
+                title: "City Price Gap",
+                body: `${highDiscCity.city} shows the highest price variance with an average discount of ${highDiscCity.discount.toFixed(1)}%, indicating the most promotional activity across platforms.`,
+                type: "warning",
+              }
+            : { icon: "tag", title: "City Price Gap", body: "No discount data available.", type: "neutral" },
+          lowestAvailCity
+            ? {
+                icon: "trend-down",
+                title: "Regional Availability",
+                body: `${lowestAvailCity.city} has the lowest availability rate at ${lowestAvailCity.availability.toFixed(1)}%, suggesting higher stockout risk in this market.`,
+                type: lowestAvailCity.availability < 80 ? "critical" : "warning",
+              }
+            : { icon: "trend-down", title: "Regional Availability", body: "No availability data available.", type: "neutral" },
+        ];
+        return <StrategicInsightsPanel insights={insights} />;
+      })()}
+
       {/* City Competitiveness Comparison chart */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Competitiveness Comparison</h2>

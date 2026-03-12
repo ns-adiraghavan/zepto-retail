@@ -436,6 +436,48 @@ const CompetitiveOverview = () => {
           </div>
         </section>
 
+        {/* Strategic Insights */}
+        {(() => {
+          // Insight 1 — Price Competitiveness: category with largest negative price_gap_pct for Zepto
+          const zeptoPressure = categoryPricePressure.find((c) => c.price_gap_pct < 0);
+          // Insight 2 — Search Leadership
+          const searchTop = top10PresenceForInsights;
+          // Insight 3 — Availability Strength
+          const availTop = PLATFORMS.reduce(
+            (best, p) => (availByPlatform[p] ?? 0) > (availByPlatform[best] ?? 0) ? p : best,
+            PLATFORMS[0]
+          );
+
+          const insights: Insight[] = [
+            zeptoPressure
+              ? {
+                  icon: "trend-down",
+                  title: "Price Competitiveness",
+                  body: `Competitors are undercutting Zepto most strongly in ${zeptoPressure.category}, where Zepto's average price is ${Math.abs(zeptoPressure.price_gap_pct).toFixed(1)}% higher.`,
+                  type: "critical",
+                }
+              : {
+                  icon: "trend-up",
+                  title: "Price Competitiveness",
+                  body: `Zepto is priced competitively across all tracked categories — no category shows a negative price gap.`,
+                  type: "positive",
+                },
+            {
+              icon: "search",
+              title: "Search Leadership",
+              body: `${searchTop.platform} leads search visibility with ${searchTop.pct.toFixed(1)}% of listings appearing in top search positions.`,
+              type: "positive",
+            },
+            {
+              icon: "shield",
+              title: "Availability Strength",
+              body: `${availTop} currently maintains the strongest availability on must-have SKUs with a ${(availByPlatform[availTop] ?? 0).toFixed(1)}% in-stock rate.`,
+              type: "positive",
+            },
+          ];
+          return <StrategicInsightsPanel insights={insights} />;
+        })()}
+
         {/* Platform Competitiveness Score */}
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
