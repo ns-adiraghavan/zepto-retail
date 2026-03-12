@@ -21,26 +21,28 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<CompetitiveOverview />} />
-              <Route path="pricing" element={<PricingPromoIntelligence />} />
-              <Route path="search" element={<SearchShelfVisibility />} />
-              <Route path="assortment" element={<AssortmentIntelligence />} />
-              <Route path="availability" element={<AvailabilityIntelligence />} />
-              <Route path="local" element={<LocalMarketIntelligence />} />
-              <Route path="events" element={<CompetitiveEvents />} />
-            </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <DataProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<CompetitiveOverview />} />
+                <Route path="pricing" element={<PricingPromoIntelligence />} />
+                <Route path="search" element={<SearchShelfVisibility />} />
+                <Route path="assortment" element={<AssortmentIntelligence />} />
+                <Route path="availability" element={<AvailabilityIntelligence />} />
+                <Route path="local" element={<LocalMarketIntelligence />} />
+                <Route path="events" element={<CompetitiveEvents />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </DataProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
