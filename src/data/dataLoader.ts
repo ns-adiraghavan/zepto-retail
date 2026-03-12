@@ -190,6 +190,26 @@ export function getDiscountByPlatform(
   }));
 }
 
+/** Top-10 search presence % per platform for a given city/platform filter */
+export function getTop10PresenceByPlatform(
+  city: string,
+  platform = "All Platforms"
+): { platform: string; top10_presence_pct: number }[] {
+  const data = filterByContext(datasets.searchRankTracking, city, platform);
+  const totals: Record<string, { top10: number; total: number }> = {};
+  for (const row of data) {
+    if (!totals[row.platform]) totals[row.platform] = { top10: 0, total: 0 };
+    totals[row.platform].total += 1;
+    if (row.search_rank <= 10) totals[row.platform].top10 += 1;
+  }
+  return Object.entries(totals)
+    .map(([p, { top10, total }]) => ({
+      platform: p,
+      top10_presence_pct: parseFloat(((top10 / total) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.top10_presence_pct - a.top10_presence_pct);
+}
+
 /** Sponsored search share per platform for a given city */
 export function getSponsoredShareByPlatform(
   city: string,
