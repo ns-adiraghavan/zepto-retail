@@ -74,20 +74,20 @@ const CompetitiveOverview = () => {
 
   // ── Raw datasets ──────────────────────────────────────────────────────────
   const priceData = useMemo(
-    () => getPriceData(selectedCity, "All Platforms"),
-    [selectedCity]
+    () => getPriceData(selectedCity, selectedPlatform),
+    [selectedCity, selectedPlatform]
   );
   const availData = useMemo(
-    () => getAvailabilityData(selectedCity, "All Platforms"),
-    [selectedCity]
+    () => getAvailabilityData(selectedCity, selectedPlatform),
+    [selectedCity, selectedPlatform]
   );
   const searchData = useMemo(
-    () => getSearchData(selectedCity, "All Platforms"),
-    [selectedCity]
+    () => getSearchData(selectedCity, selectedPlatform),
+    [selectedCity, selectedPlatform]
   );
   const assortmentData = useMemo(
-    () => getAssortmentData(selectedCity, "All Platforms"),
-    [selectedCity]
+    () => getAssortmentData(selectedCity, selectedPlatform),
+    [selectedCity, selectedPlatform]
   );
 
   // ── Price gap per platform ────────────────────────────────────────────────
