@@ -8,8 +8,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
+import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+
+interface DashboardContext {
+  selectedCity: string;
+  selectedPlatform: string;
+}
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
@@ -18,12 +24,15 @@ function avg(arr: number[]) {
 }
 
 const LocalMarketIntelligence = () => {
+  // City filter intentionally not applied — this module compares cities
+  const { selectedPlatform } = useOutletContext<DashboardContext>();
+
   const cityScores = useMemo(() =>
     CITIES.map((city) => {
       const availPlatforms = getAvailabilityByPlatform(city);
-      const discountPlatforms = getDiscountByPlatform(city);
-      const searchPlatforms = getSponsoredShareByPlatform(city);
-      const listingPlatforms = getListingCountByPlatform(city);
+      const discountPlatforms = getDiscountByPlatform(city, selectedPlatform);
+      const searchPlatforms = getSponsoredShareByPlatform(city, selectedPlatform);
+      const listingPlatforms = getListingCountByPlatform(city, selectedPlatform);
 
       const availability = avg(availPlatforms.map((p) => p.rate));
       const discount = avg(discountPlatforms.map((p) => p.avgDiscount));
@@ -33,7 +42,7 @@ const LocalMarketIntelligence = () => {
 
       return { city, availability, discount, search, assortment, score };
     }),
-  []);
+  [selectedPlatform]);
 
   const sortedByScore = [...cityScores].sort((a, b) => b.score - a.score);
   const bestCity = sortedByScore[0];
