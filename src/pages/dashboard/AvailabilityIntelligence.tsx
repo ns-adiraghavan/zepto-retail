@@ -107,7 +107,7 @@ const AvailabilityIntelligence = () => {
     },
     {
       title: "Availability Gap",
-      value: `${availabilityGap.toFixed(1)}pp`,
+      value: `${availabilityGap.toFixed(1)}%`,
       change: availabilityGap,
       trend: availabilityGap > 5 ? ("down" as const) : ("up" as const),
       tooltip: "Difference between the highest and lowest availability rate among platforms. A larger gap indicates uneven inventory performance.",
