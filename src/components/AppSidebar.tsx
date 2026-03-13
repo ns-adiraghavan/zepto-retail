@@ -83,14 +83,18 @@ export function AppSidebar() {
       {/* Logo / Brand */}
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-primary shrink-0">
-            <BarChart3 className="h-4 w-4 text-white" />
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <div className="text-sm font-bold truncate">Insightly.ai</div>
-              <div className="text-xs text-muted-foreground truncate">Quick-commerce Intel</div>
-            </div>
+          {collapsed ? (
+            <img
+              src={theme === "dark" ? logoWhite : logoColor}
+              alt="Netscribes"
+              className="h-6 w-6 object-contain shrink-0"
+            />
+          ) : (
+            <img
+              src={theme === "dark" ? logoWhite : logoColor}
+              alt="Netscribes"
+              className="h-7 w-auto object-contain"
+            />
           )}
         </div>
       </SidebarHeader>

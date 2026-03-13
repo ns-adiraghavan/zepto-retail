@@ -66,11 +66,12 @@ const Landing = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-primary">
-                <BarChart3 className="h-5 w-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold">Insightly.ai</h1>
+            <div className="flex items-center">
+              <img
+                src={theme === "dark" ? logoWhite : logoColor}
+                alt="Netscribes"
+                className="h-8 w-auto object-contain"
+              />
             </div>
             <Button
               variant="outline"
