@@ -142,7 +142,7 @@ const SearchShelfVisibility = () => {
             ? {
                 icon: "chart",
                 title: "Visibility Gap",
-                body: `There is a ${visGap.toFixed(1)}pp gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%), revealing an uneven search landscape.`,
+                body: `There is a ${visGap.toFixed(1)}% gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%), revealing an uneven search landscape.`,
                 type: visGap > 10 ? "warning" : "neutral",
               }
             : { icon: "chart", title: "Visibility Gap", body: "Insufficient data to compute visibility gap.", type: "neutral" },
