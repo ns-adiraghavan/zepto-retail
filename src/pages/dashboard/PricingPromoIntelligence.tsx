@@ -54,16 +54,12 @@ const PricingPromoIntelligence = () => {
     {
       title: "Average Discount",
       value: `${avgDiscount.toFixed(1)}%`,
-      change: avgDiscount,
-      changeType: "percentage" as const,
       trend: "neutral" as const,
       tooltip: "Mean discount percentage across all SKUs with active promotions. Computed from the price tracking dataset.",
     },
     {
       title: "Promotion Intensity",
       value: `${promoRate.toFixed(1)}%`,
-      change: promoRate,
-      changeType: "percentage" as const,
       trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
       tooltip: "Share of SKU observations currently running a promotion. A higher value signals more aggressive promotional activity.",
     },
