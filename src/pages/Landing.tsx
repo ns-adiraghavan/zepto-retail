@@ -1,4 +1,6 @@
-import { BarChart3, Tag, Search, Package, CheckCircle2, MapPin, Activity, LayoutDashboard, Moon, Sun } from "lucide-react";
+import { Tag, Search, Package, CheckCircle2, MapPin, Activity, LayoutDashboard, Moon, Sun } from "lucide-react";
+import logoColor from "@/assets/netscribes-logo-color.png";
+import logoWhite from "@/assets/netscribes-logo-white.png";
 import { useTheme } from "next-themes";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -64,11 +66,12 @@ const Landing = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-primary">
-                <BarChart3 className="h-5 w-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold">Insightly.ai</h1>
+            <div className="flex items-center">
+              <img
+                src={theme === "dark" ? logoWhite : logoColor}
+                alt="Netscribes"
+                className="h-8 w-auto object-contain"
+              />
             </div>
             <Button
               variant="outline"
@@ -131,10 +134,12 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center gap-3">
-          <div className="flex items-center justify-center w-5 h-5 rounded bg-gradient-primary">
-            <BarChart3 className="h-3 w-3 text-white" />
-          </div>
-          <span className="text-xs text-muted-foreground">© 2024 Insightly.ai · Public data competitive intelligence</span>
+          <img
+            src={theme === "dark" ? logoWhite : logoColor}
+            alt="Netscribes"
+            className="h-5 w-auto object-contain"
+          />
+          <span className="text-xs text-muted-foreground">© 2024 Netscribes · Public data competitive intelligence</span>
         </div>
       </footer>
     </div>
