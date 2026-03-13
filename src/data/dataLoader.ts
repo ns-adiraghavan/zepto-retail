@@ -85,13 +85,13 @@ export interface CompetitorEvent {
 // ─── Mutable dataset bundle (populated by DataContext at runtime) ─────────────
 
 export const datasets = {
-  skuMaster: skuMaster as SKUMaster[],
+  skuMaster: skuMaster as unknown as SKUMaster[],
   assortmentTracking: [] as AssortmentRecord[],
   priceTracking: [] as PriceRecord[],
   availabilityTracking: [] as AvailabilityRecord[],
   searchRankTracking: [] as SearchRankRecord[],
-  platformSummary: platformSummary as PlatformSummary[],
-  competitorEvents: competitorEvents as CompetitorEvent[],
+  platformSummary: platformSummary as unknown as PlatformSummary[],
+  competitorEvents: competitorEvents as unknown as CompetitorEvent[],
 };
 
 /** Called once by DataContext after all fetches complete */
