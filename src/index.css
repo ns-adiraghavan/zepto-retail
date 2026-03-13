@@ -57,6 +57,13 @@ All colors MUST be HSL.
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 60%));
     --gradient-danger: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 84% 70%));
 
+    /* Chart Colors */
+    --chart-1: 217 91% 60%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 280 70% 55%;
+    --chart-5: 199 89% 48%;
+
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;

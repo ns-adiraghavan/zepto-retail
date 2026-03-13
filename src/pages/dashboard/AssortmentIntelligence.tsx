@@ -233,15 +233,16 @@ const AssortmentIntelligence = () => {
             {categoryPlatformRows.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">No data available.</p>
             ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={categoryPlatformRows} margin={{ top: 4, right: 16, left: 0, bottom: 60 }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={categoryPlatformRows} margin={{ top: 4, right: 16, left: 0, bottom: 90 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis
                     dataKey="category"
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                    angle={-35}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    angle={-45}
                     textAnchor="end"
                     interval={0}
+                    height={80}
                   />
                   <YAxis
                     tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
