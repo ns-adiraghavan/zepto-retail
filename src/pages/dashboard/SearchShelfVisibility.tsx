@@ -49,8 +49,6 @@ const SearchShelfVisibility = () => {
     {
       title: "Page-1 Presence",
       value: `${pageOneShare.toFixed(1)}%`,
-      change: pageOneShare,
-      changeType: "percentage" as const,
       trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const),
       tooltip: "Percentage of search results where a product appears in the top 10 positions. Higher values mean stronger digital shelf presence.",
     },
