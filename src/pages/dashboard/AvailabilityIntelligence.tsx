@@ -320,9 +320,7 @@ const AvailabilityIntelligence = () => {
                   <tr className="border-b border-border text-left">
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Product</th>
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">City</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Duration</th>
-                    <th className="py-2 font-medium text-muted-foreground">Severity</th>
+                    <th className="py-2 font-medium text-muted-foreground">City</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -333,11 +331,7 @@ const AvailabilityIntelligence = () => {
                         <div className="text-xs font-mono text-muted-foreground">{row.sku}</div>
                       </td>
                       <td className="py-2 pr-4">{row.platform}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{row.city}</td>
-                      <td className="py-2 pr-4 font-medium">{row.duration}</td>
-                      <td className="py-2">
-                        <Badge variant={severityVariant(row.severity)} className="text-xs">{row.severity}</Badge>
-                      </td>
+                      <td className="py-2 text-muted-foreground">{row.city}</td>
                     </tr>
                   ))}
                 </tbody>
