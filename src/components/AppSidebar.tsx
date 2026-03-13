@@ -19,7 +19,6 @@ import {
   Package,
   CheckCircle2,
   MapPin,
-  BarChart3,
   Moon,
   Sun,
   Activity,
@@ -27,6 +26,8 @@ import {
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import logoColor from "@/assets/netscribes-logo-color.png";
+import logoWhite from "@/assets/netscribes-logo-white.png";
 
 const navItems = [
   {

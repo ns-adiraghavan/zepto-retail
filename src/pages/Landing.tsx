@@ -1,4 +1,6 @@
-import { BarChart3, Tag, Search, Package, CheckCircle2, MapPin, Activity, LayoutDashboard, Moon, Sun } from "lucide-react";
+import { Tag, Search, Package, CheckCircle2, MapPin, Activity, LayoutDashboard, Moon, Sun } from "lucide-react";
+import logoColor from "@/assets/netscribes-logo-color.png";
+import logoWhite from "@/assets/netscribes-logo-white.png";
 import { useTheme } from "next-themes";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
