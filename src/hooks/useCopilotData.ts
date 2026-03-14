@@ -133,7 +133,7 @@ export function buildDataContext(filters: GlobalFilters): string {
   // ── Platform summary ────────────────────────────────────────────────────────
   const platformSummaryLines = platformSummary.map(
     (p) =>
-      `  ${p.platform}: availability=${p.availability_rate}%, search_visibility=${p.search_visibility}, competitiveness=${p.competitiveness_score}, active_promos=${p.active_promotions}`
+      `  ${p.platform}: availability=${p.availability_rate}%, search_visibility=${p.search_visibility}, competitiveness=${p.competitiveness_score}`
   );
 
   return [

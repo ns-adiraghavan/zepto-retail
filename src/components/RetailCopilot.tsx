@@ -140,7 +140,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
         setMessages((prev) =>
           prev.map((m) => (m.loading ? { ...m, content: reply, loading: false } : m))
         );
-      } catch (err) {
+      } catch (_err) {
         setMessages((prev) =>
           prev.map((m) =>
             m.loading
