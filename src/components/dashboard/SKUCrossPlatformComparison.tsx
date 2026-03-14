@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeftRight, MapPin } from "lucide-react";
+import { ArrowLeftRight, MapPin, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { datasets, applyFilters, type GlobalFilters } from "@/data/dataLoader";
 
 const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
