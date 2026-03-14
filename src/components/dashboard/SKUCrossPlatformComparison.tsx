@@ -92,14 +92,17 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
     setSelectedSkuId("");
   };
 
-  // Products within selected category
+  // Products within selected category — label as "Brand · SKU_ID"
   const productsInCategory = useMemo(
     () =>
       datasets.skuMaster
         .filter((s) => s.category === selectedCategory)
-        .sort((a, b) => a.product_name.localeCompare(b.product_name)),
+        .sort((a, b) => a.brand.localeCompare(b.brand) || a.sku_id.localeCompare(b.sku_id)),
     [selectedCategory]
   );
+
+  const skuLabel = (s: { brand: string; sku_id: string }) =>
+    `${s.brand} · ${s.sku_id}`;
 
   const categoryProductCount = productsInCategory.length;
 
