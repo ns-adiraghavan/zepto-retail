@@ -27,9 +27,9 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
-/** Display label for a SKU: "Brand · SKU_ID" since product_name values in the dataset are generic placeholders */
-function skuLabel(s: { brand: string; sku_id: string }) {
-  return `${s.brand} · ${s.sku_id}`;
+/** Display label for a SKU: "Brand · product_name" */
+function skuLabel(s: { brand: string; product_name: string }) {
+  return `${s.brand} · ${s.product_name}`;
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
