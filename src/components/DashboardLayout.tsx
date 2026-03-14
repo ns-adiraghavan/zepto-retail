@@ -18,6 +18,7 @@ import {
   getPincodeCityMap,
 } from "@/data/dataLoader";
 import { useData } from "@/contexts/DataContext";
+import { RetailCopilot } from "@/components/RetailCopilot";
 
 const CITIES = ["All Cities", "Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 const PLATFORMS = ["All Platforms", "Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
