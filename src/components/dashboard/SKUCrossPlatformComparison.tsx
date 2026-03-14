@@ -279,53 +279,20 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 <SelectContent className="max-h-64">
                   {productsInCategory.map((s) => (
                     <SelectItem key={s.sku_id} value={s.sku_id}>
-                      {s.product_name}
+                      {skuLabel(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
-
-            {/* Category context badge */}
-            {selectedCategory && (
-              <div className="pb-0.5">
-                <Badge
-                  variant="secondary"
-                  className="text-xs font-normal gap-1"
-                >
-                  {selectedCategory} · {categoryProductCount} product
-                  {categoryProductCount !== 1 ? "s" : ""}
-                </Badge>
-              </div>
-            )}
-          </div>
-
-          {/* ── Active geo-filter context ── */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground items-center">
-              <span className="font-medium">Filters active:</span>
-              {filters.city && filters.city !== "All Cities" && (
-                <Badge variant="secondary" className="text-xs font-normal">
-                  {filters.city}
-                </Badge>
-              )}
-              {filters.pincode && filters.pincode !== "All Pincodes" && (
-                <Badge variant="secondary" className="text-xs font-normal">
-                  {filters.pincode}
-                </Badge>
-              )}
-            </div>
-          )}
-
+...
           {/* ── Selected product header ── */}
           {selectedSku && (
             <div className="rounded-md border border-border bg-muted/30 px-4 py-3 flex items-start gap-3">
               <div>
                 <p className="font-semibold text-sm leading-tight">
-                  {selectedSku.product_name}
+                  {skuLabel(selectedSku)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedSku.brand} · {selectedSku.pack_size} ·{" "}
+                  {selectedSku.category} ·{" "}
                   <span className="font-mono">{selectedSku.sku_id}</span>
                 </p>
               </div>
