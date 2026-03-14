@@ -263,6 +263,8 @@ const AvailabilityIntelligence = () => {
           </CardContent>
         </Card>
       </section>
+
+      <StockoutImpactAnalysis filters={filters} />
     </div>
   );
 };
