@@ -5,19 +5,13 @@ import {
   getPriceData,
   getSearchData,
   getAvailabilityData,
-  filterByContext,
-  datasets,
+  GlobalFilters,
 } from "@/data/dataLoader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicInsightsPanel, Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingDown, Search, ShieldAlert } from "lucide-react";
-
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   price_drop: "Price Drop",
@@ -61,12 +55,12 @@ function riskBand(ratio: number): { label: string; variant: "destructive" | "sec
 }
 
 const CompetitiveEvents = () => {
-  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+  const filters = useOutletContext<GlobalFilters>();
 
   // ── Section 1: Events ─────────────────────────────────────────────────────
   const events = useMemo(
-    () => getEvents(selectedCity, selectedPlatform).sort((a, b) => b.date.localeCompare(a.date)),
-    [selectedCity, selectedPlatform]
+    () => getEvents(filters).sort((a, b) => b.date.localeCompare(a.date)),
+    [filters]
   );
 
   const priceDrops = events.filter((e) => e.event_type === "price_drop").length;
@@ -75,10 +69,10 @@ const CompetitiveEvents = () => {
 
   // ── Section 2: Price Volatility ───────────────────────────────────────────
   const priceVolatility = useMemo(() => {
-    const priceData = getPriceData(selectedCity, selectedPlatform);
+    const priceData = getPriceData(filters);
     const skuPrices: Record<string, { prices: number[]; product_name: string; category: string }> = {};
     for (const row of priceData) {
-      if (!skuPrices[row.sku_id]) skuPrices[row.sku_id] = { prices: [], product_name: row.product_name, category: row.category };
+      if (!skuPrices[row.sku_id]) skuPrices[row.sku_id] = { prices: [], product_name: row.product_name ?? row.sku_id, category: row.category };
       skuPrices[row.sku_id].prices.push(row.sale_price);
     }
     return Object.entries(skuPrices)
@@ -90,11 +84,11 @@ const CompetitiveEvents = () => {
       }))
       .sort((a, b) => b.price_volatility - a.price_volatility)
       .slice(0, 10);
-  }, [selectedCity, selectedPlatform]);
+  }, [filters]);
 
   // ── Section 3: Search Rank Volatility ─────────────────────────────────────
   const searchVolatility = useMemo(() => {
-    const searchData = getSearchData(selectedCity, selectedPlatform);
+    const searchData = getSearchData(filters);
     const kwRanks: Record<string, number[]> = {};
     for (const row of searchData) {
       if (!kwRanks[row.keyword]) kwRanks[row.keyword] = [];
@@ -108,14 +102,14 @@ const CompetitiveEvents = () => {
       }))
       .sort((a, b) => b.rank_volatility - a.rank_volatility)
       .slice(0, 10);
-  }, [selectedCity, selectedPlatform]);
+  }, [filters]);
 
   // ── Section 4: SKU Availability Risk ─────────────────────────────────────
   const availRisk = useMemo(() => {
-    const availData = getAvailabilityData(selectedCity, selectedPlatform);
+    const availData = getAvailabilityData(filters);
     const skuFlags: Record<string, { sum: number; count: number; product_name: string; category: string }> = {};
     for (const row of availData) {
-      if (!skuFlags[row.sku_id]) skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name, category: row.category };
+      if (!skuFlags[row.sku_id]) skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
       skuFlags[row.sku_id].sum += row.availability_flag;
       skuFlags[row.sku_id].count += 1;
     }
@@ -128,7 +122,7 @@ const CompetitiveEvents = () => {
       }))
       .sort((a, b) => a.availability_ratio - b.availability_ratio)
       .slice(0, 20);
-  }, [selectedCity, selectedPlatform]);
+  }, [filters]);
 
   // ── Strategic Insights ────────────────────────────────────────────────────
   const insights = useMemo((): Insight[] => {
@@ -223,8 +217,8 @@ const CompetitiveEvents = () => {
             <CardTitle className="text-base">Live Event Feed</CardTitle>
             <CardDescription>
               {events.length} event{events.length !== 1 ? "s" : ""} · sorted by newest
-              {selectedCity !== "All Cities" ? ` · ${selectedCity}` : ""}
-              {selectedPlatform !== "All Platforms" ? ` · ${selectedPlatform}` : ""}
+              {filters.city !== "All Cities" ? ` · ${filters.city}` : ""}
+              {filters.platform !== "All Platforms" ? ` · ${filters.platform}` : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>

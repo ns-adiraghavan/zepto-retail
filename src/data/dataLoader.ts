@@ -15,38 +15,43 @@ export interface SKUMaster {
 
 export interface AssortmentRecord {
   sku_id: string;
-  brand: string;
+  brand?: string;
   category: string;
-  product_name: string;
+  product_name?: string;
   platform: string;
   city: string;
   listing_status: number;
   first_seen_date: string;
+  pincode?: string;
 }
 
 export interface PriceRecord {
   date: string;
   sku_id: string;
-  brand: string;
+  brand?: string;
   category: string;
-  product_name: string;
+  product_name?: string;
   platform: string;
   city: string;
   mrp: number;
   sale_price: number;
   discount_percent: number;
   promotion_flag: number;
+  pincode?: string;
+  promotion_type?: string;
 }
 
 export interface AvailabilityRecord {
   date: string;
   sku_id: string;
-  brand: string;
+  brand?: string;
   category: string;
-  product_name: string;
+  product_name?: string;
   platform: string;
   city: string;
   availability_flag: number;
+  pincode?: string;
+  must_have_flag?: number;
 }
 
 export interface SearchRankRecord {
@@ -55,11 +60,15 @@ export interface SearchRankRecord {
   platform: string;
   city: string;
   sku_id: string;
-  brand: string;
+  brand?: string;
   category: string;
-  product_name: string;
+  product_name?: string;
   search_rank: number;
   sponsored_flag: number;
+  pincode?: string;
+  elite_rank_flag?: number;
+  top10_flag?: number;
+  top20_flag?: number;
 }
 
 export interface PlatformSummary {
@@ -80,7 +89,28 @@ export interface CompetitorEvent {
   category: string;
   description: string;
   discount_percent: number;
+  pincode?: string;
 }
+
+// ─── Global filter dimensions ─────────────────────────────────────────────────
+
+export interface GlobalFilters {
+  city: string;
+  platform: string;
+  pincode: string;   // "All Pincodes" = no filter
+  category: string;  // "All Categories" = no filter
+  dateFrom: string;  // "" = no lower bound
+  dateTo: string;    // "" = no upper bound
+}
+
+export const DEFAULT_FILTERS: GlobalFilters = {
+  city: "All Cities",
+  platform: "All Platforms",
+  pincode: "All Pincodes",
+  category: "All Categories",
+  dateFrom: "",
+  dateTo: "",
+};
 
 // ─── Mutable dataset bundle (populated by DataContext at runtime) ─────────────
 
@@ -107,77 +137,164 @@ export function hydrateDatasets(data: {
   datasets.assortmentTracking = data.assortmentTracking;
 }
 
-// ─── Generic context filter ───────────────────────────────────────────────────
+// ─── Dynamic option lists (call after hydration) ──────────────────────────────
 
+export function getUniquePincodes(): string[] {
+  const s = new Set<string>();
+  for (const r of datasets.priceTracking)        if (r.pincode) s.add(r.pincode);
+  for (const r of datasets.availabilityTracking) if (r.pincode) s.add(r.pincode);
+  for (const r of datasets.searchRankTracking)   if (r.pincode) s.add(r.pincode);
+  for (const r of datasets.assortmentTracking)   if (r.pincode) s.add(r.pincode);
+  return Array.from(s).sort();
+}
+
+export function getUniqueCategories(): string[] {
+  const s = new Set<string>();
+  for (const r of datasets.priceTracking)        s.add(r.category);
+  for (const r of datasets.availabilityTracking) s.add(r.category);
+  for (const r of datasets.searchRankTracking)   s.add(r.category);
+  for (const r of datasets.assortmentTracking)   s.add(r.category);
+  for (const r of datasets.competitorEvents)     s.add(r.category);
+  return Array.from(s).sort();
+}
+
+// ─── Core filter helper ───────────────────────────────────────────────────────
+
+export function applyFilters<
+  T extends {
+    city?: string;
+    platform?: string;
+    pincode?: string;
+    category?: string;
+    date?: string;
+  }
+>(data: T[], filters: Partial<GlobalFilters>): T[] {
+  const {
+    city = "All Cities",
+    platform = "All Platforms",
+    pincode = "All Pincodes",
+    category = "All Categories",
+    dateFrom = "",
+    dateTo = "",
+  } = filters;
+
+  return data.filter((row) => {
+    if (city !== "All Cities" && row.city !== undefined && row.city !== city) return false;
+    if (platform !== "All Platforms" && row.platform !== undefined && row.platform !== platform) return false;
+    // Only apply pincode filter when the record has a pincode field
+    if (pincode !== "All Pincodes" && row.pincode !== undefined && row.pincode !== pincode) return false;
+    // Only apply category filter when the record has a category field
+    if (category !== "All Categories" && row.category !== undefined && row.category !== category) return false;
+    // Date filters — only apply when record has a date field
+    if (row.date !== undefined) {
+      if (dateFrom && row.date < dateFrom) return false;
+      if (dateTo   && row.date > dateTo)   return false;
+    }
+    return true;
+  });
+}
+
+/** Legacy 2-arg helper kept for backwards compatibility */
 export function filterByContext<T extends { city?: string; platform?: string }>(
   data: T[],
   city: string,
   platform: string
 ): T[] {
-  return data.filter(
-    (row) =>
-      (city === "All Cities" || row.city === city) &&
-      (platform === "All Platforms" || row.platform === platform)
-  );
+  return applyFilters(data, { city, platform });
 }
 
-// ─── Module-specific helpers ──────────────────────────────────────────────────
+// ─── Module-specific helpers (accept full filters) ────────────────────────────
 
-export const getPriceData = (city: string, platform: string): PriceRecord[] =>
-  filterByContext(datasets.priceTracking, city, platform);
+export const getPriceData = (
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
+): PriceRecord[] => {
+  if (typeof cityOrFilters === "string") {
+    return applyFilters(datasets.priceTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" });
+  }
+  return applyFilters(datasets.priceTracking, cityOrFilters);
+};
 
 export const getAvailabilityData = (
-  city: string,
-  platform: string
-): AvailabilityRecord[] =>
-  filterByContext(datasets.availabilityTracking, city, platform);
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
+): AvailabilityRecord[] => {
+  if (typeof cityOrFilters === "string") {
+    return applyFilters(datasets.availabilityTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" });
+  }
+  return applyFilters(datasets.availabilityTracking, cityOrFilters);
+};
 
 export const getSearchData = (
-  city: string,
-  platform: string
-): SearchRankRecord[] =>
-  filterByContext(datasets.searchRankTracking, city, platform);
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
+): SearchRankRecord[] => {
+  if (typeof cityOrFilters === "string") {
+    return applyFilters(datasets.searchRankTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" });
+  }
+  return applyFilters(datasets.searchRankTracking, cityOrFilters);
+};
 
 export const getAssortmentData = (
-  city: string,
-  platform: string
-): AssortmentRecord[] =>
-  filterByContext(datasets.assortmentTracking, city, platform);
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
+): AssortmentRecord[] => {
+  if (typeof cityOrFilters === "string") {
+    return applyFilters(datasets.assortmentTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" });
+  }
+  return applyFilters(datasets.assortmentTracking, cityOrFilters);
+};
 
 export const getPlatformSummary = (): PlatformSummary[] =>
   datasets.platformSummary;
 
 export const getEvents = (
-  city = "All Cities",
-  platform = "All Platforms"
-): CompetitorEvent[] =>
-  filterByContext(datasets.competitorEvents, city, platform);
+  cityOrFilters: string | Partial<GlobalFilters> = "All Cities",
+  platform?: string
+): CompetitorEvent[] => {
+  if (typeof cityOrFilters === "string") {
+    return applyFilters(datasets.competitorEvents, {
+      city: cityOrFilters,
+      platform: platform ?? "All Platforms",
+    });
+  }
+  return applyFilters(datasets.competitorEvents, cityOrFilters);
+};
 
 // ─── Convenience aggregators ──────────────────────────────────────────────────
 
 /** Average availability rate per platform for a given city */
 export function getAvailabilityByPlatform(
-  city: string
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; rate: number }[] {
-  const data = filterByContext(datasets.availabilityTracking, city, "All Platforms");
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.availabilityTracking, { city: cityOrFilters, platform: "All Platforms" })
+      : applyFilters(datasets.availabilityTracking, { ...cityOrFilters, platform: "All Platforms" });
+
   const totals: Record<string, { sum: number; count: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { sum: 0, count: 0 };
     totals[row.platform].sum += row.availability_flag;
     totals[row.platform].count += 1;
   }
-  return Object.entries(totals).map(([platform, { sum, count }]) => ({
-    platform,
+  return Object.entries(totals).map(([p, { sum, count }]) => ({
+    platform: p,
     rate: Math.round((sum / count) * 100),
   }));
 }
 
 /** Average discount % per platform for a given city */
 export function getDiscountByPlatform(
-  city: string,
-  platform = "All Platforms"
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; avgDiscount: number }[] {
-  const data = filterByContext(datasets.priceTracking, city, platform);
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.priceTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" })
+      : applyFilters(datasets.priceTracking, cityOrFilters);
+
   const totals: Record<string, { sum: number; count: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { sum: 0, count: 0 };
@@ -190,12 +307,16 @@ export function getDiscountByPlatform(
   }));
 }
 
-/** Elite rank share (top-3 positions) % per platform for a given city/platform filter */
+/** Elite rank share (top-3 positions) % per platform */
 export function getEliteRankShareByPlatform(
-  city: string,
-  platform = "All Platforms"
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; elite_rank_share_pct: number }[] {
-  const data = filterByContext(datasets.searchRankTracking, city, platform);
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.searchRankTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" })
+      : applyFilters(datasets.searchRankTracking, cityOrFilters);
+
   const totals: Record<string, { elite: number; total: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { elite: 0, total: 0 };
@@ -210,12 +331,16 @@ export function getEliteRankShareByPlatform(
     .sort((a, b) => b.elite_rank_share_pct - a.elite_rank_share_pct);
 }
 
-/** Top-10 search presence % per platform for a given city/platform filter */
+/** Top-10 search presence % per platform */
 export function getTop10PresenceByPlatform(
-  city: string,
-  platform = "All Platforms"
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; top10_presence_pct: number }[] {
-  const data = filterByContext(datasets.searchRankTracking, city, platform);
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.searchRankTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" })
+      : applyFilters(datasets.searchRankTracking, cityOrFilters);
+
   const totals: Record<string, { top10: number; total: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { top10: 0, total: 0 };
@@ -230,12 +355,16 @@ export function getTop10PresenceByPlatform(
     .sort((a, b) => b.top10_presence_pct - a.top10_presence_pct);
 }
 
-/** Sponsored search share per platform for a given city */
+/** Sponsored search share per platform */
 export function getSponsoredShareByPlatform(
-  city: string,
-  platform = "All Platforms"
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; sponsoredShare: number }[] {
-  const data = filterByContext(datasets.searchRankTracking, city, platform);
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.searchRankTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" })
+      : applyFilters(datasets.searchRankTracking, cityOrFilters);
+
   const totals: Record<string, { sponsored: number; total: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { sponsored: 0, total: 0 };
@@ -248,12 +377,16 @@ export function getSponsoredShareByPlatform(
   }));
 }
 
-/** Listed SKU count per platform for a given city */
+/** Listed SKU count per platform */
 export function getListingCountByPlatform(
-  city: string,
-  platform = "All Platforms"
+  cityOrFilters: string | Partial<GlobalFilters>,
+  platform?: string
 ): { platform: string; listed: number; notListed: number }[] {
-  const data = filterByContext(datasets.assortmentTracking, city, platform);
+  const data =
+    typeof cityOrFilters === "string"
+      ? applyFilters(datasets.assortmentTracking, { city: cityOrFilters, platform: platform ?? "All Platforms" })
+      : applyFilters(datasets.assortmentTracking, cityOrFilters);
+
   const totals: Record<string, { listed: number; notListed: number }> = {};
   for (const row of data) {
     if (!totals[row.platform]) totals[row.platform] = { listed: 0, notListed: 0 };
