@@ -7,6 +7,11 @@ import {
   AssortmentRecord,
 } from "@/data/dataLoader";
 
+// ─── Supabase Cloud Storage base URL ─────────────────────────────────────────
+// Large datasets live in Cloud Storage to keep the GitHub repo lightweight.
+const STORAGE_BASE =
+  "https://izbmztdheugubvkchgiv.supabase.co/storage/v1/object/public/retail-datasets";
+
 interface DataContextValue {
   loaded: boolean;
 }
@@ -23,10 +28,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function load() {
       const [price, availability, search, assortment] = await Promise.all([
-        fetch("/data/price_tracking.json").then((r) => r.json() as Promise<PriceRecord[]>),
-        fetch("/data/availability_tracking.json").then((r) => r.json() as Promise<AvailabilityRecord[]>),
-        fetch("/data/search_rank_tracking.json").then((r) => r.json() as Promise<SearchRankRecord[]>),
-        fetch("/data/assortment_tracking.json").then((r) => r.json() as Promise<AssortmentRecord[]>),
+        fetch(`${STORAGE_BASE}/price_tracking.json`).then((r) => r.json() as Promise<PriceRecord[]>),
+        fetch(`${STORAGE_BASE}/availability_tracking.json`).then((r) => r.json() as Promise<AvailabilityRecord[]>),
+        fetch(`${STORAGE_BASE}/search_rank_tracking.json`).then((r) => r.json() as Promise<SearchRankRecord[]>),
+        fetch(`${STORAGE_BASE}/assortment_tracking.json`).then((r) => r.json() as Promise<AssortmentRecord[]>),
       ]);
       hydrateDatasets({
         priceTracking: price,
