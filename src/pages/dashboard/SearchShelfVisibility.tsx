@@ -1,16 +1,11 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform, getEliteRankShareByPlatform } from "@/data/dataLoader";
+import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform, getEliteRankShareByPlatform, GlobalFilters } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
-
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
 
 const shelfRows = [
   { keyword: "milk 1 litre", platform: "Zepto", rank: 1, sponsored: false, brand: "Amul" },
@@ -22,48 +17,23 @@ const shelfRows = [
 ];
 
 const SearchShelfVisibility = () => {
-  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+  const filters = useOutletContext<GlobalFilters>();
 
-  const searchData = getSearchData(selectedCity, selectedPlatform);
-  const sponsoredByPlatform = getSponsoredShareByPlatform(selectedCity, selectedPlatform);
-  const top10Presence = getTop10PresenceByPlatform(selectedCity, selectedPlatform);
-  const eliteRankShare = getEliteRankShareByPlatform(selectedCity, selectedPlatform);
+  const searchData = getSearchData(filters);
+  const sponsoredByPlatform = getSponsoredShareByPlatform(filters);
+  const top10Presence = getTop10PresenceByPlatform(filters);
+  const eliteRankShare = getEliteRankShareByPlatform(filters);
 
-  const avgRank =
-    searchData.length > 0
-      ? searchData.reduce((s, r) => s + r.search_rank, 0) / searchData.length
-      : 0;
-
+  const avgRank = searchData.length > 0 ? searchData.reduce((s, r) => s + r.search_rank, 0) / searchData.length : 0;
   const pageOneCount = searchData.filter((r) => r.search_rank <= 10).length;
   const pageOneShare = searchData.length > 0 ? (pageOneCount / searchData.length) * 100 : 0;
-
   const keywordCount = new Set(searchData.map((r) => r.keyword)).size;
 
   const kpis = [
-    {
-      title: "Average Rank",
-      value: avgRank.toFixed(1),
-      trend: "neutral" as const,
-      tooltip: "Average product search rank across tracked keywords",
-    },
-    {
-      title: "Page-1 Presence",
-      value: `${pageOneShare.toFixed(1)}%`,
-      trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Percentage of search results where a product appears in the top 10 positions. Higher values mean stronger digital shelf presence.",
-    },
-    {
-      title: "Keywords Tracked",
-      value: keywordCount.toLocaleString(),
-      trend: "neutral" as const,
-      tooltip: "Unique keywords monitored in the dataset",
-    },
-    {
-      title: "Search Observations",
-      value: searchData.length.toLocaleString(),
-      trend: "neutral" as const,
-      tooltip: "Total captured search ranking observations",
-    },
+    { title: "Average Rank", value: avgRank.toFixed(1), trend: "neutral" as const, tooltip: "Average product search rank across tracked keywords" },
+    { title: "Page-1 Presence", value: `${pageOneShare.toFixed(1)}%`, trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const), tooltip: "Percentage of search results where a product appears in the top 10 positions." },
+    { title: "Keywords Tracked", value: keywordCount.toLocaleString(), trend: "neutral" as const, tooltip: "Unique keywords monitored in the filtered dataset" },
+    { title: "Search Observations", value: searchData.length.toLocaleString(), trend: "neutral" as const, tooltip: "Total captured search ranking observations" },
   ];
 
   // ── Rank distribution ────────────────────────────────────────────────────
@@ -85,80 +55,49 @@ const SearchShelfVisibility = () => {
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
-      {/* Page Header */}
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
           <Search className="h-5 w-5 text-white" />
         </div>
         <div>
           <h1 className="text-xl font-bold">Search & Digital Shelf Visibility</h1>
-          <p className="text-sm text-muted-foreground">
-            Track search rankings, sponsored placements, and brand visibility across platforms
-          </p>
+          <p className="text-sm text-muted-foreground">Track search rankings, sponsored placements, and brand visibility across platforms</p>
         </div>
       </div>
 
-      {/* KPI Summary */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map((kpi, i) => (
-            <KPICard key={i} {...kpi} />
-          ))}
+          {kpis.map((kpi, i) => <KPICard key={i} {...kpi} />)}
         </div>
       </section>
 
-      {/* Strategic Insights */}
       {(() => {
-        // Insight 1 — Search Leader
         const searchLeader = top10Presence[0];
-        // Insight 2 — Elite Rank Share leader
         const eliteLeader = eliteRankShare[0];
-        // Insight 3 — Visibility Gap
         const presenceSorted = [...top10Presence].sort((a, b) => b.top10_presence_pct - a.top10_presence_pct);
-        const visGap = presenceSorted.length >= 2
-          ? presenceSorted[0].top10_presence_pct - presenceSorted[presenceSorted.length - 1].top10_presence_pct
-          : 0;
+        const visGap = presenceSorted.length >= 2 ? presenceSorted[0].top10_presence_pct - presenceSorted[presenceSorted.length - 1].top10_presence_pct : 0;
         const gapLow = presenceSorted[presenceSorted.length - 1];
-
         const insights: Insight[] = [
           searchLeader
-            ? {
-                icon: "search",
-                title: "Search Leader",
-                body: `${searchLeader.platform} leads Top-10 search visibility with ${searchLeader.top10_presence_pct}% presence — highest across all tracked platforms.`,
-                type: "positive",
-              }
+            ? { icon: "search", title: "Search Leader", body: `${searchLeader.platform} leads Top-10 search visibility with ${searchLeader.top10_presence_pct}% presence — highest across all tracked platforms.`, type: "positive" }
             : { icon: "search", title: "Search Leader", body: "No search data available.", type: "neutral" },
           eliteLeader
-            ? {
-                icon: "target",
-                title: "Elite Rank Share",
-                body: `${eliteLeader.platform} dominates elite positions (Top 3) with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`,
-                type: "positive",
-              }
+            ? { icon: "target", title: "Elite Rank Share", body: `${eliteLeader.platform} dominates elite positions (Top 3) with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`, type: "positive" }
             : { icon: "target", title: "Elite Rank Share", body: "No elite rank data available.", type: "neutral" },
           visGap > 0 && gapLow
-            ? {
-                icon: "chart",
-                title: "Visibility Gap",
-                body: `There is a ${visGap.toFixed(1)}% gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%), revealing an uneven search landscape.`,
-                type: visGap > 10 ? "warning" : "neutral",
-              }
+            ? { icon: "chart", title: "Visibility Gap", body: `There is a ${visGap.toFixed(1)}% gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%).`, type: visGap > 10 ? "warning" : "neutral" }
             : { icon: "chart", title: "Visibility Gap", body: "Insufficient data to compute visibility gap.", type: "neutral" },
         ];
         return <StrategicInsightsPanel insights={insights} />;
       })()}
 
-      {/* Top-10 Presence by Platform */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Visibility (Top-10 Presence)</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Top-10 Search Presence by Platform</CardTitle>
-            <CardDescription>
-              % of search observations where the platform appeared in the top 10 results — higher = stronger digital shelf visibility
-            </CardDescription>
+            <CardDescription>% of search observations where the platform appeared in the top 10 results</CardDescription>
           </CardHeader>
           <CardContent>
             {top10Presence.length === 0 ? (
@@ -169,10 +108,7 @@ const SearchShelfVisibility = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip
-                    formatter={(value: number) => [`${value}%`, "Top-10 Presence"]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Top-10 Presence"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Bar dataKey="top10_presence_pct" name="Top-10 Presence %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -181,15 +117,12 @@ const SearchShelfVisibility = () => {
         </Card>
       </section>
 
-      {/* Elite Rank Share */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Elite Rank Share (Top-3 Positions)</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Elite Rank Share by Platform</CardTitle>
-            <CardDescription>
-              % of search observations where the platform captured a top-3 position — indicates dominance in high-conversion placements
-            </CardDescription>
+            <CardDescription>% of search observations where the platform captured a top-3 position</CardDescription>
           </CardHeader>
           <CardContent>
             {eliteRankShare.length === 0 ? (
@@ -200,10 +133,7 @@ const SearchShelfVisibility = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip
-                    formatter={(value: number) => [`${value}%`, "Elite Rank Share"]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Elite Rank Share"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Bar dataKey="elite_rank_share_pct" name="Elite Rank Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -212,7 +142,6 @@ const SearchShelfVisibility = () => {
         </Card>
       </section>
 
-      {/* Search Rank Distribution */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Rank Distribution</h2>
         <Card className="bg-gradient-card">
@@ -229,10 +158,7 @@ const SearchShelfVisibility = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip
-                    formatter={(value: number, name: string) => [`${value}%`, name]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Bar dataKey="Top 3"  stackId="a" fill="hsl(var(--status-low))"    radius={[0, 0, 0, 0]} />
                   <Bar dataKey="Top 10" stackId="a" fill="hsl(var(--status-medium))" radius={[0, 0, 0, 0]} />
@@ -244,7 +170,6 @@ const SearchShelfVisibility = () => {
         </Card>
       </section>
 
-      {/* Sponsored vs Organic Share */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Sponsored vs Organic Share</h2>
         <Card className="bg-gradient-card">
@@ -275,7 +200,6 @@ const SearchShelfVisibility = () => {
         </Card>
       </section>
 
-      {/* Keyword Shelf Position Tracker */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Keyword Shelf Position Tracker</h2>
         <Card className="bg-gradient-card">
@@ -303,9 +227,7 @@ const SearchShelfVisibility = () => {
                       <td className="py-2 pr-4 font-bold">#{row.rank}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{row.brand}</td>
                       <td className="py-2">
-                        <Badge variant={row.sponsored ? "destructive" : "outline"} className="text-xs">
-                          {row.sponsored ? "Sponsored" : "Organic"}
-                        </Badge>
+                        <Badge variant={row.sponsored ? "destructive" : "outline"} className="text-xs">{row.sponsored ? "Sponsored" : "Organic"}</Badge>
                       </td>
                     </tr>
                   ))}

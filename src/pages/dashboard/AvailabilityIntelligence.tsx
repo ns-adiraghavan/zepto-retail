@@ -1,30 +1,26 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getAvailabilityByPlatform, getAvailabilityData } from "@/data/dataLoader";
+import { getAvailabilityByPlatform, getAvailabilityData, GlobalFilters } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
 const stockoutRows = [
-  { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR", duration: "4h 12m", severity: "High" as const },
-  { sku: "FRV-TOM-KG", name: "Tomatoes 1 kg", platform: "Blinkit", city: "Pune", duration: "1h 45m", severity: "Medium" as const },
-  { sku: "SNK-LAY-CLR-40", name: "Lays Classic 40g", platform: "Swiggy Instamart", city: "Hyderabad", duration: "35m", severity: "Low" as const },
-  { sku: "GRC-TTM-SFW-1KG", name: "Tata Salt 1 kg", platform: "BigBasket Now", city: "Mumbai", duration: "2h 05m", severity: "High" as const },
-  { sku: "HPC-HHD-500", name: "Head & Shoulders 500ml", platform: "Zepto", city: "Bangalore", duration: "55m", severity: "Medium" as const },
+  { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR" },
+  { sku: "FRV-TOM-KG", name: "Tomatoes 1 kg", platform: "Blinkit", city: "Pune" },
+  { sku: "SNK-LAY-CLR-40", name: "Lays Classic 40g", platform: "Swiggy Instamart", city: "Hyderabad" },
+  { sku: "GRC-TTM-SFW-1KG", name: "Tata Salt 1 kg", platform: "BigBasket Now", city: "Mumbai" },
+  { sku: "HPC-HHD-500", name: "Head & Shoulders 500ml", platform: "Zepto", city: "Bangalore" },
 ];
 
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
-
 const AvailabilityIntelligence = () => {
-  const { selectedCity } = useOutletContext<DashboardContext>();
+  const filters = useOutletContext<GlobalFilters>();
 
-  const availabilityByPlatform = getAvailabilityByPlatform(selectedCity);
-  const availabilityData = getAvailabilityData(selectedCity, "All Platforms");
+  // Availability by platform: ignore global platform filter to show all platforms
+  const availabilityByPlatform = getAvailabilityByPlatform(filters);
+  // Full data respecting all filters
+  const availabilityData = getAvailabilityData(filters);
 
   // ── Reliability chart data ─────────────────────────────────────────────────
   const reliabilityRaw: Record<string, { available: number; stockout: number; total: number }> = {};
@@ -44,7 +40,7 @@ const AvailabilityIntelligence = () => {
   // ── Must-Have SKU Availability ─────────────────────────────────────────────
   const mustHaveRaw: Record<string, { sum: number; count: number }> = {};
   availabilityData.forEach((row) => {
-    if ((row as any).must_have_flag !== 1) return;
+    if (row.must_have_flag !== 1) return;
     if (!mustHaveRaw[row.platform]) mustHaveRaw[row.platform] = { sum: 0, count: 0 };
     mustHaveRaw[row.platform].sum += row.availability_flag;
     mustHaveRaw[row.platform].count++;
@@ -84,112 +80,58 @@ const AvailabilityIntelligence = () => {
     highestPlatform && lowestPlatform ? highestPlatform.rate - lowestPlatform.rate : 0;
 
   const kpis = [
-    {
-      title: "Avg Availability Rate",
-      value: `${avgAvailability.toFixed(1)}%`,
-      change: 0.4,
-      trend: "up" as const,
-      tooltip: "Average share of time a SKU remains in stock, computed across all tracked platforms and categories.",
-    },
-    {
-      title: "Best Platform",
-      value: highestPlatform ? highestPlatform.platform : "—",
-      change: highestPlatform ? highestPlatform.rate : undefined,
-      trend: "up" as const,
-      tooltip: "Platform with the highest average availability rate across all tracked SKUs and cities.",
-    },
-    {
-      title: "Lowest Platform",
-      value: lowestPlatform ? lowestPlatform.platform : "—",
-      change: lowestPlatform ? lowestPlatform.rate : undefined,
-      trend: "down" as const,
-      tooltip: "Platform with the lowest average availability rate, indicating the highest stockout risk.",
-    },
-    {
-      title: "Availability Gap",
-      value: `${availabilityGap.toFixed(1)}%`,
-      change: availabilityGap,
-      trend: availabilityGap > 5 ? ("down" as const) : ("up" as const),
-      tooltip: "Difference between the highest and lowest availability rate among platforms. A larger gap indicates uneven inventory performance.",
-    },
+    { title: "Avg Availability Rate", value: `${avgAvailability.toFixed(1)}%`, change: 0.4, trend: "up" as const, tooltip: "Average share of time a SKU remains in stock, computed across all tracked platforms and categories." },
+    { title: "Best Platform", value: highestPlatform ? highestPlatform.platform : "—", change: highestPlatform ? highestPlatform.rate : undefined, trend: "up" as const, tooltip: "Platform with the highest average availability rate." },
+    { title: "Lowest Platform", value: lowestPlatform ? lowestPlatform.platform : "—", change: lowestPlatform ? lowestPlatform.rate : undefined, trend: "down" as const, tooltip: "Platform with the lowest average availability rate." },
+    { title: "Availability Gap", value: `${availabilityGap.toFixed(1)}%`, change: availabilityGap, trend: availabilityGap > 5 ? ("down" as const) : ("up" as const), tooltip: "Difference between highest and lowest availability rate among platforms." },
   ];
-
-  const severityVariant = (s: "High" | "Medium" | "Low") =>
-    s === "High" ? "destructive" : s === "Medium" ? "secondary" : "outline";
 
   const barColor = (rate: number) =>
     rate >= 95 ? "bg-status-low" : rate >= 90 ? "bg-status-medium" : "bg-status-high";
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
-      {/* Page Header */}
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
           <CheckCircle2 className="h-5 w-5 text-white" />
         </div>
         <div>
           <h1 className="text-xl font-bold">Availability Intelligence</h1>
-          <p className="text-sm text-muted-foreground">
-            Track stockouts, fill rates, and inventory gaps across platforms and cities
-          </p>
+          <p className="text-sm text-muted-foreground">Track stockouts, fill rates, and inventory gaps across platforms and cities</p>
         </div>
       </div>
 
-      {/* KPI Summary */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map((kpi, i) => (
-            <KPICard key={i} {...kpi} />
-          ))}
+          {kpis.map((kpi, i) => <KPICard key={i} {...kpi} />)}
         </div>
       </section>
 
-      {/* Strategic Insights */}
       {(() => {
-        // Insight 1 — Platform Reliability: highest availability rate
         const reliabilityTop = [...availabilityByPlatform].sort((a, b) => b.rate - a.rate)[0];
-        // Insight 2 — Category Risk: lowest availability
         const catRiskBottom = [...categoryAvailData].sort((a, b) => a["Availability %"] - b["Availability %"])[0];
-        // Insight 3 — Must-Have SKU Health
         const mustHaveTop = mustHaveData[0];
-
         const insights: Insight[] = [
           reliabilityTop
-            ? {
-                icon: "shield",
-                title: "Platform Reliability",
-                body: `${reliabilityTop.platform} is the most reliable platform with a ${reliabilityTop.rate}% availability rate — the lowest risk of stockouts for shoppers.`,
-                type: "positive",
-              }
+            ? { icon: "shield", title: "Platform Reliability", body: `${reliabilityTop.platform} is the most reliable platform with a ${reliabilityTop.rate}% availability rate — the lowest risk of stockouts.`, type: "positive" }
             : { icon: "shield", title: "Platform Reliability", body: "No availability data available.", type: "neutral" },
           catRiskBottom
-            ? {
-                icon: "trend-down",
-                title: "Category Risk",
-                body: `${catRiskBottom.category} has the lowest availability at ${catRiskBottom["Availability %"]}%, flagging it as the highest-risk category for stockouts across platforms.`,
-                type: catRiskBottom["Availability %"] < 80 ? "critical" : "warning",
-              }
+            ? { icon: "trend-down", title: "Category Risk", body: `${catRiskBottom.category} has the lowest availability at ${catRiskBottom["Availability %"]}%, flagging it as the highest-risk category for stockouts.`, type: catRiskBottom["Availability %"] < 80 ? "critical" : "warning" }
             : { icon: "trend-down", title: "Category Risk", body: "No category availability data.", type: "neutral" },
           mustHaveTop
-            ? {
-                icon: "target",
-                title: "Must-Have SKU Health",
-                body: `${mustHaveTop.platform} maintains the strongest availability on must-have SKUs at ${mustHaveTop["Must-Have Availability %"]}%, ensuring critical items remain in stock.`,
-                type: "positive",
-              }
+            ? { icon: "target", title: "Must-Have SKU Health", body: `${mustHaveTop.platform} maintains the strongest availability on must-have SKUs at ${mustHaveTop["Must-Have Availability %"]}%.`, type: "positive" }
             : { icon: "target", title: "Must-Have SKU Health", body: "No must-have SKU data for this filter.", type: "neutral" },
         ];
         return <StrategicInsightsPanel insights={insights} />;
       })()}
 
-      {/* Platform Reliability Comparison chart */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Reliability Comparison</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Platform Reliability Comparison</CardTitle>
-            <CardDescription>Availability vs stockout rate per platform across all cities</CardDescription>
+            <CardDescription>Availability vs stockout rate per platform</CardDescription>
           </CardHeader>
           <CardContent>
             {reliabilityData.length === 0 ? (
@@ -200,10 +142,7 @@ const AvailabilityIntelligence = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip
-                    formatter={(value: number, name: string) => [`${value}%`, name]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
                   <Bar dataKey="Availability %" fill="hsl(var(--status-low))"      radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Stockout %"     fill="hsl(var(--status-critical))" radius={[4, 4, 0, 0]} />
@@ -214,7 +153,6 @@ const AvailabilityIntelligence = () => {
         </Card>
       </section>
 
-      {/* Must-Have SKU Availability */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Must-Have SKU Availability</h2>
         <Card className="bg-gradient-card">
@@ -231,10 +169,7 @@ const AvailabilityIntelligence = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip
-                    formatter={(value: number) => [`${value}%`, "Must-Have Availability"]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Must-Have Availability"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Bar dataKey="Must-Have Availability %" fill="hsl(var(--status-low))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -243,31 +178,23 @@ const AvailabilityIntelligence = () => {
         </Card>
       </section>
 
-      {/* Category Availability Health */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Availability Health</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Category Availability Health</CardTitle>
-            <CardDescription>Top 8 categories by avg availability rate — higher % = stronger inventory stability</CardDescription>
+            <CardDescription>Top 8 categories by avg availability rate</CardDescription>
           </CardHeader>
           <CardContent>
             {categoryAvailData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  layout="vertical"
-                  data={categoryAvailData}
-                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
-                >
+                <BarChart layout="vertical" data={categoryAvailData} margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal={false} />
                   <XAxis type="number" unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
                   <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={120} />
-                  <Tooltip
-                    formatter={(value: number) => [`${value}%`, "Availability"]}
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Availability"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Bar dataKey="Availability %" fill="hsl(var(--status-low))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -276,7 +203,6 @@ const AvailabilityIntelligence = () => {
         </Card>
       </section>
 
-      {/* Platform Availability Rates */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Availability Rates</h2>
         <Card className="bg-gradient-card">
@@ -293,10 +219,7 @@ const AvailabilityIntelligence = () => {
                     <span className="text-muted-foreground">{p.rate}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${barColor(p.rate)}`}
-                      style={{ width: `${p.rate}%` }}
-                    />
+                    <div className={`h-full rounded-full ${barColor(p.rate)}`} style={{ width: `${p.rate}%` }} />
                   </div>
                 </div>
               ))}
@@ -305,13 +228,12 @@ const AvailabilityIntelligence = () => {
         </Card>
       </section>
 
-      {/* Active Stockout Events */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Stockout Events</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>Active Stockout Events</CardTitle>
-            <CardDescription>Current stockouts by platform, city, and duration</CardDescription>
+            <CardDescription>Current stockouts by platform and city</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

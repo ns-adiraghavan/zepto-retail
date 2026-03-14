@@ -16,6 +16,7 @@ import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutDashboard } from "lucide-react";
 import {
+  GlobalFilters,
   getPriceData,
   getAvailabilityData,
   getSearchData,
@@ -28,20 +29,12 @@ import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
-
 const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
 
 // ─── Price gap helpers ────────────────────────────────────────────────────────
-// Computes per-platform price gap as % deviation from the cross-platform avg
-// sale price for each SKU, then averages across all rows for a platform.
 function computePriceGapByPlatform(
   priceData: ReturnType<typeof getPriceData>
 ): Record<string, number> {
-  // Build avg sale_price per sku across all platforms in the dataset
   const skuAvg: Record<string, { sum: number; count: number }> = {};
   for (const row of priceData) {
     if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0 };
@@ -69,33 +62,15 @@ function computePriceGapByPlatform(
 }
 
 const CompetitiveOverview = () => {
-  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+  const filters = useOutletContext<GlobalFilters>();
 
-  // ── Raw datasets ──────────────────────────────────────────────────────────
-  const priceData = useMemo(
-    () => getPriceData(selectedCity, selectedPlatform),
-    [selectedCity, selectedPlatform]
-  );
-  const availData = useMemo(
-    () => getAvailabilityData(selectedCity, selectedPlatform),
-    [selectedCity, selectedPlatform]
-  );
-  const searchData = useMemo(
-    () => getSearchData(selectedCity, selectedPlatform),
-    [selectedCity, selectedPlatform]
-  );
-  const assortmentData = useMemo(
-    () => getAssortmentData(selectedCity, selectedPlatform),
-    [selectedCity, selectedPlatform]
-  );
+  const priceData = useMemo(() => getPriceData(filters), [filters]);
+  const availData = useMemo(() => getAvailabilityData(filters), [filters]);
+  const searchData = useMemo(() => getSearchData(filters), [filters]);
+  const assortmentData = useMemo(() => getAssortmentData(filters), [filters]);
 
-  // ── Price gap per platform ────────────────────────────────────────────────
-  const priceGapByPlatform = useMemo(
-    () => computePriceGapByPlatform(priceData),
-    [priceData]
-  );
+  const priceGapByPlatform = useMemo(() => computePriceGapByPlatform(priceData), [priceData]);
 
-  // ── Availability rate per platform ────────────────────────────────────────
   const availByPlatform = useMemo(() => {
     const totals: Record<string, { sum: number; count: number }> = {};
     for (const row of availData) {
@@ -110,7 +85,6 @@ const CompetitiveOverview = () => {
     return result;
   }, [availData]);
 
-  // ── Page-1 search presence per platform ──────────────────────────────────
   const searchByPlatform = useMemo(() => {
     const totals: Record<string, { page1: number; total: number }> = {};
     for (const row of searchData) {
@@ -125,7 +99,6 @@ const CompetitiveOverview = () => {
     return result;
   }, [searchData]);
 
-  // ── Assortment coverage per platform ─────────────────────────────────────
   const assortByPlatform = useMemo(() => {
     const totals: Record<string, { listed: number; total: number }> = {};
     for (const row of assortmentData) {
@@ -140,11 +113,6 @@ const CompetitiveOverview = () => {
     return result;
   }, [assortmentData]);
 
-  // ── Composite platform scores ─────────────────────────────────────────────
-  // price competitiveness = 100 - clamp(avgGap, 0, 100)  [lower gap = better]
-  // availability = raw %
-  // search = page1 presence %
-  // assortment = coverage %
   const platformScores = useMemo(() => {
     return PLATFORMS.map((platform) => {
       const gap = priceGapByPlatform[platform] ?? 0;
@@ -152,19 +120,12 @@ const CompetitiveOverview = () => {
       const avail = availByPlatform[platform] ?? 0;
       const search = searchByPlatform[platform] ?? 0;
       const assort = assortByPlatform[platform] ?? 0;
-
-      const score = Math.round(
-        priceComp * 0.35 + avail * 0.25 + search * 0.20 + assort * 0.20
-      );
+      const score = Math.round(priceComp * 0.35 + avail * 0.25 + search * 0.20 + assort * 0.20);
       return { platform, score, priceComp, avail, search, assort, gap };
     });
   }, [priceGapByPlatform, availByPlatform, searchByPlatform, assortByPlatform]);
 
-  // ── KPI 1: Avg Price Gap — competitor avg vs Zepto price ─────────────────
-  // For each (sku_id, city): compare Zepto sale price to avg of competitor prices.
-  // Then average gap_pct across all such observations.
   const avgPriceGap = useMemo(() => {
-    // Group by (sku_id, city) → collect zepto price and competitor prices
     type SkuCityKey = string;
     const zeptoPrices: Record<SkuCityKey, number[]> = {};
     const compPrices: Record<SkuCityKey, number[]> = {};
@@ -178,8 +139,7 @@ const CompetitiveOverview = () => {
         compPrices[key].push(row.sale_price);
       }
     }
-    let gapSum = 0;
-    let gapCount = 0;
+    let gapSum = 0, gapCount = 0;
     for (const key of Object.keys(zeptoPrices)) {
       if (!compPrices[key] || compPrices[key].length === 0) continue;
       const zeptoAvg = zeptoPrices[key].reduce((a, b) => a + b, 0) / zeptoPrices[key].length;
@@ -191,19 +151,16 @@ const CompetitiveOverview = () => {
     return gapCount > 0 ? gapSum / gapCount : 0;
   }, [priceData]);
 
-  // ── KPI 2: Availability Rate — avg per platform, then overall avg ─────────
   const avgAvailabilityRate = useMemo(() => {
     const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
     return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
   }, [availByPlatform]);
 
-  // ── KPI 3: Search Visibility — avg page-1 presence across platforms ───────
   const avgSearchVisibility = useMemo(() => {
     const rates = PLATFORMS.map((p) => searchByPlatform[p] ?? 0).filter((r) => r > 0);
     return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
   }, [searchByPlatform]);
 
-  // ── KPI 4: SKU Coverage — total distinct listed SKUs across platforms ──────
   const skuCoverage = useMemo(() => {
     const listedIds = new Set<string>();
     for (const row of assortmentData) {
@@ -212,7 +169,6 @@ const CompetitiveOverview = () => {
     return listedIds.size;
   }, [assortmentData]);
 
-  // ── Insights: top10 presence per platform sorted ─────────────────────────
   const top10PresenceForInsights = PLATFORMS
     .map((p) => ({ platform: p, pct: searchByPlatform[p] ?? 0 }))
     .sort((a, b) => b.pct - a.pct)[0] ?? { platform: "—", pct: 0 };
@@ -223,41 +179,38 @@ const CompetitiveOverview = () => {
       value: `${avgPriceGap >= 0 ? "+" : ""}${avgPriceGap.toFixed(1)}%`,
       trend: avgPriceGap > 2 ? ("down" as const) : avgPriceGap < -2 ? ("up" as const) : ("neutral" as const),
       status: Math.abs(avgPriceGap) > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Average percentage difference between Zepto prices and competitor prices across tracked SKUs. Positive values indicate Zepto is priced higher.",
+      tooltip: "Average % difference between Zepto prices and competitor prices across tracked SKUs. Positive = Zepto is priced higher.",
     },
     {
       title: "Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
       status: avgAvailabilityRate >= 85 ? ("low" as const) : avgAvailabilityRate >= 70 ? ("medium" as const) : ("high" as const),
-      tooltip: "Percentage of tracked SKUs currently in stock. Aggregated across all platforms in the selected filter.",
+      tooltip: "Percentage of tracked SKUs currently in stock across selected filters.",
     },
     {
       title: "Search Visibility",
       value: `${avgSearchVisibility.toFixed(1)}%`,
       trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
       status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
-      tooltip: "Percentage of product listings appearing in the top 10 search results for tracked keywords. Averaged across all platforms.",
+      tooltip: "% of product listings in top 10 search results for tracked keywords.",
     },
     {
       title: "SKU Coverage",
       value: skuCoverage.toLocaleString(),
       trend: "neutral" as const,
       status: "low" as const,
-      tooltip: "Number of distinct SKUs listed by the platform across tracked categories. Only counts SKUs with listing_status = 1.",
+      tooltip: "Distinct SKUs listed across tracked categories (listing_status = 1).",
     },
   ];
 
-  // ── Score bar color ───────────────────────────────────────────────────────
   const scoreColor = (score: number) => {
     if (score >= 70) return "bg-status-low";
     if (score >= 50) return "bg-status-medium";
     return "bg-status-high";
   };
 
-  // ── Heatmap: category × platform price gap ────────────────────────────────
   const heatmapData = useMemo(() => {
-    // per (category, platform) → avg sale_price
     const catPlatAvg: Record<string, Record<string, { sum: number; count: number }>> = {};
     for (const row of priceData) {
       if (!catPlatAvg[row.category]) catPlatAvg[row.category] = {};
@@ -266,34 +219,22 @@ const CompetitiveOverview = () => {
       catPlatAvg[row.category][row.platform].sum += row.sale_price;
       catPlatAvg[row.category][row.platform].count++;
     }
-
     return Object.entries(catPlatAvg)
       .map(([category, platMap]) => {
-        // overall avg for this category across all platforms
-        let totalSum = 0;
-        let totalCount = 0;
-        for (const { sum, count } of Object.values(platMap)) {
-          totalSum += sum;
-          totalCount += count;
-        }
+        let totalSum = 0, totalCount = 0;
+        for (const { sum, count } of Object.values(platMap)) { totalSum += sum; totalCount += count; }
         const categoryAvg = totalCount > 0 ? totalSum / totalCount : 0;
-
         const platforms = PLATFORMS.map((p) => {
           const d = platMap[p];
           const platAvg = d ? d.sum / d.count : categoryAvg;
           const priceGap = categoryAvg > 0 ? ((platAvg - categoryAvg) / categoryAvg) * 100 : 0;
-          return {
-            name: p,
-            priceGap: parseFloat(priceGap.toFixed(1)),
-          };
+          return { name: p, priceGap: parseFloat(priceGap.toFixed(1)) };
         });
-
         return { category, platforms };
       })
       .sort((a, b) => a.category.localeCompare(b.category));
   }, [priceData]);
 
-  // Cell coloring based on price gap thresholds
   const heatmapCellColor = (gap: number) => {
     if (gap <= -5) return "bg-status-low";
     if (gap <= 5) return "bg-status-medium";
@@ -307,94 +248,49 @@ const CompetitiveOverview = () => {
     return "Critical";
   };
 
-  // ── Top 10 SKUs by positive price gap ────────────────────────────────────
   const topPriceGapSKUs = useMemo(() => {
-    // Compute per-SKU avg across all platforms
     const skuAvg: Record<string, { sum: number; count: number; product_name: string; category: string }> = {};
     for (const row of priceData) {
-      if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name, category: row.category };
+      if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
       skuAvg[row.sku_id].sum += row.sale_price;
       skuAvg[row.sku_id].count++;
     }
-
-    // Per (sku, platform) avg
     const skuPlatAvg: Record<string, Record<string, { sum: number; count: number }>> = {};
     for (const row of priceData) {
       if (!skuPlatAvg[row.sku_id]) skuPlatAvg[row.sku_id] = {};
-      if (!skuPlatAvg[row.sku_id][row.platform])
-        skuPlatAvg[row.sku_id][row.platform] = { sum: 0, count: 0 };
+      if (!skuPlatAvg[row.sku_id][row.platform]) skuPlatAvg[row.sku_id][row.platform] = { sum: 0, count: 0 };
       skuPlatAvg[row.sku_id][row.platform].sum += row.sale_price;
       skuPlatAvg[row.sku_id][row.platform].count++;
     }
-
-    const items: {
-      sku_id: string;
-      product_name: string;
-      category: string;
-      platform: string;
-      platformPrice: number;
-      competitorAvg: number;
-      gapPct: number;
-    }[] = [];
-
+    const items: { sku_id: string; product_name: string; category: string; platform: string; platformPrice: number; competitorAvg: number; gapPct: number; }[] = [];
     for (const [skuId, platMap] of Object.entries(skuPlatAvg)) {
       const meta = skuAvg[skuId];
       if (!meta) continue;
       const overallAvg = meta.sum / meta.count;
-
       for (const [platform, { sum, count }] of Object.entries(platMap)) {
         const platAvg = sum / count;
         if (overallAvg === 0) continue;
         const gapPct = ((platAvg - overallAvg) / overallAvg) * 100;
-        if (gapPct > 0) {
-          items.push({
-            sku_id: skuId,
-            product_name: meta.product_name,
-            category: meta.category,
-            platform,
-            platformPrice: platAvg,
-            competitorAvg: overallAvg,
-            gapPct,
-          });
-        }
+        if (gapPct > 0) items.push({ sku_id: skuId, product_name: meta.product_name, category: meta.category, platform, platformPrice: platAvg, competitorAvg: overallAvg, gapPct });
       }
     }
-
     return items.sort((a, b) => b.gapPct - a.gapPct).slice(0, 10);
   }, [priceData]);
 
-  // ── Category Price Pressure vs Market (Zepto vs competitors) ─────────────
   const categoryPricePressure = useMemo(() => {
-    const catData: Record<
-      string,
-      { zeptoSum: number; zeptoCount: number; compSum: number; compCount: number }
-    > = {};
-
+    const catData: Record<string, { zeptoSum: number; zeptoCount: number; compSum: number; compCount: number }> = {};
     for (const row of priceData) {
-      if (!catData[row.category]) {
-        catData[row.category] = { zeptoSum: 0, zeptoCount: 0, compSum: 0, compCount: 0 };
-      }
-      if (row.platform === "Zepto") {
-        catData[row.category].zeptoSum += row.sale_price;
-        catData[row.category].zeptoCount++;
-      } else {
-        catData[row.category].compSum += row.sale_price;
-        catData[row.category].compCount++;
-      }
+      if (!catData[row.category]) catData[row.category] = { zeptoSum: 0, zeptoCount: 0, compSum: 0, compCount: 0 };
+      if (row.platform === "Zepto") { catData[row.category].zeptoSum += row.sale_price; catData[row.category].zeptoCount++; }
+      else { catData[row.category].compSum += row.sale_price; catData[row.category].compCount++; }
     }
-
     return Object.entries(catData)
       .filter(([, d]) => d.zeptoCount > 0 && d.compCount > 0)
       .map(([category, d]) => {
         const zeptoAvg = d.zeptoSum / d.zeptoCount;
         const compAvg = d.compSum / d.compCount;
         const gapPct = parseFloat(((compAvg - zeptoAvg) / zeptoAvg * 100).toFixed(1));
-        return {
-          category,
-          zepto_avg_price: parseFloat(zeptoAvg.toFixed(2)),
-          competitor_avg_price: parseFloat(compAvg.toFixed(2)),
-          price_gap_pct: gapPct,
-        };
+        return { category, zepto_avg_price: parseFloat(zeptoAvg.toFixed(2)), competitor_avg_price: parseFloat(compAvg.toFixed(2)), price_gap_pct: gapPct };
       })
       .sort((a, b) => Math.abs(b.price_gap_pct) - Math.abs(a.price_gap_pct))
       .slice(0, 6);
@@ -406,7 +302,6 @@ const CompetitiveOverview = () => {
     if (gap > 5) return "Medium";
     return "Low";
   };
-
   const getRiskColor = (risk: "Critical" | "High" | "Medium" | "Low") => {
     switch (risk) {
       case "Critical": return "text-status-critical bg-status-critical/10 border-status-critical/20";
@@ -416,420 +311,212 @@ const CompetitiveOverview = () => {
     }
   };
 
-  const getRiskBadgeVariant = (risk: "Critical" | "High" | "Medium" | "Low") =>
-    risk === "Critical" || risk === "High" ? ("destructive" as const) : risk === "Medium" ? ("secondary" as const) : ("outline" as const);
+  // ── Strategic Insights ────────────────────────────────────────────────────
+  const insights: Insight[] = useMemo(() => {
+    const list: Insight[] = [];
+    const topScore = [...platformScores].sort((a, b) => b.score - a.score)[0];
+    if (topScore) list.push({ icon: "zap", title: "Competitiveness Leader", body: `${topScore.platform} leads with a composite score of ${topScore.score}/100 across price, availability, search, and assortment metrics.`, type: "positive" });
+
+    const highGapSku = topPriceGapSKUs[0];
+    if (highGapSku) list.push({ icon: "trend-down", title: "Top Price Risk SKU", body: `"${highGapSku.product_name}" on ${highGapSku.platform} has a +${highGapSku.gapPct.toFixed(1)}% price gap vs the category average — highest exposure in the current filter.`, type: "warning" });
+
+    if (top10PresenceForInsights.pct > 0) list.push({ icon: "search", title: "Search Presence Leader", body: `${top10PresenceForInsights.platform} leads Top-10 search visibility at ${top10PresenceForInsights.pct.toFixed(1)}% across tracked keywords.`, type: "positive" });
+    return list;
+  }, [platformScores, topPriceGapSKUs, top10PresenceForInsights]);
+
+  const platformCompData = platformScores.map((p) => ({
+    platform: p.platform,
+    Score: p.score,
+    "Price Comp": parseFloat(p.priceComp.toFixed(1)),
+    Availability: parseFloat(p.avail.toFixed(1)),
+    Search: parseFloat(p.search.toFixed(1)),
+    Assortment: parseFloat(p.assort.toFixed(1)),
+  }));
+
+  const CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
   return (
-    <TooltipProvider>
-      <div className="p-4 lg:p-6 space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
-            <LayoutDashboard className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">Competitive Overview</h1>
-            <p className="text-sm text-muted-foreground">
-              Cross-platform snapshot: Zepto · Blinkit · Swiggy Instamart · BigBasket Now
-            </p>
-          </div>
+    <div className="p-4 lg:p-6 space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
+          <LayoutDashboard className="h-5 w-5 text-white" />
         </div>
+        <div>
+          <h1 className="text-xl font-bold">Competitive Intelligence Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            Cross-platform performance across price, availability, search, and assortment
+          </p>
+        </div>
+      </div>
 
-        {/* KPI Summary */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {liveKPIs.map((kpi, i) => (
-              <KPICard key={i} {...kpi} />
-            ))}
-          </div>
-        </section>
+      {/* KPI Summary */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {liveKPIs.map((kpi, i) => <KPICard key={i} {...kpi} />)}
+        </div>
+      </section>
 
-        {/* Strategic Insights */}
-        {(() => {
-          // Insight 1 — Price Competitiveness: category with largest negative price_gap_pct for Zepto
-          const zeptoPressure = categoryPricePressure.find((c) => c.price_gap_pct < 0);
-          // Insight 2 — Search Leadership
-          const searchTop = top10PresenceForInsights;
-          // Insight 3 — Availability Strength
-          const availTop = PLATFORMS.reduce(
-            (best, p) => (availByPlatform[p] ?? 0) > (availByPlatform[best] ?? 0) ? p : best,
-            PLATFORMS[0]
-          );
+      {/* Strategic Insights */}
+      <StrategicInsightsPanel insights={insights} />
 
-          const insights: Insight[] = [
-            zeptoPressure
-              ? {
-                  icon: "trend-down",
-                  title: "Price Competitiveness",
-                  body: `Competitors are undercutting Zepto most strongly in ${zeptoPressure.category}, where Zepto's average price is ${Math.abs(zeptoPressure.price_gap_pct).toFixed(1)}% higher.`,
-                  type: "critical",
-                }
-              : {
-                  icon: "trend-up",
-                  title: "Price Competitiveness",
-                  body: `Zepto is priced competitively across all tracked categories — no category shows a negative price gap.`,
-                  type: "positive",
-                },
-            {
-              icon: "search",
-              title: "Search Leadership",
-              body: `${searchTop.platform} leads search visibility with ${searchTop.pct.toFixed(1)}% of listings appearing in top search positions.`,
-              type: "positive",
-            },
-            {
-              icon: "shield",
-              title: "Availability Strength",
-              body: `${availTop} currently maintains the strongest availability on must-have SKUs with a ${(availByPlatform[availTop] ?? 0).toFixed(1)}% in-stock rate.`,
-              type: "positive",
-            },
-          ];
-          return <StrategicInsightsPanel insights={insights} />;
-        })()}
+      {/* Category Price Heatmap */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Price Heatmap</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Category × Platform Price Gap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {heatmapData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px]">Category</th>
+                      {PLATFORMS.map((p) => <th key={p} className="text-center py-2 px-2 font-medium text-muted-foreground min-w-[110px]">{p}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {heatmapData.map((row) => {
+                      const cellMap = Object.fromEntries(row.platforms.map((p) => [p.name, p]));
+                      return (
+                        <tr key={row.category} className="border-b border-border/40">
+                          <td className="py-2 px-3 font-medium">{row.category}</td>
+                          {PLATFORMS.map((p) => {
+                            const cell = cellMap[p];
+                            const gap = cell?.priceGap ?? 0;
+                            const color = heatmapCellColor(gap);
+                            const label = heatmapLabel(gap);
+                            return (
+                              <td key={p} className="p-2 text-center">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className={`rounded-md px-2 py-1.5 text-xs font-semibold cursor-default border ${color}/20 text-${color.replace("bg-", "")} border-${color.replace("bg-", "")}/30`}>
+                                        {gap >= 0 ? "+" : ""}{gap.toFixed(1)}%
+                                        <div className="text-[10px] opacity-70 mt-0.5">{label}</div>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{label} — gap: {gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</p></TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-        {/* Platform Competitiveness Score */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Platform Competitiveness Score
-          </h2>
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Platform Competitiveness Score</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Overall competitive performance across pricing, availability, and search visibility.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart
-                  data={[...platformScores].sort((a, b) => b.score - a.score)}
-                  margin={{ top: 8, right: 16, left: 0, bottom: 4 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis
-                    dataKey="platform"
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={36}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{
-                      background: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      color: "hsl(var(--popover-foreground))",
-                      fontSize: 13,
-                    }}
-                    formatter={(value: number) => [`${value}`, "Competitiveness Score"]}
-                  />
-                  <Bar dataKey="score" radius={[6, 6, 0, 0]} maxBarSize={72}>
-                    {[...platformScores]
-                      .sort((a, b) => b.score - a.score)
-                      .map((entry) => (
-                        <Cell
-                          key={entry.platform}
-                          fill={
-                            entry.score >= 65
-                              ? "hsl(var(--status-low))"
-                              : entry.score >= 55
-                              ? "hsl(var(--status-medium))"
-                              : "hsl(var(--status-high))"
-                          }
-                        />
+      {/* Platform Competitiveness Summary */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Competitiveness Summary</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader><CardTitle>Platform Competitiveness Score</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={platformCompData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <RechartsTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                <Bar dataKey="Score" radius={[4, 4, 0, 0]}>
+                  {platformCompData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Category Level Rollup */}
+      <CategoryLevelRollup />
+
+      {/* Top Price Gap Items */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top Price Gap Items</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader><CardTitle>Top 10 SKUs by Price Gap</CardTitle></CardHeader>
+          <CardContent>
+            {topPriceGapSKUs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No price gap data for selected filters.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      {["#", "Product", "Category", "Platform", "Platform Price", "Avg Price", "Gap %", "Risk"].map((h) => (
+                        <th key={h} className="py-2 pr-3 font-medium text-muted-foreground whitespace-nowrap">{h}</th>
                       ))}
-                  </Bar>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topPriceGapSKUs.map((row, i) => {
+                      const risk = getRiskLevel(row.gapPct);
+                      return (
+                        <tr key={`${row.sku_id}-${row.platform}`} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
+                          <td className="py-2 pr-3 text-muted-foreground text-xs">{i + 1}</td>
+                          <td className="py-2 pr-3 font-medium max-w-[200px]">
+                            <div className="truncate">{row.product_name}</div>
+                            <div className="text-xs font-mono text-muted-foreground">{row.sku_id}</div>
+                          </td>
+                          <td className="py-2 pr-3 text-muted-foreground text-xs">{row.category}</td>
+                          <td className="py-2 pr-3 text-xs">{row.platform}</td>
+                          <td className="py-2 pr-3 text-xs font-mono">₹{row.platformPrice.toFixed(2)}</td>
+                          <td className="py-2 pr-3 text-xs font-mono text-muted-foreground">₹{row.competitorAvg.toFixed(2)}</td>
+                          <td className="py-2 pr-3 text-xs font-semibold text-status-high">+{row.gapPct.toFixed(1)}%</td>
+                          <td className="py-2">
+                            <span className={cn("text-xs px-1.5 py-0.5 rounded-full border font-medium", getRiskColor(risk))}>{risk}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Category Price Pressure vs Market */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Category Price Pressure vs Market</h2>
+        <Card className="bg-gradient-card">
+          <CardHeader><CardTitle>Zepto vs Competitor Average Price by Category</CardTitle></CardHeader>
+          <CardContent>
+            {categoryPricePressure.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={categoryPricePressure} margin={{ top: 8, right: 24, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="category" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} angle={-40} textAnchor="end" interval={0} height={70} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+                  <ReferenceLine y={0} stroke="hsl(var(--border))" />
+                  <RechartsTooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    formatter={(v: number, name: string) => [`₹${v.toFixed(2)}`, name]}
+                  />
+                  <Bar dataKey="zepto_avg_price" name="Zepto Avg Price" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="competitor_avg_price" name="Competitor Avg Price" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Category Price Competitiveness Heatmap */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Category Price Competitiveness
-          </h2>
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <CardTitle>Category Price Competitiveness Heatmap</CardTitle>
-                <div className="flex items-center gap-4 text-xs">
-                  {[
-                    { label: "Competitive", cls: "bg-status-low" },
-                    { label: "Moderate", cls: "bg-status-medium" },
-                    { label: "At Risk", cls: "bg-status-high" },
-                    { label: "Critical", cls: "bg-status-critical" },
-                  ].map(({ label, cls }) => (
-                    <div key={label} className="flex items-center gap-1">
-                      <div className={`w-3 h-3 rounded ${cls}`} />
-                      <span className="text-muted-foreground">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {heatmapData.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-2 px-4 font-medium text-muted-foreground">Category</th>
-                        {PLATFORMS.map((p) => (
-                          <th key={p} className="text-center py-2 px-4 font-medium text-muted-foreground min-w-[120px]">
-                            {p}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {heatmapData.map((row) => (
-                        <tr key={row.category} className="border-b border-border/50">
-                          <td className="py-3 px-4 font-medium text-sm">{row.category}</td>
-                          {row.platforms.map((cell) => (
-                            <td key={cell.name} className="p-2 text-center">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div
-                                    className={`rounded-lg p-3 ${heatmapCellColor(cell.priceGap)} text-white font-medium transition-all hover:scale-105 cursor-pointer`}
-                                  >
-                                    <div className="text-sm font-bold">
-                                      {cell.priceGap > 0 ? "+" : ""}{cell.priceGap}%
-                                    </div>
-                                    <div className="text-xs opacity-90">{heatmapLabel(cell.priceGap)}</div>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="p-3 max-w-[200px]">
-                                  <div className="text-sm font-semibold mb-1">{cell.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Price gap vs category avg: <span className="font-medium text-foreground">{cell.priceGap > 0 ? "+" : ""}{cell.priceGap}%</span>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Category Price Pressure vs Market */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Category Price Pressure vs Market
-          </h2>
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle>Category Price Pressure vs Market</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Zepto vs competitor avg — positive = Zepto cheaper, negative = Zepto pricier
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-status-low" />
-                    <span className="text-muted-foreground">Zepto cheaper</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-status-high" />
-                    <span className="text-muted-foreground">Zepto pricier</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {categoryPricePressure.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={categoryPricePressure.length * 52 + 40}>
-                  <BarChart
-                    data={categoryPricePressure}
-                    layout="vertical"
-                    margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      type="number"
-                      tickFormatter={(v) => `${v > 0 ? "+" : ""}${v}%`}
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="category"
-                      width={160}
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <ReferenceLine x={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
-                    <RechartsTooltip
-                      cursor={{ fill: "hsl(var(--muted)/0.3)" }}
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload;
-                        return (
-                          <div className="bg-card border border-border rounded-lg p-3 text-xs shadow-lg space-y-1.5">
-                            <div className="font-semibold text-foreground">{d.category}</div>
-                            <div className="text-muted-foreground">
-                              Zepto avg: <span className="font-medium text-foreground">₹{d.zepto_avg_price.toFixed(2)}</span>
-                            </div>
-                            <div className="text-muted-foreground">
-                              Competitor avg: <span className="font-medium text-foreground">₹{d.competitor_avg_price.toFixed(2)}</span>
-                            </div>
-                            <div className={`font-semibold ${d.price_gap_pct >= 0 ? "text-status-low" : "text-status-high"}`}>
-                              Gap: {d.price_gap_pct > 0 ? "+" : ""}{d.price_gap_pct}%
-                            </div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="price_gap_pct" radius={[0, 4, 4, 0]} maxBarSize={24}>
-                      {categoryPricePressure.map((entry) => (
-                        <Cell
-                          key={entry.category}
-                          fill={entry.price_gap_pct >= 0
-                            ? "hsl(var(--status-low))"
-                            : "hsl(var(--status-high))"}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Platform Competitiveness Summary + Category Rollup */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Competitive Comparison</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="bg-gradient-card">
-              <CardHeader>
-                <CardTitle>Platform Competitiveness Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {platformScores.map((p) => (
-                    <div key={p.platform} className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium">{p.platform}</span>
-                        <span className="text-muted-foreground font-mono">{p.score}/100</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${scoreColor(p.score)}`}
-                          style={{ width: `${p.score}%` }}
-                        />
-                      </div>
-                      <div className="flex gap-3 text-[10px] text-muted-foreground">
-                        <span>Price {p.priceComp.toFixed(0)}%</span>
-                        <span>Avail {p.avail.toFixed(0)}%</span>
-                        <span>Search {p.search.toFixed(0)}%</span>
-                        <span>Assort {p.assort.toFixed(0)}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <CategoryLevelRollup priceData={priceData} availData={availData} />
-          </div>
-        </section>
-
-        {/* Top Price Gap Items */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top Price Gap Items</h2>
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Top Price Gap Items</CardTitle>
-                <Button variant="outline" size="sm">
-                  View All
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {topPriceGapSKUs.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No price gap data for selected filters.</p>
-              ) : (
-                <div className="space-y-3">
-                  {topPriceGapSKUs.map((item, index) => {
-                    const risk = getRiskLevel(item.gapPct);
-                    return (
-                      <div
-                        key={`${item.sku_id}-${item.platform}`}
-                        className={cn(
-                          "p-4 rounded-lg border transition-all duration-200 hover:shadow-md",
-                          getRiskColor(risk)
-                        )}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
-                            <span className="font-medium text-sm">{item.product_name}</span>
-                          </div>
-                          <Badge variant={getRiskBadgeVariant(risk)} className="text-xs">
-                            {risk}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-xs">
-                          <div>
-                            <div className="text-muted-foreground">SKU</div>
-                            <div className="font-mono">{item.sku_id}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Category</div>
-                            <div>{item.category}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Avg Price ({item.platform})</div>
-                            <div className="font-medium">₹{item.platformPrice.toFixed(2)}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Cross-platform Avg</div>
-                            <div className="font-medium">₹{item.competitorAvg.toFixed(2)}</div>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center gap-4 text-xs">
-                          <div>
-                            <span className="text-muted-foreground">Price Gap: </span>
-                            <span className="font-medium text-status-high">+{item.gapPct.toFixed(1)}%</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Platform: </span>
-                            <span className="font-medium">{item.platform}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-      </div>
-    </TooltipProvider>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+    </div>
   );
 };
 

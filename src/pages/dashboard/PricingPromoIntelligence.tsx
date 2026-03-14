@@ -1,16 +1,11 @@
 import { KPICard } from "@/components/dashboard/KPICard";
-import { getDiscountByPlatform, getPriceData } from "@/data/dataLoader";
+import { getDiscountByPlatform, getPriceData, GlobalFilters } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
-
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
 
 const promoRows = [
   { platform: "Blinkit", category: "Snacks & Beverages", type: "Flash Sale", discount: "40%", city: "Bangalore", status: "Active" as const },
@@ -23,10 +18,10 @@ const promoRows = [
 const PLATFORM_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 const PricingPromoIntelligence = () => {
-  const { selectedCity, selectedPlatform } = useOutletContext<DashboardContext>();
+  const filters = useOutletContext<GlobalFilters>();
 
-  const priceData = getPriceData(selectedCity, selectedPlatform);
-  const discountByPlatform = getDiscountByPlatform(selectedCity, selectedPlatform);
+  const priceData = getPriceData(filters);
+  const discountByPlatform = getDiscountByPlatform(filters);
 
   const avgDiscount =
     priceData.length > 0
@@ -55,13 +50,13 @@ const PricingPromoIntelligence = () => {
       title: "Average Discount",
       value: `${avgDiscount.toFixed(1)}%`,
       trend: "neutral" as const,
-      tooltip: "Mean discount percentage across all SKUs with active promotions. Computed from the price tracking dataset.",
+      tooltip: "Mean discount percentage across all SKUs with active promotions.",
     },
     {
       title: "Promotion Intensity",
       value: `${promoRate.toFixed(1)}%`,
       trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Share of SKU observations currently running a promotion. A higher value signals more aggressive promotional activity.",
+      tooltip: "Share of SKU observations currently running a promotion.",
     },
     {
       title: "SKUs Under Promotion",
@@ -78,7 +73,6 @@ const PricingPromoIntelligence = () => {
   ];
 
   // ── Heatmap computation ────────────────────────────────────────────────────
-  // Raw gap = (sale_price - mrp) / mrp * 100
   const heatmapRaw: Record<string, Record<string, number[]>> = {};
   priceData.forEach((row) => {
     const gap = row.mrp > 0 ? ((row.sale_price - row.mrp) / row.mrp) * 100 : 0;
@@ -87,16 +81,12 @@ const PricingPromoIntelligence = () => {
     heatmapRaw[row.category][row.platform].push(gap);
   });
 
-  // Category-level average gap (across all platforms) for normalization
   const categoryAvgGap: Record<string, number> = {};
   Object.entries(heatmapRaw).forEach(([category, platforms]) => {
     const allGaps = Object.values(platforms).flat();
-    categoryAvgGap[category] = allGaps.length > 0
-      ? allGaps.reduce((a, b) => a + b, 0) / allGaps.length
-      : 0;
+    categoryAvgGap[category] = allGaps.length > 0 ? allGaps.reduce((a, b) => a + b, 0) / allGaps.length : 0;
   });
 
-  // Normalized gap = platform avg gap - category avg gap
   const heatmap = Object.entries(heatmapRaw).map(([category, platforms]) => ({
     category,
     platforms: Object.entries(platforms).map(([platform, gaps]) => {
@@ -106,9 +96,7 @@ const PricingPromoIntelligence = () => {
     }),
   }));
 
-  const allPlatforms = Array.from(
-    new Set(heatmap.flatMap((row) => row.platforms.map((p) => p.platform)))
-  ).sort();
+  const allPlatforms = Array.from(new Set(heatmap.flatMap((row) => row.platforms.map((p) => p.platform)))).sort();
 
   const getCellStyle = (normalizedGap: number) => {
     if (normalizedGap <= -0.8) return "bg-status-low/20 text-status-low border border-status-low/30";
@@ -144,17 +132,13 @@ const PricingPromoIntelligence = () => {
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map((kpi, i) => (
-            <KPICard key={i} {...kpi} />
-          ))}
+          {kpis.map((kpi, i) => <KPICard key={i} {...kpi} />)}
         </div>
       </section>
 
       {/* Strategic Insights */}
       {(() => {
-        // Insight 1 — Promotion Intensity
         const topPromo = promoActivityData[0];
-        // Insight 2 — Category Price Gap: category with highest avg discount_percent
         const catDiscountRaw: Record<string, { sum: number; count: number }> = {};
         priceData.forEach((row) => {
           if (!catDiscountRaw[row.category]) catDiscountRaw[row.category] = { sum: 0, count: 0 };
@@ -164,33 +148,17 @@ const PricingPromoIntelligence = () => {
         const topCatDiscount = Object.entries(catDiscountRaw)
           .map(([cat, { sum, count }]) => ({ cat, avg: sum / count }))
           .sort((a, b) => b.avg - a.avg)[0];
-        // Insight 3 — Discount Depth
         const topDiscount = [...discountByPlatform].sort((a, b) => b.avgDiscount - a.avgDiscount)[0];
 
         const insights: Insight[] = [
           topPromo
-            ? {
-                icon: "zap",
-                title: "Promotion Intensity",
-                body: `${topPromo.platform} is currently running the most aggressive promotions, with ${topPromo["Promotion Rate %"]}% of tracked SKUs under active promotion.`,
-                type: "warning",
-              }
+            ? { icon: "zap", title: "Promotion Intensity", body: `${topPromo.platform} is currently running the most aggressive promotions, with ${topPromo["Promotion Rate %"]}% of tracked SKUs under active promotion.`, type: "warning" }
             : { icon: "zap", title: "Promotion Intensity", body: "No promotion data available for the selected filters.", type: "neutral" },
           topCatDiscount
-            ? {
-                icon: "tag",
-                title: "Category Price Gap",
-                body: `${topCatDiscount.cat} shows the highest average discount at ${topCatDiscount.avg.toFixed(1)}%, signalling strong promotional pressure in this category.`,
-                type: "warning",
-              }
+            ? { icon: "tag", title: "Category Price Gap", body: `${topCatDiscount.cat} shows the highest average discount at ${topCatDiscount.avg.toFixed(1)}%, signalling strong promotional pressure in this category.`, type: "warning" }
             : { icon: "tag", title: "Category Price Gap", body: "No category discount data available.", type: "neutral" },
           topDiscount
-            ? {
-                icon: "trend-down",
-                title: "Discount Depth",
-                body: `${topDiscount.platform} offers the deepest average discount at ${topDiscount.avgDiscount.toFixed(1)}%, indicating the most aggressive pricing strategy across platforms.`,
-                type: "critical",
-              }
+            ? { icon: "trend-down", title: "Discount Depth", body: `${topDiscount.platform} offers the deepest average discount at ${topDiscount.avgDiscount.toFixed(1)}%, indicating the most aggressive pricing strategy across platforms.`, type: "critical" }
             : { icon: "trend-down", title: "Discount Depth", body: "No discount data available.", type: "neutral" },
         ];
         return <StrategicInsightsPanel insights={insights} />;
@@ -207,18 +175,9 @@ const PricingPromoIntelligence = () => {
                 <CardDescription>Average price gap vs MRP by category and platform</CardDescription>
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-status-low/40 border border-status-low/30 inline-block" />
-                  Competitive (≤ −5%)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-status-medium/40 border border-status-medium/30 inline-block" />
-                  Neutral (±5%)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-status-critical/40 border border-status-critical/30 inline-block" />
-                  Overpriced (&gt; +5%)
-                </span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-status-low/40 border border-status-low/30 inline-block" />Competitive (≤ −5%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-status-medium/40 border border-status-medium/30 inline-block" />Neutral (±5%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-status-critical/40 border border-status-critical/30 inline-block" />Overpriced (&gt; +5%)</span>
               </div>
             </div>
           </CardHeader>
@@ -232,36 +191,28 @@ const PricingPromoIntelligence = () => {
                     <tr className="border-b border-border">
                       <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px]">Category</th>
                       {allPlatforms.map((platform) => (
-                        <th key={platform} className="text-center py-2 px-2 font-medium text-muted-foreground min-w-[110px]">
-                          {platform}
-                        </th>
+                        <th key={platform} className="text-center py-2 px-2 font-medium text-muted-foreground min-w-[110px]">{platform}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {heatmap.map((row) => {
-                      const cellMap = Object.fromEntries(
-                        row.platforms.map((p) => [p.platform, p])
-                      );
+                      const cellMap = Object.fromEntries(row.platforms.map((p) => [p.platform, p]));
                       return (
                         <tr key={row.category} className="border-b border-border/40">
                           <td className="py-2 px-3 font-medium">{row.category}</td>
                           {allPlatforms.map((platform) => {
                             const cell = cellMap[platform];
-                            if (!cell) {
-                              return (
-                                <td key={platform} className="p-2 text-center">
-                                  <div className="rounded-md px-2 py-2 text-xs text-muted-foreground bg-muted/30 border border-border/30">—</div>
-                                </td>
-                              );
-                            }
+                            if (!cell) return (
+                              <td key={platform} className="p-2 text-center">
+                                <div className="rounded-md px-2 py-2 text-xs text-muted-foreground bg-muted/30 border border-border/30">—</div>
+                              </td>
+                            );
                             const { normalizedGap } = cell;
                             return (
                               <td key={platform} className="p-2 text-center">
-                                <div
-                                  className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(normalizedGap)}`}
-                                  title={`${getCellLabel(normalizedGap)} — normalized gap: ${normalizedGap > 0 ? "+" : ""}${normalizedGap.toFixed(1)}%`}
-                                >
+                                <div className={`rounded-md px-2 py-2 text-xs font-semibold transition-all hover:scale-105 cursor-default ${getCellStyle(normalizedGap)}`}
+                                  title={`${getCellLabel(normalizedGap)} — normalized gap: ${normalizedGap > 0 ? "+" : ""}${normalizedGap.toFixed(1)}%`}>
                                   <div className="font-bold">{normalizedGap > 0 ? "+" : ""}{normalizedGap.toFixed(1)}%</div>
                                   <div className="text-[10px] opacity-75 mt-0.5">{getCellLabel(normalizedGap)}</div>
                                 </div>
@@ -298,9 +249,7 @@ const PricingPromoIntelligence = () => {
                   <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 25]} />
                   <Tooltip formatter={(v: number) => [`${v}%`, "Promotion Rate"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "hsl(var(--muted)/0.3)" }} />
                   <Bar dataKey="Promotion Rate %" radius={[4, 4, 0, 0]}>
-                    {promoActivityData.map((_, i) => (
-                      <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />
-                    ))}
+                    {promoActivityData.map((_, i) => <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -327,10 +276,7 @@ const PricingPromoIntelligence = () => {
                       <span className="text-muted-foreground">{p.avgDiscount}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${barColor(p.avgDiscount)}`}
-                        style={{ width: `${Math.min(p.avgDiscount * 2.5, 100)}%` }}
-                      />
+                      <div className={`h-full rounded-full ${barColor(p.avgDiscount)}`} style={{ width: `${Math.min(p.avgDiscount * 2.5, 100)}%` }} />
                     </div>
                   </div>
                 ))}
@@ -359,13 +305,11 @@ const PricingPromoIntelligence = () => {
                     {promoRows.map((row, i) => (
                       <tr key={i} className="border-b border-border/50 last:border-0">
                         <td className="py-2 pr-3 font-medium">{row.platform}</td>
-                        <td className="py-2 pr-3 text-muted-foreground">{row.category}</td>
-                        <td className="py-2 pr-3">{row.type}</td>
-                        <td className="py-2 pr-3 font-semibold text-status-high">{row.discount}</td>
+                        <td className="py-2 pr-3 text-muted-foreground text-xs">{row.category}</td>
+                        <td className="py-2 pr-3 text-xs">{row.type}</td>
+                        <td className="py-2 pr-3 text-xs font-semibold text-status-high">{row.discount}</td>
                         <td className="py-2">
-                          <Badge variant={row.status === "Active" ? "default" : "secondary"} className="text-xs">
-                            {row.status}
-                          </Badge>
+                          <Badge variant={row.status === "Active" ? "default" : "secondary"} className="text-xs">{row.status}</Badge>
                         </td>
                       </tr>
                     ))}
