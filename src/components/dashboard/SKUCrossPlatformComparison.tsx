@@ -267,7 +267,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 <SelectContent className="max-h-64">
                   {productsInCategory.map((s) => (
                     <SelectItem key={s.sku_id} value={s.sku_id}>
-                      {skuLabel(s)}
+                      {resolveProductName(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>
