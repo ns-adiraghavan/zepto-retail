@@ -134,6 +134,7 @@ export function DashboardLayout() {
           </main>
         </div>
       </div>
+      <RetailCopilot filters={filters} />
     </SidebarProvider>
   );
 }
