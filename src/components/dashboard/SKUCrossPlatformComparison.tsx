@@ -309,8 +309,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 {skuLabel(selectedSku)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedSku.category} ·{" "}
-                <span className="font-mono">{selectedSku.sku_id}</span>
+                {selectedSku.category}
               </p>
             </div>
           )}
