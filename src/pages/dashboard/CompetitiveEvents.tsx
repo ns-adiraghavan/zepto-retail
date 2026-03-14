@@ -5,19 +5,13 @@ import {
   getPriceData,
   getSearchData,
   getAvailabilityData,
-  filterByContext,
-  datasets,
+  GlobalFilters,
 } from "@/data/dataLoader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicInsightsPanel, Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingDown, Search, ShieldAlert } from "lucide-react";
-
-interface DashboardContext {
-  selectedCity: string;
-  selectedPlatform: string;
-}
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   price_drop: "Price Drop",
