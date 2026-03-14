@@ -217,8 +217,8 @@ const CompetitiveEvents = () => {
             <CardTitle className="text-base">Live Event Feed</CardTitle>
             <CardDescription>
               {events.length} event{events.length !== 1 ? "s" : ""} · sorted by newest
-              {selectedCity !== "All Cities" ? ` · ${selectedCity}` : ""}
-              {selectedPlatform !== "All Platforms" ? ` · ${selectedPlatform}` : ""}
+              {filters.city !== "All Cities" ? ` · ${filters.city}` : ""}
+              {filters.platform !== "All Platforms" ? ` · ${filters.platform}` : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>
