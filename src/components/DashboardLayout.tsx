@@ -9,18 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { MapPin, Layers, Hash, Tag, CalendarIcon, X } from "lucide-react";
-import { format } from "date-fns";
-import type { DateRange } from "react-day-picker";
+import { MapPin, Layers, Hash, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   GlobalFilters,
   DEFAULT_FILTERS,
   getUniquePincodes,
   getUniqueCategories,
+  getPincodeCityMap,
 } from "@/data/dataLoader";
 import { useData } from "@/contexts/DataContext";
 
