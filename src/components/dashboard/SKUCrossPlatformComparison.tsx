@@ -306,10 +306,10 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
           {selectedSku && (
             <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
               <p className="font-semibold text-sm leading-tight">
-                {skuLabel(selectedSku)}
+                {resolveProductName(selectedSku)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedSku.category}
+                {selectedSku.brand} · {selectedSku.category}
               </p>
             </div>
           )}
