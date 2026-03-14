@@ -27,9 +27,9 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
-/** Display label for a SKU: "Brand · product_name" */
-function skuLabel(s: { brand: string; product_name: string }) {
-  return `${s.brand} · ${s.product_name}`;
+/** Resolve product name from skuMaster; fall back to "Unknown Product" */
+function resolveProductName(s: { product_name?: string } | null | undefined): string {
+  return s?.product_name || "Unknown Product";
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -267,7 +267,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 <SelectContent className="max-h-64">
                   {productsInCategory.map((s) => (
                     <SelectItem key={s.sku_id} value={s.sku_id}>
-                      {skuLabel(s)}
+                      {resolveProductName(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -306,10 +306,10 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
           {selectedSku && (
             <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
               <p className="font-semibold text-sm leading-tight">
-                {skuLabel(selectedSku)}
+                {resolveProductName(selectedSku)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedSku.category}
+                {selectedSku.brand} · {selectedSku.category}
               </p>
             </div>
           )}
