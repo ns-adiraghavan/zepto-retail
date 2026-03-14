@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
+import { SKUCrossPlatformComparison } from "@/components/dashboard/SKUCrossPlatformComparison";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
