@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapPin, Layers, Hash, Tag } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   GlobalFilters,
   DEFAULT_FILTERS,
@@ -27,35 +26,23 @@ export function DashboardLayout() {
   const { loaded } = useData();
 
   const [filters, setFilters] = useState<GlobalFilters>(DEFAULT_FILTERS);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [pincodeOptions, setPincodeOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [pincodeCityMap, setPincodeCityMap] = useState<Record<string, string>>({});
 
-  // Populate dynamic options once data is loaded
   useEffect(() => {
     if (!loaded) return;
     setPincodeOptions(getUniquePincodes());
     setCategoryOptions(getUniqueCategories());
+    setPincodeCityMap(getPincodeCityMap());
   }, [loaded]);
 
   const setFilter = <K extends keyof GlobalFilters>(key: K, value: GlobalFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
-  const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setDateRange(range);
-    setFilters((prev) => ({
-      ...prev,
-      dateFrom: range?.from ? format(range.from, "yyyy-MM-dd") : "",
-      dateTo:   range?.to   ? format(range.to,   "yyyy-MM-dd") : "",
-    }));
-  };
-
-  const clearDateRange = () => {
-    setDateRange(undefined);
-    setFilters((prev) => ({ ...prev, dateFrom: "", dateTo: "" }));
-  };
-
-  const hasDateFilter = !!filters.dateFrom || !!filters.dateTo;
+  // Derive associated city for currently selected pincode
+  const associatedCity =
+    filters.pincode !== "All Pincodes" ? pincodeCityMap[filters.pincode] : null;
 
   return (
     <SidebarProvider>
@@ -109,65 +96,31 @@ export function DashboardLayout() {
               </Select>
             )}
 
-            {/* ── Pincode ── */}
+            {/* ── Pincode + Associated City ── */}
             {pincodeOptions.length > 0 && (
-              <Select value={filters.pincode} onValueChange={(v) => setFilter("pincode", v)}>
-                <SelectTrigger className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium w-auto min-w-[140px] focus:ring-1 hover:bg-muted/70 transition-colors">
-                  <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Pincodes" className="text-xs">All Pincodes</SelectItem>
-                  {pincodeOptions.map((p) => (
-                    <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-1.5">
+                <Select value={filters.pincode} onValueChange={(v) => setFilter("pincode", v)}>
+                  <SelectTrigger className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium w-auto min-w-[140px] focus:ring-1 hover:bg-muted/70 transition-colors">
+                    <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Pincodes" className="text-xs">All Pincodes</SelectItem>
+                    {pincodeOptions.map((p) => (
+                      <SelectItem key={p} value={p} className="text-xs">
+                        {p}{pincodeCityMap[p] ? ` · ${pincodeCityMap[p]}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {associatedCity && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/40 border border-border rounded-full px-2.5 py-1 shrink-0">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {associatedCity}
+                  </span>
+                )}
+              </div>
             )}
-
-            {/* ── Date Range ── */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium hover:bg-muted/70 transition-colors",
-                    hasDateFilter && "border-primary/40 bg-primary/10 text-primary"
-                  )}
-                >
-                  <CalendarIcon className="h-3 w-3 shrink-0" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      `${format(dateRange.from, "dd MMM")} – ${format(dateRange.to, "dd MMM")}`
-                    ) : (
-                      format(dateRange.from, "dd MMM yyyy")
-                    )
-                  ) : (
-                    "Date Range"
-                  )}
-                  {hasDateFilter && (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); clearDateRange(); }}
-                      onKeyDown={(e) => e.key === "Enter" && clearDateRange()}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={handleDateRangeSelect}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
 
             <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
