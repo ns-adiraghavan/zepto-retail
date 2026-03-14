@@ -241,7 +241,7 @@ const CompetitiveEvents = () => {
     const skuFlags: Record<string, { sum: number; count: number; product_name: string; category: string }> = {};
     for (const row of availData) {
       if (!skuFlags[row.sku_id])
-        skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
+        skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? skuNameMap[row.sku_id] ?? row.sku_id, category: row.category };
       skuFlags[row.sku_id].sum += row.availability_flag;
       skuFlags[row.sku_id].count += 1;
     }
