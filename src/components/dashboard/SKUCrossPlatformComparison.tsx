@@ -1,8 +1,20 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowLeftRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeftRight, MapPin } from "lucide-react";
 import { datasets, applyFilters, type GlobalFilters } from "@/data/dataLoader";
 
 const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
@@ -15,37 +27,98 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
-export function SKUCrossPlatformComparison({ filters }: Props) {
-  const [query, setQuery] = useState("");
-  const [selectedSkuId, setSelectedSkuId] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
-  // Build SKU list from sku_master
-  const skuOptions = useMemo(
+function AvailBadge({ flag }: { flag: number }) {
+  if (flag >= 0.8)
+    return (
+      <Badge className="bg-status-low/20 text-status-low border border-status-low/30 text-xs">
+        In Stock
+      </Badge>
+    );
+  if (flag >= 0.4)
+    return (
+      <Badge className="bg-status-medium/20 text-status-medium border border-status-medium/30 text-xs">
+        Low Stock
+      </Badge>
+    );
+  return (
+    <Badge className="bg-status-critical/20 text-status-critical border border-status-critical/30 text-xs">
+      Out of Stock
+    </Badge>
+  );
+}
+
+function PromoBadge({ flag }: { flag: number }) {
+  return flag >= 0.5 ? (
+    <Badge className="bg-primary/10 text-primary border border-primary/20 text-xs">
+      Yes
+    </Badge>
+  ) : (
+    <span className="text-xs text-muted-foreground">No</span>
+  );
+}
+
+function discountColor(pct: number) {
+  if (pct >= 20) return "text-status-critical font-semibold";
+  if (pct >= 10) return "text-status-medium font-medium";
+  return "text-muted-foreground";
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
+export function SKUCrossPlatformComparison({ filters }: Props) {
+  // Derive sorted category list from skuMaster
+  const categories = useMemo(
     () =>
-      datasets.skuMaster
-        .filter(
-          (s) =>
-            !query || s.product_name.toLowerCase().includes(query.toLowerCase())
-        )
-        .slice(0, 12),
-    [query]
+      Array.from(new Set(datasets.skuMaster.map((s) => s.category))).sort(),
+    []
   );
 
+  // Auto-sync with global category filter if set
+  const globalCategory =
+    filters.category && filters.category !== "All Categories"
+      ? filters.category
+      : null;
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    globalCategory ?? ""
+  );
+  const [selectedSkuId, setSelectedSkuId] = useState<string>("");
+
+  // Reset SKU when category changes
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    setSelectedSkuId("");
+  };
+
+  // Products within selected category
+  const productsInCategory = useMemo(
+    () =>
+      datasets.skuMaster
+        .filter((s) => s.category === selectedCategory)
+        .sort((a, b) => a.product_name.localeCompare(b.product_name)),
+    [selectedCategory]
+  );
+
+  const categoryProductCount = productsInCategory.length;
+
+  // Resolved SKU meta
   const selectedSku = useMemo(
-    () => datasets.skuMaster.find((s) => s.sku_id === selectedSkuId),
+    () =>
+      selectedSkuId
+        ? (datasets.skuMaster.find((s) => s.sku_id === selectedSkuId) ?? null)
+        : null,
     [selectedSkuId]
   );
 
-  // Comparison table data: one row per platform
+  // ── Platform comparison rows ──────────────────────────────────────────────
   const comparisonRows = useMemo(() => {
     if (!selectedSkuId) return [];
 
-    // Build filters without the platform dimension so we can iterate per-platform
     const baseFilters: Partial<GlobalFilters> = {
       city: filters.city,
       pincode: filters.pincode,
-      category: filters.category,
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
     };
@@ -63,7 +136,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       const availRows = availBase.filter((r) => r.platform === platform);
 
       if (priceRows.length === 0 && availRows.length === 0) {
-        return { platform, listed: false };
+        return { platform, listed: false as const };
       }
 
       const salePrice = avg(priceRows.map((r) => r.sale_price));
@@ -71,21 +144,20 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       const promoFlag = avg(priceRows.map((r) => r.promotion_flag));
       const availFlag = avg(availRows.map((r) => r.availability_flag));
 
-      // Most common promotion_type among rows with one
-      const promoTypes = priceRows
-        .map((r) => r.promotion_type)
-        .filter(Boolean) as string[];
       const promoTypeMap: Record<string, number> = {};
-      promoTypes.forEach((t) => {
-        promoTypeMap[t] = (promoTypeMap[t] ?? 0) + 1;
-      });
+      priceRows
+        .map((r) => r.promotion_type)
+        .filter(Boolean)
+        .forEach((t) => {
+          promoTypeMap[t!] = (promoTypeMap[t!] ?? 0) + 1;
+        });
       const promoType =
         Object.entries(promoTypeMap).sort((a, b) => b[1] - a[1])[0]?.[0] ??
         "—";
 
       return {
         platform,
-        listed: true,
+        listed: true as const,
         salePrice,
         discountPct,
         promoFlag,
@@ -95,47 +167,47 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
     });
   }, [selectedSkuId, filters]);
 
-  type ListedRow = {
+  // ── Hyperlocal price context rows ─────────────────────────────────────────
+  type HyperlocalRow = {
+    city: string;
+    pincode: string;
     platform: string;
-    listed: true;
-    salePrice: number;
-    discountPct: number;
-    promoFlag: number;
-    promoType: string;
-    availFlag: number;
+    avgPrice: number;
   };
-  type UnlistedRow = { platform: string; listed: false };
 
-  const availBadge = (flag: number) =>
-    flag >= 0.8 ? (
-      <Badge className="bg-status-low/20 text-status-low border border-status-low/30 text-xs">
-        In Stock
-      </Badge>
-    ) : flag >= 0.4 ? (
-      <Badge className="bg-status-medium/20 text-status-medium border border-status-medium/30 text-xs">
-        Low Stock
-      </Badge>
-    ) : (
-      <Badge className="bg-status-critical/20 text-status-critical border border-status-critical/30 text-xs">
-        Out of Stock
-      </Badge>
+  const hyperlocalRows = useMemo((): HyperlocalRow[] => {
+    if (!selectedSkuId) return [];
+
+    const dateFilters: Partial<GlobalFilters> = {
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+    };
+
+    const rows = applyFilters(datasets.priceTracking, dateFilters).filter(
+      (r) => r.sku_id === selectedSkuId && r.pincode && r.city
     );
 
-  const promoBadge = (flag: number) =>
-    flag >= 0.5 ? (
-      <Badge className="bg-primary/10 text-primary border border-primary/20 text-xs">
-        Yes
-      </Badge>
-    ) : (
-      <span className="text-xs text-muted-foreground">No</span>
-    );
+    // Group by city + pincode + platform
+    const grouped: Record<string, { sum: number; count: number }> = {};
+    for (const r of rows) {
+      const key = `${r.city}||${r.pincode}||${r.platform}`;
+      if (!grouped[key]) grouped[key] = { sum: 0, count: 0 };
+      grouped[key].sum += r.sale_price;
+      grouped[key].count += 1;
+    }
 
-  const discountColor = (pct: number) =>
-    pct >= 20
-      ? "text-status-critical font-semibold"
-      : pct >= 10
-      ? "text-status-medium font-medium"
-      : "text-muted-foreground";
+    return Object.entries(grouped)
+      .map(([key, { sum, count }]) => {
+        const [city, pincode, platform] = key.split("||");
+        return { city, pincode, platform, avgPrice: sum / count };
+      })
+      .sort((a, b) => a.city.localeCompare(b.city) || a.pincode.localeCompare(b.pincode));
+  }, [selectedSkuId, filters]);
+
+  // ── Active filter badges ──────────────────────────────────────────────────
+  const hasActiveFilters =
+    (filters.city && filters.city !== "All Cities") ||
+    (filters.pincode && filters.pincode !== "All Pincodes");
 
   return (
     <section className="space-y-2">
@@ -149,59 +221,85 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
             <div>
               <CardTitle>Cross-Platform Product Comparison</CardTitle>
               <CardDescription>
-                Compare price, discount, promotions, and availability for a
-                single product across all platforms — filtered by active city,
-                pincode, category, and date selection
+                Select a category and product to compare price, discount,
+                promotions, and availability across all platforms — filtered by
+                active city, pincode, and date selection
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* SKU search */}
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              className="pl-9 text-sm"
-              placeholder="Search product name…"
-              value={selectedSku ? selectedSku.product_name : query}
-              onFocus={() => {
-                if (selectedSku) setQuery("");
-                setOpen(true);
-              }}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelectedSkuId(null);
-                setOpen(true);
-              }}
-              onBlur={() => setTimeout(() => setOpen(false), 150)}
-            />
-            {open && skuOptions.length > 0 && !selectedSkuId && (
-              <ul className="absolute z-50 mt-1 w-full rounded-md border border-border bg-card shadow-lg max-h-56 overflow-y-auto text-sm">
-                {skuOptions.map((s) => (
-                  <li
-                    key={s.sku_id}
-                    className="px-3 py-2 cursor-pointer hover:bg-muted transition-colors flex items-center justify-between gap-2"
-                    onMouseDown={() => {
-                      setSelectedSkuId(s.sku_id);
-                      setQuery("");
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="font-medium truncate">{s.product_name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {s.category}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+
+        <CardContent className="space-y-5">
+          {/* ── Selectors row ── */}
+          <div className="flex flex-wrap items-end gap-3">
+            {/* Category */}
+            <div className="space-y-1 min-w-[180px]">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Category
+              </label>
+              <Select
+                value={selectedCategory}
+                onValueChange={handleCategoryChange}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Select category…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Product */}
+            <div className="space-y-1 min-w-[240px] flex-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Product
+              </label>
+              <Select
+                value={selectedSkuId}
+                onValueChange={setSelectedSkuId}
+                disabled={!selectedCategory}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue
+                    placeholder={
+                      selectedCategory
+                        ? "Select product…"
+                        : "Select a category first"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {productsInCategory.map((s) => (
+                    <SelectItem key={s.sku_id} value={s.sku_id}>
+                      {s.product_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category context badge */}
+            {selectedCategory && (
+              <div className="pb-0.5">
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-normal gap-1"
+                >
+                  {selectedCategory} · {categoryProductCount} product
+                  {categoryProductCount !== 1 ? "s" : ""}
+                </Badge>
+              </div>
             )}
           </div>
 
-          {/* Active filter context */}
-          {(filters.city && filters.city !== "All Cities") ||
-          (filters.pincode && filters.pincode !== "All Pincodes") ||
-          (filters.category && filters.category !== "All Categories") ? (
-            <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+          {/* ── Active geo-filter context ── */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground items-center">
               <span className="font-medium">Filters active:</span>
               {filters.city && filters.city !== "All Cities" && (
                 <Badge variant="secondary" className="text-xs font-normal">
@@ -213,18 +311,28 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                   {filters.pincode}
                 </Badge>
               )}
-              {filters.category && filters.category !== "All Categories" && (
-                <Badge variant="secondary" className="text-xs font-normal">
-                  {filters.category}
-                </Badge>
-              )}
             </div>
-          ) : null}
+          )}
 
-          {/* Table */}
+          {/* ── Selected product header ── */}
+          {selectedSku && (
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3 flex items-start gap-3">
+              <div>
+                <p className="font-semibold text-sm leading-tight">
+                  {selectedSku.product_name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedSku.brand} · {selectedSku.pack_size} ·{" "}
+                  <span className="font-mono">{selectedSku.sku_id}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Platform comparison table ── */}
           {!selectedSkuId ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Search and select a product above to compare pricing across
+              Select a category and product above to compare pricing across
               platforms.
             </p>
           ) : (
@@ -232,24 +340,37 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[140px]">
-                      Platform
-                    </th>
-                    <th className="text-right py-2 px-3 font-medium text-muted-foreground min-w-[90px]">
-                      Price (₹)
-                    </th>
-                    <th className="text-right py-2 px-3 font-medium text-muted-foreground min-w-[90px]">
-                      Discount %
-                    </th>
-                    <th className="text-center py-2 px-3 font-medium text-muted-foreground min-w-[90px]">
-                      Promotion
-                    </th>
-                    <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[120px]">
-                      Promo Type
-                    </th>
-                    <th className="text-center py-2 px-3 font-medium text-muted-foreground min-w-[110px]">
-                      Availability
-                    </th>
+                    {[
+                      { label: "Platform", align: "left", w: "min-w-[140px]" },
+                      { label: "Price (₹)", align: "right", w: "min-w-[90px]" },
+                      {
+                        label: "Discount %",
+                        align: "right",
+                        w: "min-w-[90px]",
+                      },
+                      {
+                        label: "Promotion",
+                        align: "center",
+                        w: "min-w-[90px]",
+                      },
+                      {
+                        label: "Promo Type",
+                        align: "left",
+                        w: "min-w-[120px]",
+                      },
+                      {
+                        label: "Availability",
+                        align: "center",
+                        w: "min-w-[110px]",
+                      },
+                    ].map((h) => (
+                      <th
+                        key={h.label}
+                        className={`text-${h.align} py-2 px-3 font-medium text-muted-foreground ${h.w}`}
+                      >
+                        {h.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -272,33 +393,30 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                         </tr>
                       );
                     }
-                    const r = row as ListedRow;
                     return (
                       <tr
-                        key={r.platform}
+                        key={row.platform}
                         className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
                       >
                         <td className="py-2.5 px-3 font-semibold">
-                          {r.platform}
+                          {row.platform}
                         </td>
                         <td className="py-2.5 px-3 text-right font-mono font-medium">
-                          ₹{r.salePrice.toFixed(2)}
+                          ₹{row.salePrice.toFixed(2)}
                         </td>
                         <td
-                          className={`py-2.5 px-3 text-right ${discountColor(
-                            r.discountPct
-                          )}`}
+                          className={`py-2.5 px-3 text-right ${discountColor(row.discountPct)}`}
                         >
-                          {r.discountPct.toFixed(1)}%
+                          {row.discountPct.toFixed(1)}%
                         </td>
                         <td className="py-2.5 px-3 text-center">
-                          {promoBadge(r.promoFlag)}
+                          <PromoBadge flag={row.promoFlag} />
                         </td>
                         <td className="py-2.5 px-3 text-xs text-muted-foreground">
-                          {r.promoFlag >= 0.5 ? r.promoType : "—"}
+                          {row.promoFlag >= 0.5 ? row.promoType : "—"}
                         </td>
                         <td className="py-2.5 px-3 text-center">
-                          {availBadge(r.availFlag)}
+                          <AvailBadge flag={row.availFlag} />
                         </td>
                       </tr>
                     );
@@ -308,13 +426,55 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
             </div>
           )}
 
-          {/* Selected SKU meta */}
-          {selectedSku && (
-            <p className="text-xs text-muted-foreground pt-1">
-              SKU:{" "}
-              <span className="font-mono">{selectedSku.sku_id}</span> ·{" "}
-              {selectedSku.brand} · {selectedSku.pack_size}
-            </p>
+          {/* ── Hyperlocal Price Context ── */}
+          {hyperlocalRows.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Hyperlocal Price Context
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Average sale price by city · pincode · platform for the
+                selected product
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      {["City", "Pincode", "Platform", "Avg Price"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${h === "Avg Price" ? "text-right" : "text-left"}`}
+                          >
+                            {h}
+                          </th>
+                        )
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hyperlocalRows.map((r, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
+                      >
+                        <td className="py-2 px-3 text-xs">{r.city}</td>
+                        <td className="py-2 px-3 font-mono text-xs">
+                          {r.pincode}
+                        </td>
+                        <td className="py-2 px-3 text-xs">{r.platform}</td>
+                        <td className="py-2 px-3 text-right font-mono text-xs font-medium">
+                          ₹{r.avgPrice.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
