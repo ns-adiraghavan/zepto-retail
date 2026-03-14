@@ -23,7 +23,7 @@ function avg(arr: number[]) {
 const LocalMarketIntelligence = () => {
   // City filter intentionally not applied — this module compares cities
   // Only platform, pincode, category, and date filters are respected
-  const { platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
+  const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
 
   const cityScores = useMemo(() =>
     CITIES.map((city) => {
