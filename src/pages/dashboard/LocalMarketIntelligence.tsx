@@ -202,6 +202,8 @@ const LocalMarketIntelligence = () => {
           </CardContent>
         </Card>
       </section>
+
+      <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} />
     </div>
   );
 };

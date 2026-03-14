@@ -321,6 +321,8 @@ const PricingPromoIntelligence = () => {
           </Card>
         </div>
       </section>
+
+      <SKUCrossPlatformComparison filters={filters} />
     </div>
   );
 };
