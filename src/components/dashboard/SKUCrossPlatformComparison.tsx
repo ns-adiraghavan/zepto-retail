@@ -27,6 +27,11 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
+/** Display label for a SKU: "Brand · SKU_ID" since product_name values in the dataset are generic placeholders */
+function skuLabel(s: { brand: string; sku_id: string }) {
+  return `${s.brand} · ${s.sku_id}`;
+}
+
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 function AvailBadge({ flag }: { flag: number }) {
@@ -68,14 +73,12 @@ function discountColor(pct: number) {
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function SKUCrossPlatformComparison({ filters }: Props) {
-  // Derive sorted category list from skuMaster
   const categories = useMemo(
     () =>
       Array.from(new Set(datasets.skuMaster.map((s) => s.category))).sort(),
     []
   );
 
-  // Auto-sync with global category filter if set
   const globalCategory =
     filters.category && filters.category !== "All Categories"
       ? filters.category
@@ -86,24 +89,21 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
   );
   const [selectedSkuId, setSelectedSkuId] = useState<string>("");
 
-  // Reset SKU when category changes
   const handleCategoryChange = (cat: string) => {
     setSelectedCategory(cat);
     setSelectedSkuId("");
   };
 
-  // Products within selected category
   const productsInCategory = useMemo(
     () =>
       datasets.skuMaster
         .filter((s) => s.category === selectedCategory)
-        .sort((a, b) => a.product_name.localeCompare(b.product_name)),
+        .sort((a, b) => a.brand.localeCompare(b.brand) || a.sku_id.localeCompare(b.sku_id)),
     [selectedCategory]
   );
 
   const categoryProductCount = productsInCategory.length;
 
-  // Resolved SKU meta
   const selectedSku = useMemo(
     () =>
       selectedSkuId
@@ -126,10 +126,9 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
     const priceBase = applyFilters(datasets.priceTracking, baseFilters).filter(
       (r) => r.sku_id === selectedSkuId
     );
-    const availBase = applyFilters(
-      datasets.availabilityTracking,
-      baseFilters
-    ).filter((r) => r.sku_id === selectedSkuId);
+    const availBase = applyFilters(datasets.availabilityTracking, baseFilters).filter(
+      (r) => r.sku_id === selectedSkuId
+    );
 
     return PLATFORMS.map((platform) => {
       const priceRows = priceBase.filter((r) => r.platform === platform);
@@ -152,8 +151,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
           promoTypeMap[t!] = (promoTypeMap[t!] ?? 0) + 1;
         });
       const promoType =
-        Object.entries(promoTypeMap).sort((a, b) => b[1] - a[1])[0]?.[0] ??
-        "—";
+        Object.entries(promoTypeMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
 
       return {
         platform,
@@ -187,7 +185,6 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       (r) => r.sku_id === selectedSkuId && r.pincode && r.city
     );
 
-    // Group by city + pincode + platform
     const grouped: Record<string, { sum: number; count: number }> = {};
     for (const r of rows) {
       const key = `${r.city}||${r.pincode}||${r.platform}`;
@@ -204,7 +201,6 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       .sort((a, b) => a.city.localeCompare(b.city) || a.pincode.localeCompare(b.pincode));
   }, [selectedSkuId, filters]);
 
-  // ── Active filter badges ──────────────────────────────────────────────────
   const hasActiveFilters =
     (filters.city && filters.city !== "All Cities") ||
     (filters.pincode && filters.pincode !== "All Pincodes");
@@ -237,10 +233,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Category
               </label>
-              <Select
-                value={selectedCategory}
-                onValueChange={handleCategoryChange}
-              >
+              <Select value={selectedCategory} onValueChange={handleCategoryChange}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Select category…" />
                 </SelectTrigger>
@@ -267,16 +260,14 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue
                     placeholder={
-                      selectedCategory
-                        ? "Select product…"
-                        : "Select a category first"
+                      selectedCategory ? "Select product…" : "Select a category first"
                     }
                   />
                 </SelectTrigger>
                 <SelectContent className="max-h-64">
                   {productsInCategory.map((s) => (
                     <SelectItem key={s.sku_id} value={s.sku_id}>
-                      {s.product_name}
+                      {skuLabel(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -286,10 +277,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
             {/* Category context badge */}
             {selectedCategory && (
               <div className="pb-0.5">
-                <Badge
-                  variant="secondary"
-                  className="text-xs font-normal gap-1"
-                >
+                <Badge variant="secondary" className="text-xs font-normal gap-1">
                   {selectedCategory} · {categoryProductCount} product
                   {categoryProductCount !== 1 ? "s" : ""}
                 </Badge>
@@ -316,24 +304,21 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
 
           {/* ── Selected product header ── */}
           {selectedSku && (
-            <div className="rounded-md border border-border bg-muted/30 px-4 py-3 flex items-start gap-3">
-              <div>
-                <p className="font-semibold text-sm leading-tight">
-                  {selectedSku.product_name}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedSku.brand} · {selectedSku.pack_size} ·{" "}
-                  <span className="font-mono">{selectedSku.sku_id}</span>
-                </p>
-              </div>
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
+              <p className="font-semibold text-sm leading-tight">
+                {skuLabel(selectedSku)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {selectedSku.category} ·{" "}
+                <span className="font-mono">{selectedSku.sku_id}</span>
+              </p>
             </div>
           )}
 
           {/* ── Platform comparison table ── */}
           {!selectedSkuId ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Select a category and product above to compare pricing across
-              platforms.
+              Select a category and product above to compare pricing across platforms.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -343,26 +328,10 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                     {[
                       { label: "Platform", align: "left", w: "min-w-[140px]" },
                       { label: "Price (₹)", align: "right", w: "min-w-[90px]" },
-                      {
-                        label: "Discount %",
-                        align: "right",
-                        w: "min-w-[90px]",
-                      },
-                      {
-                        label: "Promotion",
-                        align: "center",
-                        w: "min-w-[90px]",
-                      },
-                      {
-                        label: "Promo Type",
-                        align: "left",
-                        w: "min-w-[120px]",
-                      },
-                      {
-                        label: "Availability",
-                        align: "center",
-                        w: "min-w-[110px]",
-                      },
+                      { label: "Discount %", align: "right", w: "min-w-[90px]" },
+                      { label: "Promotion", align: "center", w: "min-w-[90px]" },
+                      { label: "Promo Type", align: "left", w: "min-w-[120px]" },
+                      { label: "Availability", align: "center", w: "min-w-[110px]" },
                     ].map((h) => (
                       <th
                         key={h.label}
@@ -381,9 +350,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                           key={row.platform}
                           className="border-b border-border/40 last:border-0 opacity-50"
                         >
-                          <td className="py-2.5 px-3 font-medium">
-                            {row.platform}
-                          </td>
+                          <td className="py-2.5 px-3 font-medium">{row.platform}</td>
                           <td
                             colSpan={5}
                             className="py-2.5 px-3 text-center text-xs text-muted-foreground italic"
@@ -398,15 +365,11 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                         key={row.platform}
                         className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
                       >
-                        <td className="py-2.5 px-3 font-semibold">
-                          {row.platform}
-                        </td>
+                        <td className="py-2.5 px-3 font-semibold">{row.platform}</td>
                         <td className="py-2.5 px-3 text-right font-mono font-medium">
                           ₹{row.salePrice.toFixed(2)}
                         </td>
-                        <td
-                          className={`py-2.5 px-3 text-right ${discountColor(row.discountPct)}`}
-                        >
+                        <td className={`py-2.5 px-3 text-right ${discountColor(row.discountPct)}`}>
                           {row.discountPct.toFixed(1)}%
                         </td>
                         <td className="py-2.5 px-3 text-center">
@@ -436,23 +399,22 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Average sale price by city · pincode · platform for the
-                selected product
+                Average sale price by city · pincode · platform for the selected product
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b border-border">
-                      {["City", "Pincode", "Platform", "Avg Price"].map(
-                        (h) => (
-                          <th
-                            key={h}
-                            className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${h === "Avg Price" ? "text-right" : "text-left"}`}
-                          >
-                            {h}
-                          </th>
-                        )
-                      )}
+                      {["City", "Pincode", "Platform", "Avg Price"].map((h) => (
+                        <th
+                          key={h}
+                          className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${
+                            h === "Avg Price" ? "text-right" : "text-left"
+                          }`}
+                        >
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -462,9 +424,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
                         className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
                       >
                         <td className="py-2 px-3 text-xs">{r.city}</td>
-                        <td className="py-2 px-3 font-mono text-xs">
-                          {r.pincode}
-                        </td>
+                        <td className="py-2 px-3 font-mono text-xs">{r.pincode}</td>
                         <td className="py-2 px-3 text-xs">{r.platform}</td>
                         <td className="py-2 px-3 text-right font-mono text-xs font-medium">
                           ₹{r.avgPrice.toFixed(2)}
