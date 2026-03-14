@@ -194,12 +194,18 @@ const CompetitiveEvents = () => {
   }, [selectedEvent]);
 
   // ── Price Volatility ─────────────────────────────────────────────────────
+  const skuNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of datasets.skuMaster) map[s.sku_id] = s.product_name;
+    return map;
+  }, []);
+
   const priceVolatility = useMemo(() => {
     const priceData = getPriceData(filters);
     const skuPrices: Record<string, { prices: number[]; product_name: string; category: string }> = {};
     for (const row of priceData) {
       if (!skuPrices[row.sku_id])
-        skuPrices[row.sku_id] = { prices: [], product_name: row.product_name ?? row.sku_id, category: row.category };
+        skuPrices[row.sku_id] = { prices: [], product_name: row.product_name ?? skuNameMap[row.sku_id] ?? row.sku_id, category: row.category };
       skuPrices[row.sku_id].prices.push(row.sale_price);
     }
     return Object.entries(skuPrices)
