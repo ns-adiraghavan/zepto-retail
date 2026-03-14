@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   getEvents,
@@ -6,41 +6,48 @@ import {
   getSearchData,
   getAvailabilityData,
   GlobalFilters,
+  datasets,
+  CompetitorEvent,
 } from "@/data/dataLoader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicInsightsPanel, Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, TrendingDown, Search, ShieldAlert } from "lucide-react";
+import {
+  Activity,
+  TrendingDown,
+  Search,
+  ShieldAlert,
+  Zap,
+  AlertTriangle,
+  Minus,
+  ChevronRight,
+  X,
+  BarChart2,
+  Filter,
+} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  price_drop: "Price Drop",
-  flash_sale: "Flash Sale",
-  bundle_offer: "Bundle Offer",
-  promo_spike: "Promo Spike",
-  stockout_spike: "Stockout Spike",
-  new_sku_launch: "New SKU Launch",
-};
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-type SeverityVariant = "destructive" | "secondary" | "outline" | "default";
-
-function severityVariant(eventType: string): SeverityVariant {
-  if (["price_drop", "stockout_spike"].includes(eventType)) return "destructive";
-  if (["flash_sale", "promo_spike"].includes(eventType)) return "secondary";
-  return "outline";
-}
-function severityLabel(eventType: string): string {
-  if (["price_drop", "stockout_spike"].includes(eventType)) return "High";
-  if (["flash_sale", "promo_spike"].includes(eventType)) return "Medium";
-  return "Low";
-}
 function formatDate(dateStr: string) {
   try {
-    return new Date(dateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  } catch { return dateStr; }
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
 }
 
-/** Population standard deviation */
+function avg(arr: number[]): number {
+  if (!arr.length) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
 function stddev(values: number[]): number {
   if (values.length < 2) return 0;
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -49,44 +56,162 @@ function stddev(values: number[]): number {
 }
 
 function riskBand(ratio: number): { label: string; variant: "destructive" | "secondary" | "outline" } {
-  if (ratio < 0.80) return { label: "High Risk", variant: "destructive" };
-  if (ratio < 0.90) return { label: "Medium Risk", variant: "secondary" };
+  if (ratio < 0.8) return { label: "High Risk", variant: "destructive" };
+  if (ratio < 0.9) return { label: "Medium Risk", variant: "secondary" };
   return { label: "Stable", variant: "outline" };
 }
+
+const SEVERITY_CONFIG: Record<
+  string,
+  { variant: "destructive" | "secondary" | "outline" | "default"; color: string }
+> = {
+  Critical: { variant: "destructive", color: "hsl(var(--destructive))" },
+  High:     { variant: "default",     color: "hsl(var(--status-high))" },
+  Medium:   { variant: "secondary",   color: "hsl(var(--status-medium))" },
+  Low:      { variant: "outline",     color: "hsl(var(--muted-foreground))" },
+};
+
+const EVENT_ICONS: Record<string, React.FC<{ className?: string }>> = {
+  "Flash Sale Wave": Zap,
+  "Critical Stockout": AlertTriangle,
+};
+
+// ─── Unique values helper ─────────────────────────────────────────────────────
+function uniqueSorted(arr: string[]): string[] {
+  return Array.from(new Set(arr.filter(Boolean))).sort();
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+const PLATFORMS = ["Blinkit", "Zepto", "Swiggy Instamart", "BigBasket Now"];
 
 const CompetitiveEvents = () => {
   const filters = useOutletContext<GlobalFilters>();
 
-  // ── Section 1: Events ─────────────────────────────────────────────────────
-  const events = useMemo(
+  // ── Event filter state ───────────────────────────────────────────────────
+  const [eventPlatform, setEventPlatform]   = useState("All");
+  const [eventCity,     setEventCity]       = useState("All");
+  const [eventCategory, setEventCategory]   = useState("All");
+  const [eventSeverity, setEventSeverity]   = useState("All");
+  const [selectedEvent, setSelectedEvent]   = useState<CompetitorEvent | null>(null);
+
+  // ── All events (global filters) ──────────────────────────────────────────
+  const allEvents = useMemo(
     () => getEvents(filters).sort((a, b) => b.date.localeCompare(a.date)),
     [filters]
   );
 
-  const priceDrops = events.filter((e) => e.event_type === "price_drop").length;
-  const promos = events.filter((e) => ["flash_sale", "bundle_offer", "promo_spike"].includes(e.event_type)).length;
-  const stockouts = events.filter((e) => e.event_type === "stockout_spike").length;
+  // ── Option lists from events ─────────────────────────────────────────────
+  const eventCities      = useMemo(() => uniqueSorted(allEvents.map((e) => e.city)), [allEvents]);
+  const eventCategories  = useMemo(() => uniqueSorted(allEvents.map((e) => e.category)), [allEvents]);
+  const eventPlatforms   = useMemo(() => uniqueSorted(allEvents.map((e) => e.platform)), [allEvents]);
+  const eventSeverities  = useMemo(() => uniqueSorted(
+    allEvents.map((e) => (e as unknown as { severity?: string }).severity ?? "")
+  ), [allEvents]);
 
-  // ── Section 2: Price Volatility ───────────────────────────────────────────
+  // ── Filtered event rows ──────────────────────────────────────────────────
+  const filteredEvents = useMemo(() => {
+    return allEvents.filter((e) => {
+      const ev = e as unknown as { severity?: string };
+      if (eventPlatform !== "All" && e.platform !== eventPlatform)     return false;
+      if (eventCity     !== "All" && e.city     !== eventCity)         return false;
+      if (eventCategory !== "All" && e.category !== eventCategory)     return false;
+      if (eventSeverity !== "All" && (ev.severity ?? "") !== eventSeverity) return false;
+      return true;
+    });
+  }, [allEvents, eventPlatform, eventCity, eventCategory, eventSeverity]);
+
+  // ── KPIs ─────────────────────────────────────────────────────────────────
+  const flashSaleCount   = allEvents.filter((e) => e.event_type === "Flash Sale Wave").length;
+  const stockoutCount    = allEvents.filter((e) => e.event_type === "Critical Stockout").length;
+  const criticalCount    = allEvents.filter((e) => {
+    const ev = e as unknown as { severity?: string };
+    return ev.severity === "Critical";
+  }).length;
+
+  // ── Event Context: price market comparison ───────────────────────────────
+  const marketComparison = useMemo(() => {
+    if (!selectedEvent) return [];
+    const ev = selectedEvent as unknown as {
+      date: string; city: string; category: string; event_type: string;
+    };
+
+    const datePrefix = ev.date.slice(0, 10); // YYYY-MM-DD
+
+    if (ev.event_type === "Flash Sale Wave") {
+      // Use price_tracking
+      const rows = datasets.priceTracking.filter(
+        (r) =>
+          r.date?.slice(0, 10) === datePrefix &&
+          r.city === ev.city &&
+          r.category === ev.category
+      );
+      const byPlatform: Record<string, { promoSum: number; discSum: number; priceSum: number; count: number }> = {};
+      for (const r of rows) {
+        if (!byPlatform[r.platform]) byPlatform[r.platform] = { promoSum: 0, discSum: 0, priceSum: 0, count: 0 };
+        byPlatform[r.platform].promoSum  += r.promotion_flag;
+        byPlatform[r.platform].discSum   += r.discount_percent;
+        byPlatform[r.platform].priceSum  += r.sale_price;
+        byPlatform[r.platform].count     += 1;
+      }
+      return PLATFORMS.map((p) => {
+        const d = byPlatform[p];
+        if (!d) return { platform: p, promoRate: null, avgDiscount: null, avgPrice: null, availRate: null };
+        return {
+          platform:   p,
+          promoRate:  parseFloat(((d.promoSum / d.count) * 100).toFixed(1)),
+          avgDiscount: parseFloat((d.discSum / d.count).toFixed(1)),
+          avgPrice:   parseFloat((d.priceSum / d.count).toFixed(1)),
+          availRate:  null,
+        };
+      });
+    } else {
+      // Critical Stockout: use availability_tracking
+      const rows = datasets.availabilityTracking.filter(
+        (r) =>
+          r.date?.slice(0, 10) === datePrefix &&
+          r.city === ev.city &&
+          r.category === ev.category
+      );
+      const byPlatform: Record<string, { availSum: number; mustHaveSum: number; count: number }> = {};
+      for (const r of rows) {
+        if (!byPlatform[r.platform]) byPlatform[r.platform] = { availSum: 0, mustHaveSum: 0, count: 0 };
+        byPlatform[r.platform].availSum    += r.availability_flag;
+        byPlatform[r.platform].mustHaveSum += r.must_have_flag ?? 0;
+        byPlatform[r.platform].count       += 1;
+      }
+      return PLATFORMS.map((p) => {
+        const d = byPlatform[p];
+        if (!d) return { platform: p, promoRate: null, avgDiscount: null, avgPrice: null, availRate: null };
+        return {
+          platform:    p,
+          promoRate:   null,
+          avgDiscount: null,
+          avgPrice:    null,
+          availRate:   parseFloat(((d.availSum / d.count) * 100).toFixed(1)),
+        };
+      });
+    }
+  }, [selectedEvent]);
+
+  // ── Price Volatility ─────────────────────────────────────────────────────
   const priceVolatility = useMemo(() => {
     const priceData = getPriceData(filters);
     const skuPrices: Record<string, { prices: number[]; product_name: string; category: string }> = {};
     for (const row of priceData) {
-      if (!skuPrices[row.sku_id]) skuPrices[row.sku_id] = { prices: [], product_name: row.product_name ?? row.sku_id, category: row.category };
+      if (!skuPrices[row.sku_id])
+        skuPrices[row.sku_id] = { prices: [], product_name: row.product_name ?? row.sku_id, category: row.category };
       skuPrices[row.sku_id].prices.push(row.sale_price);
     }
     return Object.entries(skuPrices)
       .map(([sku_id, { prices, product_name, category }]) => ({
-        sku_id,
-        product_name,
-        category,
+        sku_id, product_name, category,
         price_volatility: parseFloat(stddev(prices).toFixed(2)),
       }))
       .sort((a, b) => b.price_volatility - a.price_volatility)
       .slice(0, 10);
   }, [filters]);
 
-  // ── Section 3: Search Rank Volatility ─────────────────────────────────────
+  // ── Search Rank Volatility ───────────────────────────────────────────────
   const searchVolatility = useMemo(() => {
     const searchData = getSearchData(filters);
     const kwRanks: Record<string, number[]> = {};
@@ -104,20 +229,19 @@ const CompetitiveEvents = () => {
       .slice(0, 10);
   }, [filters]);
 
-  // ── Section 4: SKU Availability Risk ─────────────────────────────────────
+  // ── SKU Availability Risk ────────────────────────────────────────────────
   const availRisk = useMemo(() => {
     const availData = getAvailabilityData(filters);
     const skuFlags: Record<string, { sum: number; count: number; product_name: string; category: string }> = {};
     for (const row of availData) {
-      if (!skuFlags[row.sku_id]) skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
+      if (!skuFlags[row.sku_id])
+        skuFlags[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
       skuFlags[row.sku_id].sum += row.availability_flag;
       skuFlags[row.sku_id].count += 1;
     }
     return Object.entries(skuFlags)
       .map(([sku_id, { sum, count, product_name, category }]) => ({
-        sku_id,
-        product_name,
-        category,
+        sku_id, product_name, category,
         availability_ratio: parseFloat((sum / count).toFixed(3)),
       }))
       .sort((a, b) => a.availability_ratio - b.availability_ratio)
@@ -127,14 +251,16 @@ const CompetitiveEvents = () => {
   // ── Strategic Insights ────────────────────────────────────────────────────
   const insights = useMemo((): Insight[] => {
     const topVolatileSku = priceVolatility[0];
-    const topVolatileKw = searchVolatility[0];
-    const highRiskCount = availRisk.filter((s) => s.availability_ratio < 0.80).length;
+    const topVolatileKw  = searchVolatility[0];
+    const highRiskCount  = availRisk.filter((s) => s.availability_ratio < 0.8).length;
     const mostFrequentEventType = Object.entries(
-      events.reduce<Record<string, number>>((acc, e) => { acc[e.event_type] = (acc[e.event_type] ?? 0) + 1; return acc; }, {})
+      allEvents.reduce<Record<string, number>>((acc, e) => {
+        acc[e.event_type] = (acc[e.event_type] ?? 0) + 1;
+        return acc;
+      }, {})
     ).sort((a, b) => b[1] - a[1])[0];
 
     const list: Insight[] = [];
-
     if (topVolatileSku) {
       list.push({
         icon: "trend-down",
@@ -147,7 +273,7 @@ const CompetitiveEvents = () => {
       list.push({
         icon: "search",
         title: "Unstable Search Keyword",
-        body: `The keyword "${topVolatileKw.keyword}" has the highest rank volatility (σ ${topVolatileKw.rank_volatility}), meaning search positions are shifting frequently and ad pressure may be intensifying.`,
+        body: `The keyword "${topVolatileKw.keyword}" has the highest rank volatility (σ ${topVolatileKw.rank_volatility}), meaning search positions are shifting frequently.`,
         type: "warning",
       });
     }
@@ -155,7 +281,7 @@ const CompetitiveEvents = () => {
       list.push({
         icon: "shield",
         title: "High-Risk SKU Availability",
-        body: `${highRiskCount} SKU${highRiskCount > 1 ? "s are" : " is"} in the High Risk band with availability below 80%, indicating frequent stockouts that competitors may be exploiting.`,
+        body: `${highRiskCount} SKU${highRiskCount > 1 ? "s are" : " is"} in the High Risk band with availability below 80%, indicating frequent stockouts.`,
         type: "critical",
       });
     }
@@ -163,22 +289,39 @@ const CompetitiveEvents = () => {
       list.push({
         icon: "zap",
         title: "Dominant Event Type",
-        body: `"${EVENT_TYPE_LABELS[mostFrequentEventType[0]] ?? mostFrequentEventType[0]}" is the most frequently detected competitive event (${mostFrequentEventType[1]} occurrences), indicating the primary area of market pressure.`,
+        body: `"${mostFrequentEventType[0]}" is the most frequently detected competitive event (${mostFrequentEventType[1]} occurrences).`,
         type: "neutral",
       });
     }
     return list;
-  }, [priceVolatility, searchVolatility, availRisk, events]);
+  }, [priceVolatility, searchVolatility, availRisk, allEvents]);
 
   const kpis = [
-    { title: "Events Detected", value: events.length.toString(), trend: "neutral" as const, tooltip: "Total competitive events in the filtered dataset" },
-    { title: "Price Drop Alerts", value: priceDrops.toString(), trend: priceDrops > 0 ? "down" as const : "neutral" as const, status: priceDrops > 2 ? "high" as const : "low" as const, tooltip: "Events where a competitor reduced prices" },
-    { title: "Promotion Alerts", value: promos.toString(), trend: promos > 0 ? "up" as const : "neutral" as const, status: promos > 3 ? "medium" as const : "low" as const, tooltip: "Flash sales, bundle offers, and promotional spikes" },
-    { title: "Stockout Alerts", value: stockouts.toString(), trend: stockouts > 0 ? "down" as const : "neutral" as const, status: stockouts > 1 ? "high" as const : "low" as const, tooltip: "Stockout spike events detected" },
+    { title: "Events Detected",   value: allEvents.length.toString(),   trend: "neutral" as const, tooltip: "Total competitive events in the filtered dataset" },
+    { title: "Flash Sale Waves",  value: flashSaleCount.toString(),     trend: flashSaleCount > 0 ? "up" as const : "neutral" as const,   status: flashSaleCount > 3  ? "medium" as const : "low" as const, tooltip: "Flash Sale Wave events detected" },
+    { title: "Critical Stockouts",value: stockoutCount.toString(),      trend: stockoutCount > 0 ? "down" as const : "neutral" as const,  status: stockoutCount > 2   ? "high"   as const : "low" as const, tooltip: "Critical Stockout events detected" },
+    { title: "Critical Severity", value: criticalCount.toString(),      trend: criticalCount > 0 ? "down" as const : "neutral" as const,  status: criticalCount > 0   ? "high"   as const : "low" as const, tooltip: "Events flagged as Critical severity" },
   ];
 
   const maxVolatility = priceVolatility[0]?.price_volatility ?? 1;
-  const maxRankVol = searchVolatility[0]?.rank_volatility ?? 1;
+  const maxRankVol    = searchVolatility[0]?.rank_volatility  ?? 1;
+
+  const selEv = selectedEvent as unknown as (CompetitorEvent & {
+    severity?: string; market_scope?: string;
+    platform_promo_share?: number | null; market_avg_promo?: number | null;
+  }) | null;
+
+  const isFlashSale   = selEv?.event_type === "Flash Sale Wave";
+  const isStockout    = selEv?.event_type === "Critical Stockout";
+
+  // Promotion intensity indicator
+  const promoIntensity = (() => {
+    if (!selEv || selEv.platform_promo_share == null || selEv.market_avg_promo == null) return null;
+    const delta = selEv.platform_promo_share - selEv.market_avg_promo;
+    if (delta > 0.05) return "above";
+    if (delta < -0.05) return "below";
+    return "inline";
+  })();
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -188,9 +331,9 @@ const CompetitiveEvents = () => {
           <Activity className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Competitive Risk & Volatility Center</h1>
+          <h1 className="text-xl font-bold">Competitive Risk &amp; Event Intelligence</h1>
           <p className="text-sm text-muted-foreground">
-            Event monitoring, price & rank volatility, and SKU availability risk across platforms
+            Click any event to explore triggers, market context, and competitor activity
           </p>
         </div>
       </div>
@@ -206,63 +349,368 @@ const CompetitiveEvents = () => {
       {/* Strategic Insights */}
       <StrategicInsightsPanel insights={insights} />
 
-      {/* ── Section 1: Event Feed ─────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          EVENT INTELLIGENCE PANEL
+      ══════════════════════════════════════════════════════════════════════════ */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Event Feed</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Event Intelligence</h2>
         </div>
+
+        {/* ── 1. Event Filters ─────────────────────────────────────────────── */}
         <Card className="bg-gradient-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Live Event Feed</CardTitle>
-            <CardDescription>
-              {events.length} event{events.length !== 1 ? "s" : ""} · sorted by newest
-              {filters.city !== "All Cities" ? ` · ${filters.city}` : ""}
-              {filters.platform !== "All Platforms" ? ` · ${filters.platform}` : ""}
-            </CardDescription>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle className="text-base">Event Summary Table</CardTitle>
+                <CardDescription>
+                  {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""} · click a row to explore intelligence
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                {/* Platform */}
+                <Select value={eventPlatform} onValueChange={setEventPlatform}>
+                  <SelectTrigger className="h-8 text-xs w-36">
+                    <SelectValue placeholder="Platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Platforms</SelectItem>
+                    {eventPlatforms.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {/* City */}
+                <Select value={eventCity} onValueChange={setEventCity}>
+                  <SelectTrigger className="h-8 text-xs w-32">
+                    <SelectValue placeholder="City" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Cities</SelectItem>
+                    {eventCities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {/* Category */}
+                <Select value={eventCategory} onValueChange={setEventCategory}>
+                  <SelectTrigger className="h-8 text-xs w-44">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Categories</SelectItem>
+                    {eventCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {/* Severity */}
+                <Select value={eventSeverity} onValueChange={setEventSeverity}>
+                  <SelectTrigger className="h-8 text-xs w-28">
+                    <SelectValue placeholder="Severity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Severity</SelectItem>
+                    {eventSeverities.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            {events.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No events found for the selected filters.</p>
+          <CardContent className="pt-0">
+            {filteredEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No events match the selected filters.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left">
-                      {["Date", "Platform", "City", "Category", "Event Type", "Severity", "Description"].map((h) => (
-                        <th key={h} className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap">{h}</th>
+                      {["Date", "Platform", "City", "Category", "Event Type", "Severity", ""].map((h, i) => (
+                        <th key={i} className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap last:pr-0">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {events.map((e, i) => (
-                      <tr key={e.event_id ?? i} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
-                        <td className="py-2 pr-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{formatDate(e.date)}</td>
-                        <td className="py-2 pr-4 font-medium">{e.platform}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">{e.city}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">{e.category}</td>
-                        <td className="py-2 pr-4">
-                          <Badge variant="outline" className="text-xs whitespace-nowrap">
-                            {EVENT_TYPE_LABELS[e.event_type] ?? e.event_type}
-                          </Badge>
-                        </td>
-                        <td className="py-2 pr-4">
-                          <Badge variant={severityVariant(e.event_type)} className="text-xs">
-                            {severityLabel(e.event_type)}
-                          </Badge>
-                        </td>
-                        <td className="py-2 text-muted-foreground text-xs max-w-xs">{e.description}</td>
-                      </tr>
-                    ))}
+                    {filteredEvents.map((e, i) => {
+                      const ev = e as unknown as CompetitorEvent & { severity?: string };
+                      const sevCfg = SEVERITY_CONFIG[ev.severity ?? "Low"] ?? SEVERITY_CONFIG["Low"];
+                      const EventIcon = EVENT_ICONS[e.event_type] ?? Activity;
+                      const isSelected = selectedEvent === e;
+                      return (
+                        <tr
+                          key={e.event_id ?? i}
+                          onClick={() => setSelectedEvent(isSelected ? null : e)}
+                          className={`border-b border-border/50 last:border-0 cursor-pointer transition-colors ${
+                            isSelected ? "bg-primary/8 ring-1 ring-inset ring-primary/20" : "hover:bg-muted/20"
+                          }`}
+                        >
+                          <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDate(e.date)}
+                          </td>
+                          <td className="py-2.5 pr-4 font-medium">{e.platform}</td>
+                          <td className="py-2.5 pr-4 text-muted-foreground">{e.city}</td>
+                          <td className="py-2.5 pr-4 text-muted-foreground text-xs max-w-[140px] truncate">{e.category}</td>
+                          <td className="py-2.5 pr-4">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                              <EventIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+                              {e.event_type}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-4">
+                            <Badge variant={sevCfg.variant} className="text-xs">
+                              {ev.severity ?? "Low"}
+                            </Badge>
+                          </td>
+                          <td className="py-2.5 text-right">
+                            <ChevronRight
+                              className={`h-4 w-4 transition-transform ${
+                                isSelected ? "rotate-90 text-primary" : "text-muted-foreground"
+                              }`}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* ── 2 + 3. Event Context + Market Comparison (when row selected) ─── */}
+        {selEv && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+
+            {/* Event Context Panel */}
+            <Card className="bg-gradient-card border-primary/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {isFlashSale
+                      ? <Zap className="h-4 w-4 text-primary shrink-0" />
+                      : <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                    }
+                    <CardTitle className="text-base leading-snug">Event Context</CardTitle>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 -mt-1 -mr-1"
+                    onClick={() => setSelectedEvent(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <CardDescription className="text-xs mt-1">{selEv.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Key fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Platform",    value: selEv.platform },
+                    { label: "City",        value: selEv.city },
+                    { label: "Category",    value: selEv.category },
+                    { label: "Date",        value: formatDate(selEv.date) },
+                    { label: "Market Scope", value: selEv.market_scope
+                        ? selEv.market_scope.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                        : "—" },
+                    { label: "Severity",   value: selEv.severity ?? "Low" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className="text-sm font-medium">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Flash Sale: promo share metrics */}
+                {isFlashSale && selEv.platform_promo_share != null && selEv.market_avg_promo != null && (
+                  <div className="border border-border/60 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Promotion Intensity</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Platform Promo Share</p>
+                        <p className="text-lg font-bold">
+                          {(selEv.platform_promo_share * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Market Average</p>
+                        <p className="text-lg font-bold text-muted-foreground">
+                          {(selEv.market_avg_promo * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                    </div>
+                    {/* Bar comparison */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs w-20 text-muted-foreground shrink-0">{selEv.platform}</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.min(selEv.platform_promo_share * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono w-9 text-right">{(selEv.platform_promo_share * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs w-20 text-muted-foreground shrink-0">Market avg</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-muted-foreground/50"
+                            style={{ width: `${Math.min(selEv.market_avg_promo * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono w-9 text-right">{(selEv.market_avg_promo * 100).toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    {/* Indicator */}
+                    {promoIntensity && (
+                      <div className={`flex items-center gap-1.5 text-xs font-semibold mt-1 ${
+                        promoIntensity === "above" ? "text-destructive" :
+                        promoIntensity === "below" ? "text-green-600" : "text-muted-foreground"
+                      }`}>
+                        {promoIntensity === "above" ? <TrendingDown className="h-3.5 w-3.5" /> :
+                         promoIntensity === "below" ? <TrendingDown className="h-3.5 w-3.5 rotate-180" /> :
+                         <Minus className="h-3.5 w-3.5" />}
+                        {promoIntensity === "above" ? "Promotion intensity above market baseline" :
+                         promoIntensity === "below" ? "Promotion intensity below market baseline" :
+                         "Promotion inline with market"}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Stockout: must-have indicator */}
+                {isStockout && (
+                  <div className="border border-destructive/30 rounded-lg p-3 bg-destructive/5">
+                    <div className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <p className="text-sm font-semibold">Must-have SKU availability drop detected</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {selEv.market_scope === "stockout_cluster"
+                        ? "Stockout cluster detected across the city — this may indicate a supply chain disruption or demand surge."
+                        : "Isolated stockout event — monitor for escalation."}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Market Comparison Panel */}
+            <Card className="bg-gradient-card border-primary/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart2 className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Market Comparison on Event Date</CardTitle>
+                </div>
+                <CardDescription className="text-xs">
+                  {selEv.city} · {selEv.category} · {formatDate(selEv.date)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isFlashSale ? (
+                  /* Flash Sale: promo / discount / price table */
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left">
+                          <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
+                          <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Promo Rate</th>
+                          <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Avg Discount</th>
+                          <th className="py-2 font-medium text-muted-foreground text-right">Avg Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {marketComparison.map((row) => {
+                          const isEventPlatform = row.platform === selEv.platform;
+                          return (
+                            <tr
+                              key={row.platform}
+                              className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-primary/5 font-semibold" : ""}`}
+                            >
+                              <td className="py-2.5 pr-4">
+                                <span className="flex items-center gap-1.5">
+                                  {isEventPlatform && <Zap className="h-3 w-3 text-primary shrink-0" />}
+                                  <span className={isEventPlatform ? "text-primary" : ""}>{row.platform}</span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 pr-4 text-right font-mono text-xs">
+                                {row.promoRate != null ? (
+                                  <span className={row.promoRate > 20 ? "text-destructive font-bold" : ""}>
+                                    {row.promoRate}%
+                                  </span>
+                                ) : <span className="text-muted-foreground">—</span>}
+                              </td>
+                              <td className="py-2.5 pr-4 text-right font-mono text-xs">
+                                {row.avgDiscount != null ? `${row.avgDiscount}%` : <span className="text-muted-foreground">—</span>}
+                              </td>
+                              <td className="py-2.5 text-right font-mono text-xs">
+                                {row.avgPrice != null ? `₹${row.avgPrice}` : <span className="text-muted-foreground">—</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {marketComparison.every((r) => r.promoRate == null) && (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        No price tracking data found for this exact date, city, and category combination.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  /* Stockout: availability table */
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left">
+                          <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
+                          <th className="py-2 font-medium text-muted-foreground text-right">Availability Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {marketComparison.map((row) => {
+                          const isEventPlatform = row.platform === selEv.platform;
+                          const band = row.availRate != null ? riskBand(row.availRate / 100) : null;
+                          return (
+                            <tr
+                              key={row.platform}
+                              className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-destructive/5 font-semibold" : ""}`}
+                            >
+                              <td className="py-2.5 pr-4">
+                                <span className="flex items-center gap-1.5">
+                                  {isEventPlatform && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                                  <span className={isEventPlatform ? "text-destructive" : ""}>{row.platform}</span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-right">
+                                {row.availRate != null ? (
+                                  <span className="inline-flex items-center gap-2 justify-end">
+                                    <span className="font-mono text-xs">{row.availRate}%</span>
+                                    {band && <Badge variant={band.variant} className="text-xs py-0 h-5">{band.label}</Badge>}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {marketComparison.every((r) => r.availRate == null) && (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        No availability data found for this exact date, city, and category combination.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </section>
 
-      {/* ── Section 2: Price Volatility ───────────────────────────────────── */}
+      {/* ─── Price Volatility Monitor ─────────────────────────────────────── */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
           <TrendingDown className="h-4 w-4 text-primary" />
@@ -309,7 +757,7 @@ const CompetitiveEvents = () => {
         </Card>
       </section>
 
-      {/* ── Section 3: Search Rank Volatility ─────────────────────────────── */}
+      {/* ─── Search Rank Volatility ───────────────────────────────────────── */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-primary" />
@@ -318,7 +766,7 @@ const CompetitiveEvents = () => {
         <Card className="bg-gradient-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Top 10 Keywords by Rank Volatility</CardTitle>
-            <CardDescription>Standard deviation of search rank across observations — high values mean unstable positioning</CardDescription>
+            <CardDescription>Standard deviation of search rank — high values mean unstable positioning</CardDescription>
           </CardHeader>
           <CardContent>
             {searchVolatility.length === 0 ? (
@@ -361,7 +809,7 @@ const CompetitiveEvents = () => {
         </Card>
       </section>
 
-      {/* ── Section 4: SKU Availability Risk ─────────────────────────────── */}
+      {/* ─── SKU Availability Risk ────────────────────────────────────────── */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-primary" />
@@ -374,7 +822,7 @@ const CompetitiveEvents = () => {
           </CardHeader>
           <CardContent>
             {availRisk.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No availability data available for selected filters.</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">No availability data for selected filters.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -403,9 +851,9 @@ const CompetitiveEvents = () => {
                                   style={{
                                     width: `${row.availability_ratio * 100}%`,
                                     backgroundColor:
-                                      row.availability_ratio < 0.80
+                                      row.availability_ratio < 0.8
                                         ? "hsl(var(--status-high))"
-                                        : row.availability_ratio < 0.90
+                                        : row.availability_ratio < 0.9
                                         ? "hsl(var(--status-medium))"
                                         : "hsl(var(--status-low))",
                                   }}
