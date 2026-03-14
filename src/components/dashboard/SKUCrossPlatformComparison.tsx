@@ -27,9 +27,9 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
-/** Display label for a SKU: "Brand · product_name" */
-function skuLabel(s: { brand: string; product_name: string }) {
-  return `${s.brand} · ${s.product_name}`;
+/** Resolve product name from skuMaster; fall back to "Unknown Product" */
+function resolveProductName(s: { product_name?: string } | null | undefined): string {
+  return s?.product_name || "Unknown Product";
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
