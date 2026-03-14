@@ -201,6 +201,65 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       .sort((a, b) => a.city.localeCompare(b.city) || a.pincode.localeCompare(b.pincode));
   }, [selectedSkuId, filters]);
 
+  // ── Promotion Benchmark rows ──────────────────────────────────────────────
+  const promotionBenchmarkRows = useMemo(() => {
+    if (!selectedSkuId || !selectedCategory) return [];
+
+    const baseFilters: Partial<GlobalFilters> = {
+      city: filters.city,
+      pincode: filters.pincode,
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+    };
+
+    const allFiltered = applyFilters(datasets.priceTracking, baseFilters).filter(
+      (r) => r.category === selectedCategory
+    );
+    const skuFiltered = allFiltered.filter((r) => r.sku_id === selectedSkuId);
+
+    return PLATFORMS.map((platform) => {
+      const catRows = allFiltered.filter((r) => r.platform === platform);
+      const skuRows = skuFiltered.filter((r) => r.platform === platform);
+
+      if (catRows.length === 0 && skuRows.length === 0) return null;
+
+      const catPromoRate = avg(catRows.map((r) => r.promotion_flag)) * 100;
+      const catAvgDiscount = avg(catRows.map((r) => r.discount_percent));
+      const skuPromoRate = avg(skuRows.map((r) => r.promotion_flag)) * 100;
+      const skuDiscount = avg(skuRows.map((r) => r.discount_percent));
+
+      const hasSkuData = skuRows.length > 0;
+      const indicator: "above" | "below" | "equal" | "no-data" = !hasSkuData
+        ? "no-data"
+        : skuPromoRate > catPromoRate + 2
+        ? "above"
+        : skuPromoRate < catPromoRate - 2
+        ? "below"
+        : "equal";
+
+      return { platform, catPromoRate, catAvgDiscount, skuPromoRate, skuDiscount, indicator, hasSkuData };
+    }).filter(Boolean) as {
+      platform: string;
+      catPromoRate: number;
+      catAvgDiscount: number;
+      skuPromoRate: number;
+      skuDiscount: number;
+      indicator: "above" | "below" | "equal" | "no-data";
+      hasSkuData: boolean;
+    }[];
+  }, [selectedSkuId, selectedCategory, filters]);
+
+  // Overall benchmark signal (majority vote across platforms)
+  const overallBenchmark = useMemo(() => {
+    const rows = promotionBenchmarkRows.filter((r) => r.indicator !== "no-data");
+    if (rows.length === 0) return null;
+    const above = rows.filter((r) => r.indicator === "above").length;
+    const below = rows.filter((r) => r.indicator === "below").length;
+    if (above > below) return "above";
+    if (below > above) return "below";
+    return "equal";
+  }, [promotionBenchmarkRows]);
+
   const hasActiveFilters =
     (filters.city && filters.city !== "All Cities") ||
     (filters.pincode && filters.pincode !== "All Pincodes");
