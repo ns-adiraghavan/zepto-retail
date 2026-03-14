@@ -238,6 +238,8 @@ const SearchShelfVisibility = () => {
           </CardContent>
         </Card>
       </section>
+
+      <CompetitiveSearchAdvantage filters={filters} />
     </div>
   );
 };
