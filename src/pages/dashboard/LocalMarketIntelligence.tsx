@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
+import { SKUCrossPlatformComparison } from "@/components/dashboard/SKUCrossPlatformComparison";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
@@ -22,7 +23,7 @@ function avg(arr: number[]) {
 const LocalMarketIntelligence = () => {
   // City filter intentionally not applied — this module compares cities
   // Only platform, pincode, category, and date filters are respected
-  const { platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
+  const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
 
   const cityScores = useMemo(() =>
     CITIES.map((city) => {
@@ -201,6 +202,8 @@ const LocalMarketIntelligence = () => {
           </CardContent>
         </Card>
       </section>
+
+      <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} />
     </div>
   );
 };
