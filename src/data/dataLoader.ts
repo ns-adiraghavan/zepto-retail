@@ -148,6 +148,21 @@ export function getUniquePincodes(): string[] {
   return Array.from(s).sort();
 }
 
+/** Returns a map of pincode → city for display purposes */
+export function getPincodeCityMap(): Record<string, string> {
+  const map: Record<string, string> = {};
+  const sources = [
+    ...datasets.priceTracking,
+    ...datasets.availabilityTracking,
+    ...datasets.searchRankTracking,
+    ...datasets.assortmentTracking,
+  ] as Array<{ pincode?: string; city?: string }>;
+  for (const r of sources) {
+    if (r.pincode && r.city && !map[r.pincode]) map[r.pincode] = r.city;
+  }
+  return map;
+}
+
 export function getUniqueCategories(): string[] {
   const s = new Set<string>();
   for (const r of datasets.priceTracking)        s.add(r.category);
