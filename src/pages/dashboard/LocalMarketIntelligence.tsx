@@ -130,7 +130,7 @@ const LocalMarketIntelligence = () => {
   const highestVarianceCity = [...cityScores].sort((a, b) => b.priceVariance - a.priceVariance)[0];
 
   const kpis = [
-    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Composite score (0–100) averaging SKU Availability Rate, search visibility, and inverse discount intensity across all cities." },
+    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Weighted score (0–100) = 35% Promotion Share + 25% Avg Discount Depth + 20% Top-10 Presence + 20% SKU Availability Rate." },
     { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest Market Competition Index score." },
     { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest Market Competition Index score." },
     { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Standard deviation of avg sale prices across pincodes. Higher values indicate inconsistent pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
