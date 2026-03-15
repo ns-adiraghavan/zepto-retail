@@ -94,11 +94,11 @@ const SearchShelfVisibility = () => {
       })()}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Visibility (Top-10 Presence)</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top-10 Presence by Platform</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>Top-10 Search Presence by Platform</CardTitle>
-            <CardDescription>% of search observations where the platform appeared in the top 10 results</CardDescription>
+            <CardTitle>Top-10 Presence by Platform</CardTitle>
+            <CardDescription>% of search observations where the platform appeared in the first 10 results</CardDescription>
           </CardHeader>
           <CardContent>
             {top10Presence.length === 0 ? (
