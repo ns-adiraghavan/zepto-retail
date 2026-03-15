@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { GlobalFilters } from "@/data/dataLoader";
 import { buildDataContext, buildPageContext } from "@/hooks/useCopilotData";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface Message {
   id: string;
