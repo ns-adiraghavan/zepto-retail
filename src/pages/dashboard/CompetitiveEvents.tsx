@@ -345,7 +345,7 @@ const CompetitiveEvents = () => {
         </div>
       </div>
 
-      <PageControlBar exportLabel="competitor_events" exportData={events as unknown as Record<string, unknown>[]} />
+      <PageControlBar exportLabel="competitor_events" exportData={allEvents as unknown as Record<string, unknown>[]} />
 
       {/* KPI Summary */}
       <section className="space-y-2">
