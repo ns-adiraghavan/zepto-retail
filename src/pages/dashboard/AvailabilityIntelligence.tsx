@@ -81,10 +81,10 @@ const AvailabilityIntelligence = () => {
     highestPlatform && lowestPlatform ? highestPlatform.rate - lowestPlatform.rate : 0;
 
   const kpis = [
-    { title: "Avg Availability Rate", value: `${avgAvailability.toFixed(1)}%`, change: 0.4, trend: "up" as const, tooltip: "Average share of time a SKU remains in stock, computed across all tracked platforms and categories." },
-    { title: "Best Platform", value: highestPlatform ? highestPlatform.platform : "—", change: highestPlatform ? highestPlatform.rate : undefined, trend: "up" as const, tooltip: "Platform with the highest average availability rate." },
-    { title: "Lowest Platform", value: lowestPlatform ? lowestPlatform.platform : "—", change: lowestPlatform ? lowestPlatform.rate : undefined, trend: "down" as const, tooltip: "Platform with the lowest average availability rate." },
-    { title: "Availability Gap", value: `${availabilityGap.toFixed(1)}%`, change: availabilityGap, trend: availabilityGap > 5 ? ("down" as const) : ("up" as const), tooltip: "Difference between highest and lowest availability rate among platforms." },
+    { title: "SKU Availability Rate", value: `${avgAvailability.toFixed(1)}%`, change: 0.4, trend: "up" as const, tooltip: "SKU Availability Rate: % of tracked SKU observations where the product was in stock, averaged across all platforms and categories." },
+    { title: "Best Platform", value: highestPlatform ? highestPlatform.platform : "—", change: highestPlatform ? highestPlatform.rate : undefined, trend: "up" as const, tooltip: "Platform with the highest average SKU Availability Rate." },
+    { title: "Lowest Platform", value: lowestPlatform ? lowestPlatform.platform : "—", change: lowestPlatform ? lowestPlatform.rate : undefined, trend: "down" as const, tooltip: "Platform with the lowest average SKU Availability Rate." },
+    { title: "Availability Gap", value: `${availabilityGap.toFixed(1)}%`, change: availabilityGap, trend: availabilityGap > 5 ? ("down" as const) : ("up" as const), tooltip: "Difference in SKU Availability Rate between the best and worst-performing platforms." },
   ];
 
   const barColor = (rate: number) =>

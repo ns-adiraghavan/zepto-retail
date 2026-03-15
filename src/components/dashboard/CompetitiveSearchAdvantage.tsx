@@ -320,7 +320,7 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span>Sponsored: <strong className="text-foreground">{row.sponsoredShare.toFixed(1)}%</strong></span>
-                  <span>Elite Share: <strong className="text-foreground">{row.eliteShare.toFixed(1)}%</strong></span>
+                  <span>Top-3 Search Share: <strong className="text-foreground">{row.eliteShare.toFixed(1)}%</strong></span>
                 </div>
                 <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
                   <div className="bg-status-high h-full transition-all" style={{ width: `${Math.min(row.sponsoredShare, 100)}%` }} />
