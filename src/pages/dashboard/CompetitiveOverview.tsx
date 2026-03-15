@@ -23,9 +23,6 @@ import {
   getAssortmentData,
 } from "@/data/dataLoader";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
@@ -125,31 +122,6 @@ const CompetitiveOverview = () => {
     });
   }, [priceGapByPlatform, availByPlatform, searchByPlatform, assortByPlatform]);
 
-  const avgPriceGap = useMemo(() => {
-    type SkuCityKey = string;
-    const zeptoPrices: Record<SkuCityKey, number[]> = {};
-    const compPrices: Record<SkuCityKey, number[]> = {};
-    for (const row of priceData) {
-      const key = `${row.sku_id}__${row.city ?? ""}`;
-      if (row.platform === "Zepto") {
-        if (!zeptoPrices[key]) zeptoPrices[key] = [];
-        zeptoPrices[key].push(row.sale_price);
-      } else {
-        if (!compPrices[key]) compPrices[key] = [];
-        compPrices[key].push(row.sale_price);
-      }
-    }
-    let gapSum = 0, gapCount = 0;
-    for (const key of Object.keys(zeptoPrices)) {
-      if (!compPrices[key] || compPrices[key].length === 0) continue;
-      const zeptoAvg = zeptoPrices[key].reduce((a, b) => a + b, 0) / zeptoPrices[key].length;
-      const compAvg = compPrices[key].reduce((a, b) => a + b, 0) / compPrices[key].length;
-      if (zeptoAvg === 0) continue;
-      gapSum += ((compAvg - zeptoAvg) / zeptoAvg) * 100;
-      gapCount++;
-    }
-    return gapCount > 0 ? gapSum / gapCount : 0;
-  }, [priceData]);
 
   const avgAvailabilityRate = useMemo(() => {
     const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
@@ -175,13 +147,6 @@ const CompetitiveOverview = () => {
 
   const liveKPIs = [
     {
-      title: "Avg Price Gap vs Competitors",
-      value: `${avgPriceGap >= 0 ? "+" : ""}${avgPriceGap.toFixed(1)}%`,
-      trend: avgPriceGap > 2 ? ("down" as const) : avgPriceGap < -2 ? ("up" as const) : ("neutral" as const),
-      status: Math.abs(avgPriceGap) > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Average % difference between Zepto prices and competitor prices across tracked SKUs. Positive = Zepto is priced higher.",
-    },
-    {
       title: "Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
@@ -203,12 +168,6 @@ const CompetitiveOverview = () => {
       tooltip: "Distinct SKUs listed across tracked categories (listing_status = 1).",
     },
   ];
-
-  const scoreColor = (score: number) => {
-    if (score >= 70) return "bg-status-low";
-    if (score >= 50) return "bg-status-medium";
-    return "bg-status-high";
-  };
 
   const heatmapData = useMemo(() => {
     const catPlatAvg: Record<string, Record<string, { sum: number; count: number }>> = {};

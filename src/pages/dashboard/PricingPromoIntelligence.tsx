@@ -30,7 +30,6 @@ const PricingPromoIntelligence = () => {
       : 0;
 
   const promoCount = priceData.filter((r) => r.promotion_flag === 1).length;
-  const promoRate = priceData.length > 0 ? (promoCount / priceData.length) * 100 : 0;
 
   // ── Promotion Activity by Platform ────────────────────────────────────────
   const promoByPlatformRaw: Record<string, { sum: number; count: number }> = {};
@@ -52,12 +51,6 @@ const PricingPromoIntelligence = () => {
       value: `${avgDiscount.toFixed(1)}%`,
       trend: "neutral" as const,
       tooltip: "Mean discount percentage across all SKUs with active promotions.",
-    },
-    {
-      title: "Promotion Intensity",
-      value: `${promoRate.toFixed(1)}%`,
-      trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Share of SKU observations currently running a promotion.",
     },
     {
       title: "SKUs Under Promotion",
