@@ -98,7 +98,7 @@ const LocalMarketIntelligence = () => {
     { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Weighted score (0–100) = 35% Promotion Share + 25% Avg Discount Depth + 20% Top-10 Presence + 20% SKU Availability Rate." },
     { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest Market Competition Index score." },
     { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest Market Competition Index score." },
-    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Standard deviation of avg sale prices across pincodes. Higher values indicate inconsistent pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
+    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Std-dev of avg sale prices across SKU-platform groups within a city. Higher values indicate inconsistent local pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
   ];
 
   const cityChartData = cityScores.map((c) => ({
@@ -120,13 +120,13 @@ const LocalMarketIntelligence = () => {
 
   const insights: Insight[] = [
     topCity
-      ? { icon: "pin", title: "Most Competitive City", body: `${topCity.city} leads with a composite score of ${topCity.score}/100, driven by strong availability (${topCity.availability.toFixed(0)}%) and search visibility across its platform-pincode clusters.`, type: "positive" }
+      ? { icon: "pin", title: "Most Competitive City", body: `${topCity.city} leads with a Market Competition Index of ${topCity.score}/100 — driven by promo intensity (${topCity.promoRate.toFixed(1)}%), avg discount (${topCity.discount.toFixed(1)}%), and ${topCity.availability.toFixed(0)}% SKU availability.`, type: "positive" }
       : { icon: "pin", title: "Most Competitive City", body: "No city data available.", type: "neutral" },
     highestVarianceCity
-      ? { icon: "tag", title: "Hyperlocal Price Hotspot", body: `${highestVarianceCity.city} shows the highest hyperlocal price variation (₹${highestVarianceCity.priceVariance} std-dev), indicating significant price inconsistency across its pincodes.`, type: highestVarianceCity.priceVariance > 5 ? "warning" : "neutral" }
+      ? { icon: "tag", title: "Hyperlocal Price Hotspot", body: `${highestVarianceCity.city} shows the highest price dispersion (₹${highestVarianceCity.priceVariance} std-dev across SKU-platform groups), indicating uneven local pricing that may signal differential trade terms.`, type: highestVarianceCity.priceVariance > 5 ? "warning" : "neutral" }
       : { icon: "tag", title: "Hyperlocal Price Hotspot", body: "No variance data available.", type: "neutral" },
     lowestAvailCity
-      ? { icon: "trend-down", title: "Regional Availability Gap", body: `${lowestAvailCity.city} has the lowest two-stage availability rate at ${lowestAvailCity.availability.toFixed(1)}%, suggesting elevated stockout risk across its platform-pincode combinations.`, type: lowestAvailCity.availability < 80 ? "critical" : "warning" }
+      ? { icon: "trend-down", title: "Regional Availability Gap", body: `${lowestAvailCity.city} has the lowest SKU Availability Rate at ${lowestAvailCity.availability.toFixed(1)}%, suggesting elevated stockout risk vs the ${avgScore.toFixed(1)} avg across all cities.`, type: lowestAvailCity.availability < 80 ? "critical" : "warning" }
       : { icon: "trend-down", title: "Regional Availability Gap", body: "No availability data available.", type: "neutral" },
     highPromoCity
       ? { icon: "tag", title: "Highest Promo Intensity", body: `${highPromoCity.city} has the most promotional activity at ${highPromoCity.promoRate.toFixed(1)}% promo rate — monitor for margin pressure.`, type: "warning" }
