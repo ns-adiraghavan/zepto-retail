@@ -25,6 +25,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
 const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
 
