@@ -59,25 +59,27 @@ const LocalMarketIntelligence = () => {
       const availability = avg(availRows.map((r) => r.availability_flag * 100));
       const search      = avg(searchRows.map((r) => (r.top10_flag ?? (r.search_rank <= 10 ? 1 : 0)) * 100));
 
-      // ── Hyperlocal price variance: stddev of per-pincode avg sale prices ──
-      // Step 1: group city rows by pincode
-      // Step 2: avg sale_price per pincode
-      // Step 3: stddev of those averages
-      const byPincode: Record<string, number[]> = {};
+      // ── Hyperlocal price variance: stddev of avg sale price per (sku × platform) ──
+      // Groups all city rows by SKU-platform pairs (each a unique "local market point"),
+      // computes avg sale_price per group, then takes population stddev of those averages.
+      // Falls back to per-pincode grouping when pincode data is present.
+      const priceBuckets: Record<string, number[]> = {};
       for (const row of priceRows) {
-        const key = String(row.pincode ?? "unknown");
-        if (!byPincode[key]) byPincode[key] = [];
-        byPincode[key].push(row.sale_price);
+        // Use pincode if available, otherwise sku_id × platform as a geographic proxy
+        const key = row.pincode
+          ? String(row.pincode)
+          : `${row.sku_id}||${row.platform}`;
+        if (!priceBuckets[key]) priceBuckets[key] = [];
+        priceBuckets[key].push(row.sale_price);
       }
-      const pincodeAvgs = Object.values(byPincode).map((vals) => avg(vals));
-      const priceVariance = parseFloat(stddev(pincodeAvgs).toFixed(2));
+      const bucketAvgs = Object.values(priceBuckets).map((vals) => avg(vals));
+      const priceVariance = parseFloat(stddev(bucketAvgs).toFixed(2));
 
       // ── Market Competition Index (weighted, all inputs 0–100) ─────────────
-      const score = Math.round(
-        0.35 * promoRate +
-        0.25 * discount +
-        0.20 * search +
-        0.20 * availability
+      // Keep full precision (1 decimal) so cities with similar but non-identical
+      // data still show distinguishable scores.
+      const score = parseFloat(
+        (0.35 * promoRate + 0.25 * discount + 0.20 * search + 0.20 * availability).toFixed(1)
       );
 
       return { city: c, availability, discount, promoRate, search, priceVariance, score };
