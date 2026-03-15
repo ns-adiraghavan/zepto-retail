@@ -31,10 +31,10 @@ const SearchShelfVisibility = () => {
   const keywordCount = new Set(searchData.map((r) => r.keyword)).size;
 
   const kpis = [
-    { title: "Average Rank", value: avgRank.toFixed(1), trend: "neutral" as const, tooltip: "Average product search rank across tracked keywords" },
-    { title: "Page-1 Presence", value: `${pageOneShare.toFixed(1)}%`, trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const), tooltip: "Percentage of search results where a product appears in the top 10 positions." },
-    { title: "Keywords Tracked", value: keywordCount.toLocaleString(), trend: "neutral" as const, tooltip: "Unique keywords monitored in the filtered dataset" },
-    { title: "Search Observations", value: searchData.length.toLocaleString(), trend: "neutral" as const, tooltip: "Total captured search ranking observations" },
+    { title: "Avg Search Rank", value: avgRank.toFixed(1), trend: "neutral" as const, tooltip: "Avg Search Rank: Mean position across all tracked keywords and platforms. Lower is better." },
+    { title: "Top-10 Presence", value: `${pageOneShare.toFixed(1)}%`, trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const), tooltip: "Top-10 Presence: % of search observations where the platform appears in the first 10 results." },
+    { title: "Keywords Tracked", value: keywordCount.toLocaleString(), trend: "neutral" as const, tooltip: "Unique keywords monitored in the filtered dataset." },
+    { title: "Search Observations", value: searchData.length.toLocaleString(), trend: "neutral" as const, tooltip: "Total captured search ranking observations in the selected period." },
   ];
 
   // ── Rank distribution ────────────────────────────────────────────────────
