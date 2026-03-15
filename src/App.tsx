@@ -14,6 +14,7 @@ import AssortmentIntelligence from "./pages/dashboard/AssortmentIntelligence";
 import AvailabilityIntelligence from "./pages/dashboard/AvailabilityIntelligence";
 import LocalMarketIntelligence from "./pages/dashboard/LocalMarketIntelligence";
 import CompetitiveEvents from "./pages/dashboard/CompetitiveEvents";
+import AnalyticsTaxonomy from "./pages/AnalyticsTaxonomy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="local" element={<LocalMarketIntelligence />} />
                 <Route path="events" element={<CompetitiveEvents />} />
               </Route>
+              <Route path="/analytics-taxonomy" element={<AnalyticsTaxonomy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

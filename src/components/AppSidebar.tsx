@@ -22,6 +22,7 @@ import {
   Moon,
   Sun,
   Activity,
+  BookOpen,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,26 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
+        {/* Analytics Taxonomy link */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Analytics Taxonomy">
+              <Link
+                to="/analytics-taxonomy"
+                className={cn(
+                  "flex items-center gap-2 text-xs",
+                  location.pathname === "/analytics-taxonomy"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "hover:bg-sidebar-accent/50 text-muted-foreground"
+                )}
+              >
+                <BookOpen className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Analytics Taxonomy</span>}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
