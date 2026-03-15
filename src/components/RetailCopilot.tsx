@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
   MessageSquare,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { GlobalFilters } from "@/data/dataLoader";
 import { buildDataContext, buildPageContext } from "@/hooks/useCopilotData";
 
-
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -25,12 +25,16 @@ interface Message {
   loading?: boolean;
 }
 
+interface AutoInsight {
+  insight: string;
+  cta: string;
+}
+
 const SUGGESTED_QUESTIONS = [
   "Which platform is most aggressive on promotions?",
   "Why is Bangalore the most competitive city?",
   "Which platform dominates search visibility?",
   "Are there unusual promotional events this week?",
-  "Which categories have the highest price competition?",
 ];
 
 const PAGE_LABELS: Record<string, string> = {
@@ -43,26 +47,62 @@ const PAGE_LABELS: Record<string, string> = {
   "/dashboard/events": "Competitive Events",
 };
 
+/** Renders markdown-style bullet lists and bold text */
 function formatMessage(content: string) {
-  // Render **bold**, *italic*, and newlines
-  const lines = content.split("\n");
-  return lines.map((line, i) => {
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
-    return (
-      <span key={i}>
-        {parts.map((part, j) =>
-          part.startsWith("**") && part.endsWith("**") ? (
-            <strong key={j} className="font-semibold text-foreground">
-              {part.slice(2, -2)}
-            </strong>
-          ) : (
-            <span key={j}>{part}</span>
-          )
-        )}
-        {i < lines.length - 1 && <br />}
-      </span>
-    );
+  const lines = content.split("\n").filter((l, i, arr) => {
+    // Collapse more than one consecutive blank line
+    if (l.trim() === "" && arr[i - 1]?.trim() === "") return false;
+    return true;
   });
+
+  return (
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-1" />;
+
+        // Bold section headers like **Fact**
+        if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+          return (
+            <p key={i} className="text-[11px] font-bold text-primary/80 uppercase tracking-wider mt-2 mb-0.5 first:mt-0">
+              {trimmed.slice(2, -2)}
+            </p>
+          );
+        }
+
+        // Bullet lines starting with - or •
+        if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+          const text = trimmed.slice(2);
+          return (
+            <div key={i} className="flex gap-1.5 items-start">
+              <span className="text-primary/60 mt-[3px] shrink-0 text-[10px]">▸</span>
+              <span className="text-[12.5px] leading-snug">{renderInline(text)}</span>
+            </div>
+          );
+        }
+
+        // Regular text
+        return (
+          <p key={i} className="text-[12.5px] leading-snug">
+            {renderInline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, j) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={j} className="font-semibold text-foreground">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <span key={j}>{part}</span>
+    )
+  );
 }
 
 interface RetailCopilotProps {
@@ -76,6 +116,8 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(true);
+  const [autoInsights, setAutoInsights] = useState<AutoInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -93,6 +135,57 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
+
+  // Fetch auto-insights when panel opens (only if no messages yet)
+  useEffect(() => {
+    if (!open || messages.length > 0 || autoInsights.length > 0 || insightsLoading) return;
+
+    const fetchInsights = async () => {
+      setInsightsLoading(true);
+      try {
+        const dataContext = buildDataContext(filters);
+        const filterPayload: Record<string, string> = {
+          city: filters.city,
+          platform: filters.platform,
+          category: filters.category,
+          pincode: filters.pincode,
+        };
+
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        if (!supabaseUrl || !supabaseKey) return;
+
+        const res = await fetch(`${supabaseUrl}/functions/v1/retail-copilot`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+            apikey: supabaseKey,
+          },
+          body: JSON.stringify({
+            messages: [],
+            dataContext,
+            filters: filterPayload,
+            pageContext,
+            mode: "auto_insights",
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json.insights) && json.insights.length > 0) {
+            setAutoInsights(json.insights);
+          }
+        }
+      } catch {
+        // Silently fail — insights are optional
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+
+    fetchInsights();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -143,13 +236,13 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
               apikey: supabaseKey,
-              "x-client-info": "retail-copilot-ui/1.0",
             },
             body: JSON.stringify({
               messages: history,
               dataContext,
               filters: filterPayload,
               pageContext,
+              mode: "chat",
             }),
             signal: controller.signal,
           });
@@ -173,11 +266,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
         setMessages((prev) =>
           prev.map((m) =>
             m.loading
-              ? {
-                  ...m,
-                  content: `Unable to reach the AI. Error: ${message}`,
-                  loading: false,
-                }
+              ? { ...m, content: `Unable to reach the AI. Error: ${message}`, loading: false }
               : m
           )
         );
@@ -203,8 +292,11 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
 
   const clearChat = () => {
     setMessages([]);
+    setAutoInsights([]);
     setSuggestionsOpen(true);
   };
+
+  const showWelcome = messages.length === 0;
 
   return (
     <>
@@ -229,7 +321,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
           "fixed bottom-0 right-0 z-50 flex flex-col transition-all duration-300 ease-in-out",
           "w-[420px] max-w-[100vw]",
           open
-            ? "h-[620px] max-h-[90vh] opacity-100 translate-y-0"
+            ? "h-[640px] max-h-[92vh] opacity-100 translate-y-0"
             : "h-0 opacity-0 translate-y-4 pointer-events-none"
         )}
       >
@@ -292,22 +384,61 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full">
               <div ref={scrollRef} className="flex flex-col gap-3 px-4 py-3">
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center gap-3 py-6 text-center">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                      <MessageSquare className="h-6 w-6 text-primary/60" />
+
+                {/* Welcome state */}
+                {showWelcome && (
+                  <div className="flex flex-col items-center gap-2 py-4 text-center">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+                      <MessageSquare className="h-5 w-5 text-primary/60" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Ask me anything about your retail data
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Insights grounded in live dashboard datasets
+                      <p className="text-sm font-medium text-foreground">Ask me about your retail data</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Grounded in live dashboard datasets
                       </p>
                     </div>
                   </div>
                 )}
 
+                {/* ── Auto-insight triggers ── */}
+                {showWelcome && (
+                  <div className="flex flex-col gap-2">
+                    {insightsLoading ? (
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50">
+                        <Zap className="h-3.5 w-3.5 text-primary/50 shrink-0" />
+                        <span className="text-[11.5px] text-muted-foreground">Generating live insights…</span>
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-auto" />
+                      </div>
+                    ) : (
+                      autoInsights.map((ins, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex flex-col gap-2"
+                        >
+                          <div className="flex gap-2 items-start">
+                            <Zap className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                            <p className="text-[12px] font-medium text-foreground leading-snug">
+                              {ins.insight}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => sendMessage(ins.cta)}
+                            disabled={loading}
+                            className={cn(
+                              "self-start text-[11px] text-primary font-medium px-2.5 py-1 rounded-md",
+                              "bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20",
+                              loading && "opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            {ins.cta} →
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* Chat messages */}
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -323,9 +454,9 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
                     )}
                     <div
                       className={cn(
-                        "max-w-[82%] rounded-xl px-3 py-2.5 text-[13px] leading-relaxed",
+                        "max-w-[84%] rounded-xl px-3 py-2.5 text-[13px]",
                         msg.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-tr-sm"
+                          ? "bg-primary text-primary-foreground rounded-tr-sm text-[12.5px] leading-relaxed"
                           : "bg-muted text-foreground rounded-tl-sm"
                       )}
                     >
@@ -334,8 +465,10 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
                           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                           <span className="text-muted-foreground text-xs">Analyzing data…</span>
                         </div>
+                      ) : msg.role === "assistant" ? (
+                        formatMessage(msg.content)
                       ) : (
-                        <span>{formatMessage(msg.content)}</span>
+                        <span className="text-[12.5px] leading-relaxed">{msg.content}</span>
                       )}
                     </div>
                   </div>
@@ -345,13 +478,13 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
           </div>
 
           {/* ── Suggested Questions ── */}
-          {suggestionsOpen && messages.length === 0 && (
+          {suggestionsOpen && showWelcome && (
             <div className="shrink-0 border-t border-border/60 bg-muted/10">
               <button
                 onClick={() => setSuggestionsOpen((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                <span className="font-medium">Suggested questions</span>
+                <span className="font-medium">Quick questions</span>
                 <ChevronDown className="h-3 w-3" />
               </button>
               <div className="px-3 pb-2 flex flex-col gap-1">
@@ -381,7 +514,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about pricing, promotions, availability, or competition…"
+                placeholder="Ask about pricing, promotions, availability…"
                 rows={2}
                 className="flex-1 resize-none text-xs rounded-lg min-h-[44px] max-h-[120px] py-2.5 leading-relaxed border-border/70"
                 disabled={loading}
@@ -400,7 +533,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground/60 text-center mt-1.5">
-              Answers are based solely on dashboard datasets
+              Answers based solely on dashboard datasets
             </p>
           </div>
         </div>
