@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
 
 const AssortmentIntelligence = () => {
@@ -98,6 +99,8 @@ const AssortmentIntelligence = () => {
           <p className="text-sm text-muted-foreground">Analyse SKU breadth, exclusive listings, and product mix gaps across platforms</p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="assortment_tracking" exportData={assortmentData as unknown as Record<string, unknown>[]} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>

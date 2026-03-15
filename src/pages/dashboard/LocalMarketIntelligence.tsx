@@ -7,6 +7,7 @@ import { useOutletContext } from "react-router-dom";
 import { SKUCrossPlatformComparison } from "@/components/dashboard/SKUCrossPlatformComparison";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
@@ -181,6 +182,8 @@ const LocalMarketIntelligence = () => {
           </p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="local_market_intelligence" exportData={cityScores as unknown as Record<string, unknown>[]} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>

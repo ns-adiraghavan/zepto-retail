@@ -7,6 +7,7 @@ import { useOutletContext } from "react-router-dom";
 import { SKUCrossPlatformComparison } from "@/components/dashboard/SKUCrossPlatformComparison";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
 const promoRows = [
   { platform: "Blinkit", category: "Snacks & Beverages", type: "Flash Sale", discount: "40%", city: "Bangalore", status: "Active" as const },
@@ -121,6 +122,8 @@ const PricingPromoIntelligence = () => {
           </p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="price_tracking" exportData={priceData as unknown as Record<string, unknown>[]} />
 
       {/* KPI Summary */}
       <section className="space-y-2">

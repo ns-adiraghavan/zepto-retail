@@ -6,6 +6,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
 const stockoutRows = [
   { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR" },
@@ -101,6 +102,8 @@ const AvailabilityIntelligence = () => {
           <p className="text-sm text-muted-foreground">Track stockouts, fill rates, and inventory gaps across platforms and cities</p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="availability_tracking" exportData={availabilityData as unknown as Record<string, unknown>[]} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>

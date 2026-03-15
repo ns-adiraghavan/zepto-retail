@@ -11,6 +11,7 @@ import {
 } from "@/data/dataLoader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicInsightsPanel, Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -343,6 +344,8 @@ const CompetitiveEvents = () => {
           </p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="competitor_events" exportData={allEvents as unknown as Record<string, unknown>[]} />
 
       {/* KPI Summary */}
       <section className="space-y-2">

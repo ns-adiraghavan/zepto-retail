@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 import { CompetitiveSearchAdvantage } from "@/components/dashboard/CompetitiveSearchAdvantage";
 
 const shelfRows = [
@@ -65,6 +66,8 @@ const SearchShelfVisibility = () => {
           <p className="text-sm text-muted-foreground">Track search rankings, sponsored placements, and brand visibility across platforms</p>
         </div>
       </div>
+
+      <PageControlBar exportLabel="search_rank_tracking" exportData={searchData as unknown as Record<string, unknown>[]} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">KPI Summary</h2>
