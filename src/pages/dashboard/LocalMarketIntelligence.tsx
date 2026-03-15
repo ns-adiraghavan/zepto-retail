@@ -38,31 +38,8 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
-/** Price variance: stddev of per-pincode avg sale prices */
-function cityPriceVariance(cityName: string, otherFilters: Partial<GlobalFilters>): number {
-  const rows = datasets.priceTracking.filter((r) => {
-    if (r.city !== cityName) return false;
-    if (otherFilters.platform && otherFilters.platform !== "All Platforms" && r.platform !== otherFilters.platform) return false;
-    if (otherFilters.category && otherFilters.category !== "All Categories" && r.category !== otherFilters.category) return false;
-    if (otherFilters.dateFrom && r.date < otherFilters.dateFrom) return false;
-    if (otherFilters.dateTo   && r.date > otherFilters.dateTo)   return false;
-    return true;
-  });
-
-  // group by pincode → avg sale_price per pincode
-  const byPincode: Record<string, number[]> = {};
-  for (const row of rows) {
-    const key = row.pincode ?? "unknown";
-    if (!byPincode[key]) byPincode[key] = [];
-    byPincode[key].push(row.sale_price);
-  }
-  const pincodeAvgs = Object.values(byPincode).map((v) => avg(v));
-  return parseFloat(stddev(pincodeAvgs).toFixed(2));
-}
-
 const LocalMarketIntelligence = () => {
   const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
-  const otherFilters: Partial<GlobalFilters> = { platform, pincode, category, dateFrom, dateTo };
 
   const cityScores = useMemo(() =>
     CITIES.map((c) => {
@@ -103,7 +80,7 @@ const LocalMarketIntelligence = () => {
         (r) => r.promotion_flag * 100
       );
 
-      // ── Search: two-stage groupBy(platform, pincode) ─────────────────────
+      // ── Search: top-10 presence via two-stage groupBy(platform, pincode) ──
       const searchRows = datasets.searchRankTracking.filter((r) => {
         if (r.city !== c) return false;
         if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
@@ -113,16 +90,34 @@ const LocalMarketIntelligence = () => {
         if (dateTo   && r.date > dateTo)   return false;
         return true;
       });
+      // Use top10_flag (or derive from search_rank) — NOT sponsored_flag
       const search = twoStageAvg(
         searchRows,
         (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => (r.sponsored_flag ?? 0) * 100
+        (r) => (r.top10_flag ?? (r.search_rank <= 10 ? 1 : 0)) * 100
       );
 
-      // ── Price variance ────────────────────────────────────────────────────
-      const priceVariance = cityPriceVariance(c, otherFilters);
+      // ── Price variance: stddev of per-pincode avg sale prices ─────────────
+      // Group price rows for this city by pincode, avg sale_price per group,
+      // then take the population stddev of those pincode averages.
+      const byPincode: Record<string, number[]> = {};
+      for (const row of priceRows) {
+        const key = row.pincode ?? "unknown";
+        if (!byPincode[key]) byPincode[key] = [];
+        byPincode[key].push(row.sale_price);
+      }
+      const pincodeAvgs = Object.values(byPincode).map((v) => avg(v));
+      const priceVariance = parseFloat(stddev(pincodeAvgs).toFixed(2));
 
-      const score = Math.round((availability + search + (100 - discount)) / 3);
+      // ── Market Competition Index (weighted) ───────────────────────────────
+      // Score = 0.35 × promoRate + 0.25 × discountDepth + 0.20 × searchTop10 + 0.20 × availability
+      // All inputs are already 0–100 percentages.
+      const score = Math.round(
+        0.35 * promoRate +
+        0.25 * discount +
+        0.20 * search +
+        0.20 * availability
+      );
 
       return { city: c, availability, discount, promoRate, search, priceVariance, score };
     }),
@@ -135,7 +130,7 @@ const LocalMarketIntelligence = () => {
   const highestVarianceCity = [...cityScores].sort((a, b) => b.priceVariance - a.priceVariance)[0];
 
   const kpis = [
-    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Composite score (0–100) averaging SKU Availability Rate, search visibility, and inverse discount intensity across all cities." },
+    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Weighted score (0–100) = 35% Promotion Share + 25% Avg Discount Depth + 20% Top-10 Presence + 20% SKU Availability Rate." },
     { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest Market Competition Index score." },
     { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest Market Competition Index score." },
     { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Standard deviation of avg sale prices across pincodes. Higher values indicate inconsistent pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
@@ -226,7 +221,7 @@ const LocalMarketIntelligence = () => {
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>City Intelligence Scores</CardTitle>
-            <CardDescription>Market Competition Index: SKU Availability Rate + Top-10 Presence − discount intensity (platform × pincode aggregation)</CardDescription>
+            <CardDescription>Market Competition Index = 35% Promotion Share + 25% Discount Depth + 20% Top-10 Presence + 20% SKU Availability (platform × pincode aggregation)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
