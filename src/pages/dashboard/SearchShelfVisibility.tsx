@@ -119,10 +119,10 @@ const SearchShelfVisibility = () => {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Elite Rank Share (Top-3 Positions)</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top-3 Search Share by Platform</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>Elite Rank Share by Platform</CardTitle>
+            <CardTitle>Top-3 Search Share by Platform</CardTitle>
             <CardDescription>% of search observations where the platform captured a top-3 position</CardDescription>
           </CardHeader>
           <CardContent>
