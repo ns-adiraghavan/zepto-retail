@@ -150,13 +150,6 @@ const CompetitiveOverview = () => {
 
   const liveKPIs = [
     {
-      title: "Avg Price Gap vs Competitors",
-      value: `${avgPriceGap >= 0 ? "+" : ""}${avgPriceGap.toFixed(1)}%`,
-      trend: avgPriceGap > 2 ? ("down" as const) : avgPriceGap < -2 ? ("up" as const) : ("neutral" as const),
-      status: Math.abs(avgPriceGap) > 5 ? ("medium" as const) : ("low" as const),
-      tooltip: "Average % difference between Zepto prices and competitor prices across tracked SKUs. Positive = Zepto is priced higher.",
-    },
-    {
       title: "Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
@@ -178,12 +171,6 @@ const CompetitiveOverview = () => {
       tooltip: "Distinct SKUs listed across tracked categories (listing_status = 1).",
     },
   ];
-
-  const scoreColor = (score: number) => {
-    if (score >= 70) return "bg-status-low";
-    if (score >= 50) return "bg-status-medium";
-    return "bg-status-high";
-  };
 
   const heatmapData = useMemo(() => {
     const catPlatAvg: Record<string, Record<string, { sum: number; count: number }>> = {};
