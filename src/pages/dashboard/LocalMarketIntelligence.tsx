@@ -221,7 +221,7 @@ const LocalMarketIntelligence = () => {
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>City Intelligence Scores</CardTitle>
-            <CardDescription>Market Competition Index: SKU Availability Rate + Top-10 Presence − discount intensity (platform × pincode aggregation)</CardDescription>
+            <CardDescription>Market Competition Index = 35% Promotion Share + 25% Discount Depth + 20% Top-10 Presence + 20% SKU Availability (platform × pincode aggregation)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
