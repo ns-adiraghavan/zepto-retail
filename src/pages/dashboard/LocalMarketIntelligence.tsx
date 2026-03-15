@@ -135,10 +135,10 @@ const LocalMarketIntelligence = () => {
   const highestVarianceCity = [...cityScores].sort((a, b) => b.priceVariance - a.priceVariance)[0];
 
   const kpis = [
-    { title: "Avg City Score", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Composite score averaged across all five cities (two-stage aggregation)" },
-    { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest composite intelligence score" },
-    { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest composite intelligence score" },
-    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Highest price std-dev across pincodes — ${highestVarianceCity?.city ?? "—"} leads` },
+    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Composite score (0–100) averaging SKU Availability Rate, search visibility, and inverse discount intensity across all cities." },
+    { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest Market Competition Index score." },
+    { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest Market Competition Index score." },
+    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Standard deviation of avg sale prices across pincodes. Higher values indicate inconsistent pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
   ];
 
   const cityChartData = cityScores.map((c) => ({
