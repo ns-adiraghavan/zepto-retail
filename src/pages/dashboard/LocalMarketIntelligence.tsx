@@ -15,22 +15,6 @@ function avg(arr: number[]) {
   return arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
-/** Two-stage aggregation: group rows by (platform, pincode), compute metric avg per group, then avg across groups */
-function twoStageAvg<T>(
-  rows: T[],
-  keyFn: (r: T) => string,
-  valueFn: (r: T) => number
-): number {
-  const groups: Record<string, number[]> = {};
-  for (const row of rows) {
-    const key = keyFn(row);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(valueFn(row));
-  }
-  const groupAvgs = Object.values(groups).map((vals) => avg(vals));
-  return avg(groupAvgs);
-}
-
 /** Population stddev of values */
 function stddev(values: number[]): number {
   if (values.length < 2) return 0;
