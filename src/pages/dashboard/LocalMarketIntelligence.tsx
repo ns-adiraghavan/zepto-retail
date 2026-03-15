@@ -103,7 +103,7 @@ const LocalMarketIntelligence = () => {
         (r) => r.promotion_flag * 100
       );
 
-      // ── Search: two-stage groupBy(platform, pincode) ─────────────────────
+      // ── Search: top-10 presence via two-stage groupBy(platform, pincode) ──
       const searchRows = datasets.searchRankTracking.filter((r) => {
         if (r.city !== c) return false;
         if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
@@ -113,16 +113,34 @@ const LocalMarketIntelligence = () => {
         if (dateTo   && r.date > dateTo)   return false;
         return true;
       });
+      // Use top10_flag (or derive from search_rank) — NOT sponsored_flag
       const search = twoStageAvg(
         searchRows,
         (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => (r.sponsored_flag ?? 0) * 100
+        (r) => (r.top10_flag ?? (r.search_rank <= 10 ? 1 : 0)) * 100
       );
 
-      // ── Price variance ────────────────────────────────────────────────────
-      const priceVariance = cityPriceVariance(c, otherFilters);
+      // ── Price variance: stddev of per-pincode avg sale prices ─────────────
+      // Group price rows for this city by pincode, avg sale_price per group,
+      // then take the population stddev of those pincode averages.
+      const byPincode: Record<string, number[]> = {};
+      for (const row of priceRows) {
+        const key = row.pincode ?? "unknown";
+        if (!byPincode[key]) byPincode[key] = [];
+        byPincode[key].push(row.sale_price);
+      }
+      const pincodeAvgs = Object.values(byPincode).map((v) => avg(v));
+      const priceVariance = parseFloat(stddev(pincodeAvgs).toFixed(2));
 
-      const score = Math.round((availability + search + (100 - discount)) / 3);
+      // ── Market Competition Index (weighted) ───────────────────────────────
+      // Score = 0.35 × promoRate + 0.25 × discountDepth + 0.20 × searchTop10 + 0.20 × availability
+      // All inputs are already 0–100 percentages.
+      const score = Math.round(
+        0.35 * promoRate +
+        0.25 * discount +
+        0.20 * search +
+        0.20 * availability
+      );
 
       return { city: c, availability, discount, promoRate, search, priceVariance, score };
     }),
