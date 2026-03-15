@@ -204,7 +204,7 @@ const LocalMarketIntelligence = () => {
                       <span>Disc {c.discount.toFixed(1)}%</span>
                       <span>Promo {c.promoRate.toFixed(0)}%</span>
                       <span>±₹{c.priceVariance}</span>
-                      <span className="font-semibold text-foreground">{c.score}/100</span>
+                      <span className="font-semibold text-foreground">{c.score.toFixed(1)}/100</span>
                     </div>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
