@@ -288,42 +288,6 @@ const LocalMarketIntelligence = () => {
         </Card>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Hyper-local Promotions</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>Hyper-local Promotions</CardTitle>
-            <CardDescription>City-specific offers not available nationally</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-3 font-medium text-muted-foreground">City</th>
-                    <th className="py-2 pr-3 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 pr-3 font-medium text-muted-foreground">Category</th>
-                    <th className="py-2 pr-3 font-medium text-muted-foreground">Promo Rate</th>
-                    <th className="py-2 font-medium text-muted-foreground">Discount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cityScores.map((c, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-3 font-medium">{c.city}</td>
-                      <td className="py-2 pr-3 text-muted-foreground">—</td>
-                      <td className="py-2 pr-3 text-muted-foreground">All</td>
-                      <td className="py-2 pr-3 text-muted-foreground">{c.promoRate.toFixed(1)}%</td>
-                      <td className="py-2 font-semibold text-status-high">{c.discount.toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} />
     </div>
   );

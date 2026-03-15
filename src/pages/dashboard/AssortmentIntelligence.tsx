@@ -227,59 +227,36 @@ const AssortmentIntelligence = () => {
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Platform Assortment Analysis</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Listed vs Missing SKUs by Platform</CardTitle>
-              <CardDescription>Share of tracked SKUs currently listed per platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {listingByPlatform.map((p) => {
-                  const total = p.listed + p.notListed;
-                  const listedPct = total > 0 ? (p.listed / total) * 100 : 0;
-                  return (
-                    <div key={p.platform} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium">{p.platform}</span>
-                        <span className="text-muted-foreground">{p.listed.toLocaleString()} listed · {p.notListed.toLocaleString()} missing</span>
-                      </div>
-                      <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                        <div className="bg-status-low h-full" style={{ width: `${listedPct}%` }} />
-                        <div className="bg-status-high h-full flex-1" />
-                      </div>
+        <Card className="bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Listed vs Missing SKUs by Platform</CardTitle>
+            <CardDescription>Share of tracked SKUs currently listed per platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {listingByPlatform.map((p) => {
+                const total = p.listed + p.notListed;
+                const listedPct = total > 0 ? (p.listed / total) * 100 : 0;
+                return (
+                  <div key={p.platform} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium">{p.platform}</span>
+                      <span className="text-muted-foreground">{p.listed.toLocaleString()} listed · {p.notListed.toLocaleString()} missing</span>
                     </div>
-                  );
-                })}
-                <div className="flex gap-4 text-xs text-muted-foreground pt-1">
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Listed</div>
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Missing</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-card">
-            <CardHeader>
-              <CardTitle>Platform-Exclusive SKUs</CardTitle>
-              <CardDescription>Products listed on only one platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {exclusiveItems.map((item) => (
-                  <div key={item.sku} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/40">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{item.name}</div>
-                      <div className="text-xs font-mono text-muted-foreground mt-0.5">{item.sku}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{item.category}</div>
+                    <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                      <div className="bg-status-low h-full" style={{ width: `${listedPct}%` }} />
+                      <div className="bg-status-high h-full flex-1" />
                     </div>
-                    <div className="text-xs font-medium text-primary shrink-0">{item.platform}</div>
                   </div>
-                ))}
+                );
+              })}
+              <div className="flex gap-4 text-xs text-muted-foreground pt-1">
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Listed</div>
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Missing</div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

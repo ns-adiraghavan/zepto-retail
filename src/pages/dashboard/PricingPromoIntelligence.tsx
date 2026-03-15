@@ -54,12 +54,6 @@ const PricingPromoIntelligence = () => {
       tooltip: "Mean discount percentage across all SKUs with active promotions.",
     },
     {
-      title: "Promotion Intensity",
-      value: `${promoRate.toFixed(1)}%`,
-      trend: promoRate > 30 ? ("up" as const) : ("neutral" as const),
-      tooltip: "Share of SKU observations currently running a promotion.",
-    },
-    {
       title: "SKUs Under Promotion",
       value: promoCount.toLocaleString(),
       trend: "neutral" as const,

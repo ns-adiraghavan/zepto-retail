@@ -125,31 +125,6 @@ const CompetitiveOverview = () => {
     });
   }, [priceGapByPlatform, availByPlatform, searchByPlatform, assortByPlatform]);
 
-  const avgPriceGap = useMemo(() => {
-    type SkuCityKey = string;
-    const zeptoPrices: Record<SkuCityKey, number[]> = {};
-    const compPrices: Record<SkuCityKey, number[]> = {};
-    for (const row of priceData) {
-      const key = `${row.sku_id}__${row.city ?? ""}`;
-      if (row.platform === "Zepto") {
-        if (!zeptoPrices[key]) zeptoPrices[key] = [];
-        zeptoPrices[key].push(row.sale_price);
-      } else {
-        if (!compPrices[key]) compPrices[key] = [];
-        compPrices[key].push(row.sale_price);
-      }
-    }
-    let gapSum = 0, gapCount = 0;
-    for (const key of Object.keys(zeptoPrices)) {
-      if (!compPrices[key] || compPrices[key].length === 0) continue;
-      const zeptoAvg = zeptoPrices[key].reduce((a, b) => a + b, 0) / zeptoPrices[key].length;
-      const compAvg = compPrices[key].reduce((a, b) => a + b, 0) / compPrices[key].length;
-      if (zeptoAvg === 0) continue;
-      gapSum += ((compAvg - zeptoAvg) / zeptoAvg) * 100;
-      gapCount++;
-    }
-    return gapCount > 0 ? gapSum / gapCount : 0;
-  }, [priceData]);
 
   const avgAvailabilityRate = useMemo(() => {
     const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
