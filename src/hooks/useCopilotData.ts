@@ -163,7 +163,8 @@ export function buildDataContext(filters: GlobalFilters): string {
     ...platformSummaryLines,
   ]
     .filter((l) => l !== undefined)
-    .join("\n");
+    .join("\n")
+    .slice(0, 6000);
 }
 
 /**
