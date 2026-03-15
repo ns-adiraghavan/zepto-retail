@@ -38,28 +38,6 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
-/** Price variance: stddev of per-pincode avg sale prices */
-function cityPriceVariance(cityName: string, otherFilters: Partial<GlobalFilters>): number {
-  const rows = datasets.priceTracking.filter((r) => {
-    if (r.city !== cityName) return false;
-    if (otherFilters.platform && otherFilters.platform !== "All Platforms" && r.platform !== otherFilters.platform) return false;
-    if (otherFilters.category && otherFilters.category !== "All Categories" && r.category !== otherFilters.category) return false;
-    if (otherFilters.dateFrom && r.date < otherFilters.dateFrom) return false;
-    if (otherFilters.dateTo   && r.date > otherFilters.dateTo)   return false;
-    return true;
-  });
-
-  // group by pincode → avg sale_price per pincode
-  const byPincode: Record<string, number[]> = {};
-  for (const row of rows) {
-    const key = row.pincode ?? "unknown";
-    if (!byPincode[key]) byPincode[key] = [];
-    byPincode[key].push(row.sale_price);
-  }
-  const pincodeAvgs = Object.values(byPincode).map((v) => avg(v));
-  return parseFloat(stddev(pincodeAvgs).toFixed(2));
-}
-
 const LocalMarketIntelligence = () => {
   const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
 
