@@ -20,14 +20,32 @@ export type DatasetKey =
   | "assortment_tracking";
 
 // ─── Page → required datasets mapping ────────────────────────────────────────
+// Each entry lists EVERY dataset the page (and its sub-components) touches.
 const PAGE_DATASETS: Record<string, DatasetKey[]> = {
-  "/dashboard":           [],                                               // platform_summary only (already local)
-  "/dashboard/pricing":   ["price_tracking"],
-  "/dashboard/search":    ["search_rank_tracking"],
-  "/dashboard/assortment":["assortment_tracking"],
+  // Competitive Overview: KPI cards + heatmaps use ALL four tracking datasets
+  "/dashboard": [
+    "price_tracking",
+    "availability_tracking",
+    "search_rank_tracking",
+    "assortment_tracking",
+  ],
+  // Pricing: price only (SKUCrossPlatformComparison also only needs price)
+  "/dashboard/pricing": ["price_tracking"],
+  // Search: search_rank only
+  "/dashboard/search": ["search_rank_tracking"],
+  // Assortment: uses datasets.assortmentTracking directly — must be loaded
+  "/dashboard/assortment": ["assortment_tracking"],
+  // Availability: availability only
   "/dashboard/availability": ["availability_tracking"],
-  "/dashboard/local":     ["price_tracking", "availability_tracking"],
-  "/dashboard/events":    [],                                               // competitor_events already local
+  // Local Market: directly accesses datasets.priceTracking, datasets.availabilityTracking,
+  // and datasets.searchRankTracking — all three must be loaded
+  "/dashboard/local": [
+    "price_tracking",
+    "availability_tracking",
+    "search_rank_tracking",
+  ],
+  // Competitive Events: competitor_events + platform_summary are already local (no fetch needed)
+  "/dashboard/events": [],
 };
 
 // ─── Context value ────────────────────────────────────────────────────────────
