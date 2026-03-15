@@ -44,75 +44,51 @@ const LocalMarketIntelligence = () => {
 
   const cityScores = useMemo(() =>
     CITIES.map((c) => {
-      // ── Availability: two-stage groupBy(platform, pincode) ────────────────
-      const availRows = datasets.availabilityTracking.filter((r) => {
-        if (r.city !== c) return false;
-        if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
-        if (pincode && pincode !== "All Pincodes" && r.pincode !== undefined && r.pincode !== pincode) return false;
-        if (category && category !== "All Categories" && r.category !== category) return false;
-        if (dateFrom && r.date < dateFrom) return false;
-        if (dateTo   && r.date > dateTo)   return false;
-        return true;
-      });
-      const availability = twoStageAvg(
-        availRows,
-        (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => r.availability_flag * 100
-      );
-
-      // ── Discount: two-stage groupBy(platform, pincode) ───────────────────
+      // ── Filter each dataset strictly by this city only (no global city filter) ──
       const priceRows = datasets.priceTracking.filter((r) => {
         if (r.city !== c) return false;
         if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
-        if (pincode && pincode !== "All Pincodes" && r.pincode !== undefined && r.pincode !== pincode) return false;
-        if (category && category !== "All Categories" && r.category !== category) return false;
         if (dateFrom && r.date < dateFrom) return false;
         if (dateTo   && r.date > dateTo)   return false;
         return true;
       });
-      const discount = twoStageAvg(
-        priceRows,
-        (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => r.discount_percent
-      );
-      const promoRate = twoStageAvg(
-        priceRows,
-        (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => r.promotion_flag * 100
-      );
 
-      // ── Search: top-10 presence via two-stage groupBy(platform, pincode) ──
+      const availRows = datasets.availabilityTracking.filter((r) => {
+        if (r.city !== c) return false;
+        if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
+        if (dateFrom && r.date < dateFrom) return false;
+        if (dateTo   && r.date > dateTo)   return false;
+        return true;
+      });
+
       const searchRows = datasets.searchRankTracking.filter((r) => {
         if (r.city !== c) return false;
         if (platform && platform !== "All Platforms" && r.platform !== platform) return false;
-        if (pincode && pincode !== "All Pincodes" && r.pincode !== undefined && r.pincode !== pincode) return false;
-        if (category && category !== "All Categories" && r.category !== category) return false;
         if (dateFrom && r.date < dateFrom) return false;
         if (dateTo   && r.date > dateTo)   return false;
         return true;
       });
-      // Use top10_flag (or derive from search_rank) — NOT sponsored_flag
-      const search = twoStageAvg(
-        searchRows,
-        (r) => `${r.platform}||${r.pincode ?? ""}`,
-        (r) => (r.top10_flag ?? (r.search_rank <= 10 ? 1 : 0)) * 100
-      );
 
-      // ── Price variance: stddev of per-pincode avg sale prices ─────────────
-      // Group price rows for this city by pincode, avg sale_price per group,
-      // then take the population stddev of those pincode averages.
+      // ── Simple direct averages per city (preserves natural variance) ──────
+      const promoRate   = avg(priceRows.map((r) => r.promotion_flag * 100));
+      const discount    = avg(priceRows.map((r) => r.discount_percent));
+      const availability = avg(availRows.map((r) => r.availability_flag * 100));
+      const search      = avg(searchRows.map((r) => (r.top10_flag ?? (r.search_rank <= 10 ? 1 : 0)) * 100));
+
+      // ── Hyperlocal price variance: stddev of per-pincode avg sale prices ──
+      // Step 1: group city rows by pincode
+      // Step 2: avg sale_price per pincode
+      // Step 3: stddev of those averages
       const byPincode: Record<string, number[]> = {};
       for (const row of priceRows) {
-        const key = row.pincode ?? "unknown";
+        const key = String(row.pincode ?? "unknown");
         if (!byPincode[key]) byPincode[key] = [];
         byPincode[key].push(row.sale_price);
       }
-      const pincodeAvgs = Object.values(byPincode).map((v) => avg(v));
+      const pincodeAvgs = Object.values(byPincode).map((vals) => avg(vals));
       const priceVariance = parseFloat(stddev(pincodeAvgs).toFixed(2));
 
-      // ── Market Competition Index (weighted) ───────────────────────────────
-      // Score = 0.35 × promoRate + 0.25 × discountDepth + 0.20 × searchTop10 + 0.20 × availability
-      // All inputs are already 0–100 percentages.
+      // ── Market Competition Index (weighted, all inputs 0–100) ─────────────
       const score = Math.round(
         0.35 * promoRate +
         0.25 * discount +
@@ -122,7 +98,9 @@ const LocalMarketIntelligence = () => {
 
       return { city: c, availability, discount, promoRate, search, priceVariance, score };
     }),
-  [platform, pincode, category, dateFrom, dateTo]);
+  // Intentionally excludes `city` — each city is computed independently from full data
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [platform, dateFrom, dateTo]);
 
   const sortedByScore = [...cityScores].sort((a, b) => b.score - a.score);
   const bestCity = sortedByScore[0];
