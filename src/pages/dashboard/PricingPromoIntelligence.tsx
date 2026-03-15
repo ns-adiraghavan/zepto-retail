@@ -30,7 +30,6 @@ const PricingPromoIntelligence = () => {
       : 0;
 
   const promoCount = priceData.filter((r) => r.promotion_flag === 1).length;
-  const promoRate = priceData.length > 0 ? (promoCount / priceData.length) * 100 : 0;
 
   // ── Promotion Activity by Platform ────────────────────────────────────────
   const promoByPlatformRaw: Record<string, { sum: number; count: number }> = {};

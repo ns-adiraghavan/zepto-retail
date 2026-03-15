@@ -154,7 +154,7 @@ const LocalMarketIntelligence = () => {
 
   // ── Strategic Insights ───────────────────────────────────────────────────────
   const topCity = sortedByScore[0];
-  const highDiscCity = [...cityScores].sort((a, b) => b.discount - a.discount)[0];
+  
   const lowestAvailCity = [...cityScores].sort((a, b) => a.availability - b.availability)[0];
   const highPromoCity = [...cityScores].sort((a, b) => b.promoRate - a.promoRate)[0];
 

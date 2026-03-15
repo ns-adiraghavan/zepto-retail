@@ -6,12 +6,6 @@ import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 
-const exclusiveItems = [
-  { platform: "BigBasket Now", sku: "BB-PVTLBL-RICE-5KG", name: "BB Organics Basmati Rice 5kg", category: "Staples & Grains" },
-  { platform: "Zepto", sku: "ZP-CAFE-BRW-250", name: "Zepto Cafe Cold Brew 250ml", category: "Snacks & Beverages" },
-  { platform: "Blinkit", sku: "BL-KITCHEN-SET", name: "Blinkit Quick Kitchen Set", category: "Household Essentials" },
-  { platform: "Swiggy Instamart", sku: "SI-COMBO-BF", name: "Instamart Breakfast Combo", category: "Dairy & Eggs" },
-];
 
 const AssortmentIntelligence = () => {
   const filters = useOutletContext<GlobalFilters>();
