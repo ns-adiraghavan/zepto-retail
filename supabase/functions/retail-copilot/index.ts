@@ -3,6 +3,13 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
 const SYSTEM_PROMPT = `You are the Retail Intelligence Copilot — an analytical assistant embedded inside a competitive retail intelligence dashboard that monitors quick-commerce platforms (Zepto, Blinkit, Swiggy Instamart, BigBasket Now) across Indian cities.
 
 ## YOUR ROLE
@@ -31,7 +38,7 @@ Why this matters competitively — what it signals about market dynamics.
 What the strategy or category team should monitor or consider acting on.
 
 ## CONTEXT AWARENESS
-The user may provide active dashboard filters (city, platform, category, pincode). If provided, reference them specifically in your answer. For example, if Bangalore is selected, scope insights to Bangalore.
+The user may provide active dashboard filters (city, platform, category, pincode). If provided, reference them specifically in your answer.
 
 ## NAVIGATION GUIDANCE
 When relevant, guide users to the correct dashboard module:
@@ -63,13 +70,11 @@ interface RequestBody {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+      status: 204,
+      headers: corsHeaders,
     });
   }
 
@@ -116,7 +121,7 @@ Deno.serve(async (req) => {
       const err = await response.text();
       return new Response(JSON.stringify({ error: err }), {
         status: 500,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -124,12 +129,12 @@ Deno.serve(async (req) => {
     const reply = data.choices?.[0]?.message?.content ?? "Unable to generate response.";
 
     return new Response(JSON.stringify({ reply }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 });
