@@ -62,7 +62,6 @@ function cityPriceVariance(cityName: string, otherFilters: Partial<GlobalFilters
 
 const LocalMarketIntelligence = () => {
   const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
-  const otherFilters: Partial<GlobalFilters> = { platform, pincode, category, dateFrom, dateTo };
 
   const cityScores = useMemo(() =>
     CITIES.map((c) => {
