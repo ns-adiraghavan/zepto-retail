@@ -81,13 +81,13 @@ const SearchShelfVisibility = () => {
         const gapLow = presenceSorted[presenceSorted.length - 1];
         const insights: Insight[] = [
           searchLeader
-            ? { icon: "search", title: "Search Leader", body: `${searchLeader.platform} leads Top-10 search visibility with ${searchLeader.top10_presence_pct}% presence — highest across all tracked platforms.`, type: "positive" }
+            ? { icon: "search", title: "Search Leader", body: `${searchLeader.platform} leads Top-10 Presence with ${searchLeader.top10_presence_pct}% — highest across all tracked platforms.`, type: "positive" }
             : { icon: "search", title: "Search Leader", body: "No search data available.", type: "neutral" },
           eliteLeader
-            ? { icon: "target", title: "Elite Rank Share", body: `${eliteLeader.platform} dominates elite positions (Top 3) with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`, type: "positive" }
-            : { icon: "target", title: "Elite Rank Share", body: "No elite rank data available.", type: "neutral" },
+            ? { icon: "target", title: "Top-3 Search Share", body: `${eliteLeader.platform} dominates Top-3 positions with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`, type: "positive" }
+            : { icon: "target", title: "Top-3 Search Share", body: "No elite rank data available.", type: "neutral" },
           visGap > 0 && gapLow
-            ? { icon: "chart", title: "Visibility Gap", body: `There is a ${visGap.toFixed(1)}% gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%).`, type: visGap > 10 ? "warning" : "neutral" }
+            ? { icon: "chart", title: "Visibility Gap", body: `There is a ${visGap.toFixed(1)}% gap in Top-10 Presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%).`, type: visGap > 10 ? "warning" : "neutral" }
             : { icon: "chart", title: "Visibility Gap", body: "Insufficient data to compute visibility gap.", type: "neutral" },
         ];
         return <StrategicInsightsPanel insights={insights} />;
