@@ -128,8 +128,12 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error("Missing Supabase configuration.");
+        }
+
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         let res: Response;
         try {
@@ -139,6 +143,7 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
               apikey: supabaseKey,
+              "x-client-info": "retail-copilot-ui/1.0",
             },
             body: JSON.stringify({
               messages: history,
@@ -149,12 +154,12 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
             signal: controller.signal,
           });
         } finally {
-          clearTimeout(timeout);
+          clearTimeout(timeoutId);
         }
 
         if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Edge function error ${res.status}: ${errText}`);
+          const errText = await res.text().catch(() => `HTTP ${res.status}`);
+          throw new Error(`[${res.status}] ${errText}`);
         }
 
         const json = await res.json();
@@ -162,13 +167,15 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
         setMessages((prev) =>
           prev.map((m) => (m.loading ? { ...m, content: reply, loading: false } : m))
         );
-      } catch (_err) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[RetailCopilot] fetch error:", message);
         setMessages((prev) =>
           prev.map((m) =>
             m.loading
               ? {
                   ...m,
-                  content: "Sorry, I encountered an error. Please try again.",
+                  content: `Unable to reach the AI. Error: ${message}`,
                   loading: false,
                 }
               : m

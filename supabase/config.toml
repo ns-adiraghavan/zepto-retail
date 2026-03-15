@@ -1,1 +1,4 @@
 project_id = "izbmztdheugubvkchgiv"
+
+[functions.retail-copilot]
+verify_jwt = false
