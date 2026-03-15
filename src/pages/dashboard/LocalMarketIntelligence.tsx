@@ -197,11 +197,11 @@ const LocalMarketIntelligence = () => {
       <StrategicInsightsPanel insights={insights} />
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Competitiveness Comparison</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Market Competition Index</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>City Competitiveness Comparison</CardTitle>
-            <CardDescription>Score, availability, search visibility, and price competitiveness per city (two-stage aggregation)</CardDescription>
+            <CardTitle>City Market Competition Index</CardTitle>
+            <CardDescription>Market Competition Index, SKU Availability Rate, Top-10 Presence, and Price Competitiveness per city (two-stage aggregation)</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -211,10 +211,10 @@ const LocalMarketIntelligence = () => {
                 <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
                 <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="Score"                 fill="hsl(var(--status-low))"    radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Availability"          fill="hsl(221 83% 53%)"          radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Search Visibility"     fill="hsl(270 70% 55%)"          radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Price Competitiveness" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Market Competition Index" fill="hsl(var(--status-low))"    radius={[4, 4, 0, 0]} />
+                <Bar dataKey="SKU Availability Rate"   fill="hsl(221 83% 53%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Top-10 Presence"         fill="hsl(270 70% 55%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Price Competitiveness"   fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
