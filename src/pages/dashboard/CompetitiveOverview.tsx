@@ -147,25 +147,25 @@ const CompetitiveOverview = () => {
 
   const liveKPIs = [
     {
-      title: "Availability Rate",
+      title: "SKU Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
       status: avgAvailabilityRate >= 85 ? ("low" as const) : avgAvailabilityRate >= 70 ? ("medium" as const) : ("high" as const),
-      tooltip: "Percentage of tracked SKUs currently in stock across selected filters.",
+      tooltip: "SKU Availability Rate: % of tracked SKU observations where the product was in stock across selected filters.",
     },
     {
-      title: "Search Visibility",
+      title: "Top-10 Presence",
       value: `${avgSearchVisibility.toFixed(1)}%`,
       trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
       status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
-      tooltip: "% of product listings in top 10 search results for tracked keywords.",
+      tooltip: "Top-10 Presence: % of search observations where a product appeared in the first 10 results across tracked keywords.",
     },
     {
       title: "SKU Coverage",
       value: skuCoverage.toLocaleString(),
       trend: "neutral" as const,
       status: "low" as const,
-      tooltip: "Distinct SKUs listed across tracked categories (listing_status = 1).",
+      tooltip: "SKU Coverage: Distinct SKUs listed at least once across tracked categories (listing_status = 1).",
     },
   ];
 

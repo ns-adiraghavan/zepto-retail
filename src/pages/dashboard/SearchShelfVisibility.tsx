@@ -31,10 +31,10 @@ const SearchShelfVisibility = () => {
   const keywordCount = new Set(searchData.map((r) => r.keyword)).size;
 
   const kpis = [
-    { title: "Average Rank", value: avgRank.toFixed(1), trend: "neutral" as const, tooltip: "Average product search rank across tracked keywords" },
-    { title: "Page-1 Presence", value: `${pageOneShare.toFixed(1)}%`, trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const), tooltip: "Percentage of search results where a product appears in the top 10 positions." },
-    { title: "Keywords Tracked", value: keywordCount.toLocaleString(), trend: "neutral" as const, tooltip: "Unique keywords monitored in the filtered dataset" },
-    { title: "Search Observations", value: searchData.length.toLocaleString(), trend: "neutral" as const, tooltip: "Total captured search ranking observations" },
+    { title: "Avg Search Rank", value: avgRank.toFixed(1), trend: "neutral" as const, tooltip: "Avg Search Rank: Mean position across all tracked keywords and platforms. Lower is better." },
+    { title: "Top-10 Presence", value: `${pageOneShare.toFixed(1)}%`, trend: pageOneShare > 40 ? ("up" as const) : ("neutral" as const), tooltip: "Top-10 Presence: % of search observations where the platform appears in the first 10 results." },
+    { title: "Keywords Tracked", value: keywordCount.toLocaleString(), trend: "neutral" as const, tooltip: "Unique keywords monitored in the filtered dataset." },
+    { title: "Search Observations", value: searchData.length.toLocaleString(), trend: "neutral" as const, tooltip: "Total captured search ranking observations in the selected period." },
   ];
 
   // ── Rank distribution ────────────────────────────────────────────────────
@@ -81,24 +81,24 @@ const SearchShelfVisibility = () => {
         const gapLow = presenceSorted[presenceSorted.length - 1];
         const insights: Insight[] = [
           searchLeader
-            ? { icon: "search", title: "Search Leader", body: `${searchLeader.platform} leads Top-10 search visibility with ${searchLeader.top10_presence_pct}% presence — highest across all tracked platforms.`, type: "positive" }
+            ? { icon: "search", title: "Search Leader", body: `${searchLeader.platform} leads Top-10 Presence with ${searchLeader.top10_presence_pct}% — highest across all tracked platforms.`, type: "positive" }
             : { icon: "search", title: "Search Leader", body: "No search data available.", type: "neutral" },
           eliteLeader
-            ? { icon: "target", title: "Elite Rank Share", body: `${eliteLeader.platform} dominates elite positions (Top 3) with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`, type: "positive" }
-            : { icon: "target", title: "Elite Rank Share", body: "No elite rank data available.", type: "neutral" },
+            ? { icon: "target", title: "Top-3 Search Share", body: `${eliteLeader.platform} dominates Top-3 positions with ${eliteLeader.elite_rank_share_pct}% share — the strongest high-conversion placement rate.`, type: "positive" }
+            : { icon: "target", title: "Top-3 Search Share", body: "No elite rank data available.", type: "neutral" },
           visGap > 0 && gapLow
-            ? { icon: "chart", title: "Visibility Gap", body: `There is a ${visGap.toFixed(1)}% gap in Top-10 presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%).`, type: visGap > 10 ? "warning" : "neutral" }
+            ? { icon: "chart", title: "Visibility Gap", body: `There is a ${visGap.toFixed(1)}% gap in Top-10 Presence between the best and worst platform (${gapLow.platform} at ${gapLow.top10_presence_pct}%).`, type: visGap > 10 ? "warning" : "neutral" }
             : { icon: "chart", title: "Visibility Gap", body: "Insufficient data to compute visibility gap.", type: "neutral" },
         ];
         return <StrategicInsightsPanel insights={insights} />;
       })()}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Visibility (Top-10 Presence)</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top-10 Presence by Platform</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>Top-10 Search Presence by Platform</CardTitle>
-            <CardDescription>% of search observations where the platform appeared in the top 10 results</CardDescription>
+            <CardTitle>Top-10 Presence by Platform</CardTitle>
+            <CardDescription>% of search observations where the platform appeared in the first 10 results</CardDescription>
           </CardHeader>
           <CardContent>
             {top10Presence.length === 0 ? (
@@ -119,10 +119,10 @@ const SearchShelfVisibility = () => {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Elite Rank Share (Top-3 Positions)</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top-3 Search Share by Platform</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>Elite Rank Share by Platform</CardTitle>
+            <CardTitle>Top-3 Search Share by Platform</CardTitle>
             <CardDescription>% of search observations where the platform captured a top-3 position</CardDescription>
           </CardHeader>
           <CardContent>
@@ -134,8 +134,8 @@ const SearchShelfVisibility = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip formatter={(value: number) => [`${value}%`, "Elite Rank Share"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
-                  <Bar dataKey="elite_rank_share_pct" name="Elite Rank Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Top-3 Search Share"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
+                  <Bar dataKey="elite_rank_share_pct" name="Top-3 Search Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

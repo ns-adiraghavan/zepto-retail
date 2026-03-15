@@ -135,17 +135,17 @@ const LocalMarketIntelligence = () => {
   const highestVarianceCity = [...cityScores].sort((a, b) => b.priceVariance - a.priceVariance)[0];
 
   const kpis = [
-    { title: "Avg City Score", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Composite score averaged across all five cities (two-stage aggregation)" },
-    { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest composite intelligence score" },
-    { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest composite intelligence score" },
-    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Highest price std-dev across pincodes — ${highestVarianceCity?.city ?? "—"} leads` },
+    { title: "Market Competition Index", value: avgScore.toFixed(1), trend: "neutral" as const, tooltip: "Market Competition Index: Composite score (0–100) averaging SKU Availability Rate, search visibility, and inverse discount intensity across all cities." },
+    { title: "Best Performing City", value: bestCity?.city ?? "—", change: bestCity?.score, changeType: "absolute" as const, trend: "up" as const, tooltip: "City with the highest Market Competition Index score." },
+    { title: "Lowest Performing City", value: worstCity?.city ?? "—", change: worstCity?.score, changeType: "absolute" as const, trend: "down" as const, tooltip: "City with the lowest Market Competition Index score." },
+    { title: "Hyperlocal Price Variance", value: highestVarianceCity ? `₹${highestVarianceCity.priceVariance}` : "—", trend: highestVarianceCity?.priceVariance > 4 ? "down" as const : "neutral" as const, tooltip: `Hyperlocal Price Variance: Standard deviation of avg sale prices across pincodes. Higher values indicate inconsistent pricing — ${highestVarianceCity?.city ?? "—"} leads.` },
   ];
 
   const cityChartData = cityScores.map((c) => ({
     city: c.city,
-    Score: c.score,
-    Availability: parseFloat(c.availability.toFixed(1)),
-    "Search Visibility": parseFloat(c.search.toFixed(1)),
+    "Market Competition Index": c.score,
+    "SKU Availability Rate": parseFloat(c.availability.toFixed(1)),
+    "Top-10 Presence": parseFloat(c.search.toFixed(1)),
     "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
   }));
 
@@ -197,11 +197,11 @@ const LocalMarketIntelligence = () => {
       <StrategicInsightsPanel insights={insights} />
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Competitiveness Comparison</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Market Competition Index</h2>
         <Card className="bg-gradient-card">
           <CardHeader>
-            <CardTitle>City Competitiveness Comparison</CardTitle>
-            <CardDescription>Score, availability, search visibility, and price competitiveness per city (two-stage aggregation)</CardDescription>
+            <CardTitle>City Market Competition Index</CardTitle>
+            <CardDescription>Market Competition Index, SKU Availability Rate, Top-10 Presence, and Price Competitiveness per city (two-stage aggregation)</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -211,10 +211,10 @@ const LocalMarketIntelligence = () => {
                 <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
                 <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="Score"                 fill="hsl(var(--status-low))"    radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Availability"          fill="hsl(221 83% 53%)"          radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Search Visibility"     fill="hsl(270 70% 55%)"          radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Price Competitiveness" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Market Competition Index" fill="hsl(var(--status-low))"    radius={[4, 4, 0, 0]} />
+                <Bar dataKey="SKU Availability Rate"   fill="hsl(221 83% 53%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Top-10 Presence"         fill="hsl(270 70% 55%)"          radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Price Competitiveness"   fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -226,7 +226,7 @@ const LocalMarketIntelligence = () => {
         <Card className="bg-gradient-card">
           <CardHeader>
             <CardTitle>City Intelligence Scores</CardTitle>
-            <CardDescription>Composite score: availability + search visibility − discount intensity (platform × pincode aggregation)</CardDescription>
+            <CardDescription>Market Competition Index: SKU Availability Rate + Top-10 Presence − discount intensity (platform × pincode aggregation)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

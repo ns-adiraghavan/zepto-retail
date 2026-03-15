@@ -138,8 +138,8 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
                 <tr className="border-b border-border text-left">
                   <th className="py-2 pr-4 font-medium text-muted-foreground">Rank</th>
                   <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Elite Share</th>
-                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-10 Share</th>
+                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-3 Search Share</th>
+                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-10 Presence</th>
                   <th className="py-2 font-medium text-muted-foreground text-right">Advantage Score</th>
                 </tr>
               </thead>
@@ -320,7 +320,7 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span>Sponsored: <strong className="text-foreground">{row.sponsoredShare.toFixed(1)}%</strong></span>
-                  <span>Elite Share: <strong className="text-foreground">{row.eliteShare.toFixed(1)}%</strong></span>
+                  <span>Top-3 Search Share: <strong className="text-foreground">{row.eliteShare.toFixed(1)}%</strong></span>
                 </div>
                 <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
                   <div className="bg-status-high h-full transition-all" style={{ width: `${Math.min(row.sponsoredShare, 100)}%` }} />
