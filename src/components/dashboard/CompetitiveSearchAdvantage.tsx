@@ -138,8 +138,8 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
                 <tr className="border-b border-border text-left">
                   <th className="py-2 pr-4 font-medium text-muted-foreground">Rank</th>
                   <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Elite Share</th>
-                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-10 Share</th>
+                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-3 Search Share</th>
+                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Top-10 Presence</th>
                   <th className="py-2 font-medium text-muted-foreground text-right">Advantage Score</th>
                 </tr>
               </thead>
