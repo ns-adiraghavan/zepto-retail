@@ -143,9 +143,9 @@ const LocalMarketIntelligence = () => {
 
   const cityChartData = cityScores.map((c) => ({
     city: c.city,
-    Score: c.score,
-    Availability: parseFloat(c.availability.toFixed(1)),
-    "Search Visibility": parseFloat(c.search.toFixed(1)),
+    "Market Competition Index": c.score,
+    "SKU Availability Rate": parseFloat(c.availability.toFixed(1)),
+    "Top-10 Presence": parseFloat(c.search.toFixed(1)),
     "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
   }));
 
