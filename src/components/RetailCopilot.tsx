@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { GlobalFilters } from "@/data/dataLoader";
 import { buildDataContext, buildPageContext } from "@/hooks/useCopilotData";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface Message {
   id: string;
@@ -125,18 +125,40 @@ export function RetailCopilot({ filters }: RetailCopilotProps) {
           pincode: filters.pincode,
         };
 
-        const { data, error } = await supabase.functions.invoke("retail-copilot", {
-          body: {
-            messages: history,
-            dataContext,
-            filters: filterPayload,
-            pageContext,
-          },
-        });
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-        if (error) throw error;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
 
-        const reply = data?.reply ?? "Unable to generate a response. Please try again.";
+        let res: Response;
+        try {
+          res = await fetch(`${supabaseUrl}/functions/v1/retail-copilot`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseKey}`,
+              apikey: supabaseKey,
+            },
+            body: JSON.stringify({
+              messages: history,
+              dataContext,
+              filters: filterPayload,
+              pageContext,
+            }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeout);
+        }
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Edge function error ${res.status}: ${errText}`);
+        }
+
+        const json = await res.json();
+        const reply = json?.reply ?? "Unable to generate a response. Please try again.";
         setMessages((prev) =>
           prev.map((m) => (m.loading ? { ...m, content: reply, loading: false } : m))
         );

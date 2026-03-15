@@ -127,7 +127,7 @@ export function buildDataContext(filters: GlobalFilters): string {
 
   // ── Competitive events ──────────────────────────────────────────────────────
   const recentEvents = events.slice(0, 5).map(
-    (e) => `  [${e.date}] ${e.platform} — ${e.event_type} in ${e.category} (${e.city}): ${e.description} | discount=${e.discount_percent}%`
+    (e) => `  [${e.date}] ${e.platform} — ${e.event_type} in ${e.category} (${e.city}): ${e.description}${e.discount_percent != null ? ` | discount=${e.discount_percent}%` : ""}`
   );
 
   // ── Platform summary ────────────────────────────────────────────────────────
