@@ -1,31 +1,40 @@
 import { datasets } from "@/data/dataLoader";
 import { GlobalFilters } from "@/data/dataLoader";
 
+// ─── Sample size cap — prevents 700k-row iteration in the browser ─────────────
+const SAMPLE_SIZE = 2000;
+
 /**
  * Computes a rich data context string from live datasets to inject into the AI prompt.
- * Uses two-stage aggregation (platform × pincode) to preserve variance.
+ * Samples up to SAMPLE_SIZE rows per dataset before aggregation to keep computation fast.
  */
 export function buildDataContext(filters: GlobalFilters): string {
-  const { priceTracking, availabilityTracking, searchRankTracking, assortmentTracking, platformSummary, competitorEvents } = datasets;
+  const { platformSummary, competitorEvents } = datasets;
 
-  const cityFilter = filters.city !== "All Cities" ? filters.city : null;
-  const platformFilter = filters.platform !== "All Platforms" ? filters.platform : null;
-  const categoryFilter = filters.category !== "All Categories" ? filters.category : null;
+  // ── Sample raw datasets before filtering ────────────────────────────────────
+  const priceTrackingSample  = datasets.priceTracking.slice(0, SAMPLE_SIZE);
+  const availSample          = datasets.availabilityTracking.slice(0, SAMPLE_SIZE);
+  const searchSample         = datasets.searchRankTracking.slice(0, SAMPLE_SIZE);
+  const assortSample         = datasets.assortmentTracking.slice(0, SAMPLE_SIZE);
+
+  const cityFilter     = filters.city     !== "All Cities"      ? filters.city     : null;
+  const platformFilter = filters.platform !== "All Platforms"   ? filters.platform : null;
+  const categoryFilter = filters.category !== "All Categories"  ? filters.category : null;
 
   const applyBase = <T extends { city?: string; platform?: string; category?: string }>(
     data: T[]
   ): T[] =>
     data.filter(
       (r) =>
-        (!cityFilter || r.city === cityFilter) &&
+        (!cityFilter     || r.city     === cityFilter)     &&
         (!platformFilter || r.platform === platformFilter) &&
         (!categoryFilter || r.category === categoryFilter)
     );
 
-  const price = applyBase(priceTracking);
-  const avail = applyBase(availabilityTracking);
-  const search = applyBase(searchRankTracking);
-  const assort = applyBase(assortmentTracking);
+  const price  = applyBase(priceTrackingSample);
+  const avail  = applyBase(availSample);
+  const search = applyBase(searchSample);
+  const assort = applyBase(assortSample);
   const events = applyBase(competitorEvents);
 
   const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
