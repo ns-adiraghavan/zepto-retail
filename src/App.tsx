@@ -38,6 +38,7 @@ const App = () => (
                 <Route path="local" element={<LocalMarketIntelligence />} />
                 <Route path="events" element={<CompetitiveEvents />} />
               </Route>
+              <Route path="/analytics-taxonomy" element={<AnalyticsTaxonomy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
