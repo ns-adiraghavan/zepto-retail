@@ -134,8 +134,8 @@ const SearchShelfVisibility = () => {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
                   <YAxis unit="%" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip formatter={(value: number) => [`${value}%`, "Elite Rank Share"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
-                  <Bar dataKey="elite_rank_share_pct" name="Elite Rank Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
+                  <Tooltip formatter={(value: number) => [`${value}%`, "Top-3 Search Share"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
+                  <Bar dataKey="elite_rank_share_pct" name="Top-3 Search Share %" fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
