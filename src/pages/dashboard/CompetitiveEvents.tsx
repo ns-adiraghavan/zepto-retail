@@ -11,6 +11,7 @@ import {
 } from "@/data/dataLoader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicInsightsPanel, Insight } from "@/components/dashboard/StrategicInsightsPanel";
+import { PageControlBar } from "@/components/dashboard/PageControlBar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
