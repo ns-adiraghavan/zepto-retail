@@ -415,7 +415,7 @@ const CompetitiveEvents = () => {
         </Card>
 
         {/* Two-column: timeline left, context right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
           {/* ── LEFT: Event Timeline ─────────────────────────────────────── */}
           <Card className="bg-gradient-card">
