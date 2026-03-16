@@ -221,11 +221,39 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
       dateTo: filters.dateTo,
     };
 
-    const priceBase = applyFilters(datasets.priceTracking, baseFilters).filter(
-      (r) => r.sku_id === selectedSkuId && r.pincode
+    const allSkuRows = applyFilters(datasets.priceTracking, baseFilters).filter(
+      (r) => r.sku_id === selectedSkuId
     );
 
-    if (priceBase.length === 0) return [];
+    if (allSkuRows.length === 0) return [];
+
+    // Support numeric pincodes stored as numbers in JSON
+    const priceBase = allSkuRows
+      .map((r) => ({ ...r, pincode: r.pincode != null ? String(r.pincode) : undefined }))
+      .filter((r) => r.pincode && r.pincode !== "undefined" && r.pincode !== "null");
+
+    // If no pincode data exists, fall back to city-level grouping
+    if (priceBase.length === 0) {
+      // Group by city as proxy for locality
+      const cityAvg = avg(allSkuRows.map((r) => r.sale_price));
+      const cities = [...new Set(allSkuRows.map((r) => r.city))];
+      return cities
+        .map((city) => {
+          const cityRows = allSkuRows.filter((r) => r.city === city);
+          const platformPrices: Record<string, number | null> = {};
+          for (const platform of PLATFORMS) {
+            const pRows = cityRows.filter((r) => r.platform === platform);
+            platformPrices[platform] = pRows.length > 0 ? avg(pRows.map((r) => r.sale_price)) : null;
+          }
+          const validPrices = Object.values(platformPrices).filter((v): v is number => v !== null);
+          const avgPrice = avg(validPrices);
+          const delta = cityAvg > 0 ? ((avgPrice - cityAvg) / cityAvg) * 100 : 0;
+          const signal: PincodePriceRow["signal"] =
+            delta <= -3 ? "Undercutting Market" : delta >= 3 ? "Premium Locality" : "In Line";
+          return { pincode: city, platformPrices, avgPrice, cityAvgDelta: delta, signal };
+        })
+        .sort((a, b) => a.avgPrice - b.avgPrice);
+    }
 
     const cityAvg = avg(priceBase.map((r) => r.sale_price));
 
