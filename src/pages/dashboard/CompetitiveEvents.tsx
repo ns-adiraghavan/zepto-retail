@@ -49,10 +49,6 @@ function formatDate(dateStr: string) {
   }
 }
 
-function avg(arr: number[]): number {
-  if (!arr.length) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
 
 function stddev(values: number[]): number {
   if (values.length < 2) return 0;
