@@ -545,7 +545,8 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-border">
+                     <tr className="border-b border-border">
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-left min-w-[110px]">City</th>
                         <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-left min-w-[90px]">Pincode</th>
                         {PLATFORMS.map((p) => (
                           <th key={p} className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[110px]">{p}</th>
@@ -558,6 +559,7 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
                     <tbody>
                       {pincodePriceRows.map((row, i) => (
                         <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                          <td className="py-2.5 px-3 text-xs">{row.city}</td>
                           <td className="py-2.5 px-3 font-mono text-xs font-semibold">{row.pincode}</td>
                           {PLATFORMS.map((p) => (
                             <td key={p} className="py-2.5 px-3 text-right font-mono text-xs">
