@@ -207,62 +207,7 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
       </Card>
 
       {/* ── 3. Keyword Competition Heatmap ── */}
-      <Card className="bg-gradient-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-status-high" />
-            Keyword Competition Heatmap
-          </CardTitle>
-          <CardDescription>Average search rank per keyword × platform — green = strong, red = weak</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {keywords.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No data for selected filters.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground min-w-[140px]">Keyword</th>
-                    {heatmapPlatforms.map((p) => (
-                      <th key={p} className="py-2 px-2 font-medium text-muted-foreground text-center whitespace-nowrap">{p}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {keywords.map((kw) => (
-                    <tr key={kw} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4 font-mono text-xs text-foreground">{kw}</td>
-                      {heatmapPlatforms.map((p) => {
-                        const rank = cells[kw]?.[p] ?? -1;
-                        return (
-                          <td key={p} className="py-2 px-2 text-center">
-                            {rank < 0 ? (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            ) : (
-                              <span className={cn("inline-block px-2 py-0.5 rounded text-xs font-semibold tabular-nums", rankBg(rank))}>
-                                #{rank.toFixed(1)}
-                              </span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="flex gap-3 text-xs text-muted-foreground mt-3 flex-wrap">
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-status-low/30 inline-block" />≤2 Elite</div>
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-status-medium/30 inline-block" />3–7 Good</div>
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-status-high/30 inline-block" />8–12 Weak</div>
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-status-critical/30 inline-block" />&gt;12 Poor</div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── 4. Sponsored Influence Indicator ── */}
+      {/* ── 3. Sponsored Influence Indicator ── */}
       <Card className="bg-gradient-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
