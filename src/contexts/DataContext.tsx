@@ -65,14 +65,28 @@ const fetchedDatasets = new Set<DatasetKey>();
 let fetchPromises: Partial<Record<DatasetKey, Promise<void>>> = {};
 
 // ─── Gzip fetch helper ────────────────────────────────────────────────────────
+// The static file server may auto-decompress .gz files (Content-Encoding: gzip),
+// in which case response.json() works directly. If not, we fall back to pako.
 async function fetchGzip(filename: string): Promise<unknown[]> {
   const res = await fetch(`/data/${filename}.json.gz`);
   if (!res.ok) throw new Error(`Failed to fetch ${filename}.json.gz: HTTP ${res.status}`);
-  const buffer = await res.arrayBuffer();
-  const decompressed = pako.inflate(new Uint8Array(buffer), { to: "string" });
-  const json = JSON.parse(decompressed);
-  if (!Array.isArray(json)) throw new Error(`${filename}.json.gz did not decompress to an array`);
-  return json;
+
+  // Clone so we can try both paths without consuming the body twice
+  const clone = res.clone();
+
+  try {
+    // Fast path: browser already auto-decompressed (Content-Encoding: gzip)
+    const json = await res.json();
+    if (!Array.isArray(json)) throw new Error("not an array");
+    return json;
+  } catch {
+    // Slow path: body is raw gzip bytes — decompress manually with pako
+    const buffer = await clone.arrayBuffer();
+    const decompressed = pako.inflate(new Uint8Array(buffer), { to: "string" });
+    const json = JSON.parse(decompressed);
+    if (!Array.isArray(json)) throw new Error(`${filename}.json.gz did not decompress to an array`);
+    return json;
+  }
 }
 
 // ─── Normalize pincode to string ──────────────────────────────────────────────
