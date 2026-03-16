@@ -75,28 +75,7 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
       .slice(0, 8);
   }, [searchData]);
 
-  // ── 3. Keyword Competition Heatmap ─────────────────────────────────────
-  const { keywords, platforms: heatmapPlatforms, cells } = useMemo(() => {
-    const acc: Record<string, Record<string, number[]>> = {};
-    for (const row of searchData) {
-      const kw = row.keyword;
-      const pl = row.platform;
-      if (!acc[kw]) acc[kw] = {};
-      if (!acc[kw][pl]) acc[kw][pl] = [];
-      acc[kw][pl].push(row.search_rank);
-    }
-    const allPlatforms = Array.from(new Set(searchData.map((r) => r.platform))).sort();
-    const allKeywords  = Object.keys(acc).slice(0, 12); // cap at 12 rows for readability
-    const cells: Record<string, Record<string, number>> = {};
-    for (const kw of allKeywords) {
-      cells[kw] = {};
-      for (const pl of allPlatforms) {
-        const ranks = acc[kw]?.[pl] ?? [];
-        cells[kw][pl] = ranks.length ? avg(ranks) : -1;
-      }
-    }
-    return { keywords: allKeywords, platforms: allPlatforms, cells };
-  }, [searchData]);
+  // ── 4 moved to 3 after heatmap removal ──────────────────────────────────
 
   // ── 4. Sponsored Influence ─────────────────────────────────────────────
   const sponsoredInsights = useMemo(() => {
