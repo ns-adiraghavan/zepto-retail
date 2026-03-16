@@ -319,18 +319,24 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
   return (
     <section className="space-y-2">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        Cross-Platform Product Comparison
+        {mode === "hyperlocal" ? "Hyperlocal Price Competition" : "Cross-Platform Product Comparison"}
       </h2>
       <Card className="bg-gradient-card">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ArrowLeftRight className="h-4 w-4 text-primary" />
+            {mode === "hyperlocal" ? (
+              <MapPin className="h-4 w-4 text-primary" />
+            ) : (
+              <ArrowLeftRight className="h-4 w-4 text-primary" />
+            )}
             <div>
-              <CardTitle>Cross-Platform Product Comparison</CardTitle>
+              <CardTitle>
+                {mode === "hyperlocal" ? "Hyperlocal Price Competition" : "Cross-Platform Product Comparison"}
+              </CardTitle>
               <CardDescription>
-                Select a category and product to compare price, discount,
-                promotions, and availability across all platforms — filtered by
-                active city, pincode, and date selection
+                {mode === "hyperlocal"
+                  ? "Compare how the selected product is priced across pincodes within the city and identify localities where competitors are undercutting the market."
+                  : "Select a category and product to compare price, discount, promotions, and availability across all platforms — filtered by active city, pincode, and date selection"}
               </CardDescription>
             </div>
           </div>
