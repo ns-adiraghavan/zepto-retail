@@ -67,7 +67,7 @@ export function CompetitiveSearchAdvantage({ filters }: Props) {
       .slice(0, 8);
   }, [searchData]);
 
-  // ── 4 moved to 3 after heatmap removal ──────────────────────────────────
+  // ── 3. Sponsored Influence ─────────────────────────────────────────────
 
   // ── 4. Sponsored Influence ─────────────────────────────────────────────
   const sponsoredInsights = useMemo(() => {
