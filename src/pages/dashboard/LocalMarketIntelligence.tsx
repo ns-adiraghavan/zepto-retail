@@ -31,7 +31,7 @@ function stddev(values: number[]): number {
 }
 
 const LocalMarketIntelligence = () => {
-  const { city, platform, pincode: globalPincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
+  const { city, platform, pincode, category, dateFrom, dateTo } = useOutletContext<GlobalFilters>();
 
   // ── Local pincode state (page-level, dependent on city) ──────────────────
   const [localPincode, setLocalPincode] = useState<string>("All Pincodes");
@@ -47,8 +47,12 @@ const LocalMarketIntelligence = () => {
     return Array.from(s).sort();
   }, [city]);
 
-  // Reset local pincode when city changes or city is "All Cities"
-  const effectivePincode = city === "All Cities" ? "All Pincodes" : localPincode;
+  // Local page pincode takes precedence; fall back to global pincode, then "All Pincodes"
+  // Variance calculation NEVER uses pincode — only comparison tables do
+  const effectivePincode =
+    city === "All Cities"
+      ? (pincode !== "All Pincodes" ? pincode : "All Pincodes")
+      : (localPincode !== "All Pincodes" ? localPincode : pincode !== "All Pincodes" ? pincode : "All Pincodes");
 
   // ── City-level scores (memoized, independent of city/pincode filter) ─────
   const cityScores = useMemo(() =>
