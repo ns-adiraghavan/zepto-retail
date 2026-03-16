@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ExternalLink, TrendingUp, TrendingDown, Info, AlertTriangle } from "lucide-react";
 import { heatmapData } from "@/data/dashboardData";
-import { competitorSkuNames } from "@/data/competitorSkuNames";
+
 
 interface CompetitorTableProps {
   skuId: string;

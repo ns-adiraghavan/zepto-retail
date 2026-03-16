@@ -1,7 +1,9 @@
-import { BookOpen, Search } from "lucide-react";
+import { BookOpen, Search, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface KPI {
   name: string;
