@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
@@ -13,8 +13,9 @@ import { MapPin, Layers, Hash, Tag } from "lucide-react";
 import {
   GlobalFilters,
   DEFAULT_FILTERS,
+  getUniquePincodes,
   getUniqueCategories,
-  datasets,
+  getPincodeCityMap,
 } from "@/data/dataLoader";
 import { useData } from "@/contexts/DataContext";
 import { RetailCopilot } from "@/components/RetailCopilot";
@@ -26,33 +27,23 @@ export function DashboardLayout() {
   const { loaded } = useData();
 
   const [filters, setFilters] = useState<GlobalFilters>(DEFAULT_FILTERS);
+  const [pincodeOptions, setPincodeOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [pincodeCityMap, setPincodeCityMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!loaded) return;
+    setPincodeOptions(getUniquePincodes());
     setCategoryOptions(getUniqueCategories());
+    setPincodeCityMap(getPincodeCityMap());
   }, [loaded]);
 
   const setFilter = <K extends keyof GlobalFilters>(key: K, value: GlobalFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
-  // When city changes, reset pincode to avoid stale selection
-  const handleCityChange = (v: string) => {
-    setFilters((prev) => ({ ...prev, city: v, pincode: "All Pincodes" }));
-  };
-
-  // ── Pincode options: city-dependent ─────────────────────────────────────
-  const pincodeOptions = useMemo(() => {
-    if (!loaded) return [];
-    const s = new Set<string>();
-    for (const r of datasets.priceTracking) {
-      if (!r.pincode) continue;
-      if (filters.city === "All Cities" || r.city === filters.city) {
-        s.add(String(r.pincode));
-      }
-    }
-    return Array.from(s).sort();
-  }, [loaded, filters.city]);
+  // Derive associated city for currently selected pincode
+  const associatedCity =
+    filters.pincode !== "All Pincodes" ? pincodeCityMap[filters.pincode] : null;
 
   return (
     <SidebarProvider>
@@ -65,7 +56,7 @@ export function DashboardLayout() {
             <div className="h-4 w-px bg-border" />
 
             {/* ── City ── */}
-            <Select value={filters.city} onValueChange={handleCityChange}>
+            <Select value={filters.city} onValueChange={(v) => setFilter("city", v)}>
               <SelectTrigger className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium w-auto min-w-[130px] focus:ring-1 hover:bg-muted/70 transition-colors">
                 <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                 <SelectValue />
@@ -73,24 +64,6 @@ export function DashboardLayout() {
               <SelectContent>
                 {CITIES.map((c) => (
                   <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* ── Pincode (city-dependent) ── */}
-            <Select
-              value={filters.pincode}
-              onValueChange={(v) => setFilter("pincode", v)}
-              disabled={pincodeOptions.length === 0}
-            >
-              <SelectTrigger className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium w-auto min-w-[140px] focus:ring-1 hover:bg-muted/70 transition-colors">
-                <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="All Pincodes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Pincodes" className="text-xs">All Pincodes</SelectItem>
-                {pincodeOptions.map((p) => (
-                  <SelectItem key={p} value={p} className="text-xs font-mono">{p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -122,6 +95,32 @@ export function DashboardLayout() {
                   ))}
                 </SelectContent>
               </Select>
+            )}
+
+            {/* ── Pincode + Associated City ── */}
+            {pincodeOptions.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Select value={filters.pincode} onValueChange={(v) => setFilter("pincode", v)}>
+                  <SelectTrigger className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium w-auto min-w-[140px] focus:ring-1 hover:bg-muted/70 transition-colors">
+                    <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Pincodes" className="text-xs">All Pincodes</SelectItem>
+                    {pincodeOptions.map((p) => (
+                      <SelectItem key={p} value={p} className="text-xs">
+                        {p}{pincodeCityMap[p] ? ` · ${pincodeCityMap[p]}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {associatedCity && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/40 border border-border rounded-full px-2.5 py-1 shrink-0">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {associatedCity}
+                  </span>
+                )}
+              </div>
             )}
 
             <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
