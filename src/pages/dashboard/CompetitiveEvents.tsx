@@ -365,7 +365,7 @@ const CompetitiveEvents = () => {
       <StrategicInsightsPanel insights={insights} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          EVENT INTELLIGENCE PANEL
+          EVENT INTELLIGENCE PANEL — two-column layout
       ══════════════════════════════════════════════════════════════════════════ */}
       <section className="space-y-2">
         <div className="flex items-center gap-2">
@@ -373,356 +373,382 @@ const CompetitiveEvents = () => {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Event Intelligence</h2>
         </div>
 
-        {/* ── 1. Event Filters ─────────────────────────────────────────────── */}
+        {/* Filters bar */}
         <Card className="bg-gradient-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <CardTitle className="text-base">Event Summary Table</CardTitle>
-                <CardDescription>
-                  {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""} · click a row to explore intelligence
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-                {/* Platform */}
-                <Select value={eventPlatform} onValueChange={setEventPlatform}>
-                  <SelectTrigger className="h-8 text-xs w-36">
-                    <SelectValue placeholder="Platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Platforms</SelectItem>
-                    {eventPlatforms.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {/* City */}
-                <Select value={eventCity} onValueChange={setEventCity}>
-                  <SelectTrigger className="h-8 text-xs w-32">
-                    <SelectValue placeholder="City" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Cities</SelectItem>
-                    {eventCities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {/* Category */}
-                <Select value={eventCategory} onValueChange={setEventCategory}>
-                  <SelectTrigger className="h-8 text-xs w-44">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Categories</SelectItem>
-                    {eventCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {/* Severity */}
-                <Select value={eventSeverity} onValueChange={setEventSeverity}>
-                  <SelectTrigger className="h-8 text-xs w-28">
-                    <SelectValue placeholder="Severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Severity</SelectItem>
-                    {eventSeverities.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+          <CardContent className="py-3">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <Select value={eventPlatform} onValueChange={setEventPlatform}>
+                <SelectTrigger className="h-8 text-xs w-36">
+                  <SelectValue placeholder="Platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Platforms</SelectItem>
+                  {eventPlatforms.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={eventCity} onValueChange={setEventCity}>
+                <SelectTrigger className="h-8 text-xs w-32">
+                  <SelectValue placeholder="City" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Cities</SelectItem>
+                  {eventCities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={eventCategory} onValueChange={setEventCategory}>
+                <SelectTrigger className="h-8 text-xs w-44">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Categories</SelectItem>
+                  {eventCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={eventSeverity} onValueChange={setEventSeverity}>
+                <SelectTrigger className="h-8 text-xs w-28">
+                  <SelectValue placeholder="Severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Severity</SelectItem>
+                  {eventSeverities.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""}
+              </span>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {filteredEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-6 text-center">No events match the selected filters.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left">
-                      {["Date", "Platform", "City", "Category", "Event Type", "Severity", ""].map((h, i) => (
-                        <th key={i} className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap last:pr-0">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+          </CardContent>
+        </Card>
+
+        {/* Two-column: timeline left, context right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-4 items-start">
+
+          {/* ── LEFT: Event Timeline ─────────────────────────────────────── */}
+          <Card className="bg-gradient-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Event Timeline</CardTitle>
+              <CardDescription className="text-xs">Click a row to explore intelligence on the right</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0 px-0">
+              {filteredEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center px-4">No events match the selected filters.</p>
+              ) : (
+                <ScrollArea className="h-[480px]">
+                  <div className="space-y-0 px-4">
                     {filteredEvents.map((e, i) => {
                       const ev = e as unknown as CompetitorEvent & { severity?: string };
                       const sevCfg = SEVERITY_CONFIG[ev.severity ?? "Low"] ?? SEVERITY_CONFIG["Low"];
                       const EventIcon = EVENT_ICONS[e.event_type] ?? Activity;
                       const isSelected = selectedEvent === e;
                       return (
-                        <tr
+                        <div
                           key={e.event_id ?? i}
                           onClick={() => setSelectedEvent(isSelected ? null : e)}
-                          className={`border-b border-border/50 last:border-0 cursor-pointer transition-colors ${
-                            isSelected ? "bg-primary/8 ring-1 ring-inset ring-primary/20" : "hover:bg-muted/20"
+                          className={`flex items-start gap-3 py-3 border-b border-border/50 last:border-0 cursor-pointer transition-colors rounded-sm px-2 -mx-2 ${
+                            isSelected
+                              ? "bg-primary/8 ring-1 ring-inset ring-primary/20"
+                              : "hover:bg-muted/30"
                           }`}
                         >
-                          <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                            {formatDate(e.date)}
-                          </td>
-                          <td className="py-2.5 pr-4 font-medium">{e.platform}</td>
-                          <td className="py-2.5 pr-4 text-muted-foreground">{e.city}</td>
-                          <td className="py-2.5 pr-4 text-muted-foreground text-xs max-w-[140px] truncate">{e.category}</td>
-                          <td className="py-2.5 pr-4">
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-                              <EventIcon className="h-3.5 w-3.5 text-primary shrink-0" />
-                              {e.event_type}
-                            </span>
-                          </td>
-                          <td className="py-2.5 pr-4">
-                            <Badge variant={sevCfg.variant} className="text-xs">
-                              {ev.severity ?? "Low"}
-                            </Badge>
-                          </td>
-                          <td className="py-2.5 text-right">
+                          {/* Timeline dot + icon */}
+                          <div className={`mt-0.5 flex items-center justify-center w-7 h-7 rounded-full shrink-0 ${
+                            isSelected ? "bg-primary/15" : "bg-muted"
+                          }`}>
+                            <EventIcon className={`h-3.5 w-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-sm font-semibold truncate ${isSelected ? "text-primary" : ""}`}>
+                                {e.event_type}
+                              </span>
+                              <Badge variant={sevCfg.variant} className="text-xs shrink-0 py-0 h-5">
+                                {ev.severity ?? "Low"}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{e.description}</p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              <span className="font-medium text-foreground/70">{e.platform}</span>
+                              <span>·</span>
+                              <span>{e.city}</span>
+                              <span>·</span>
+                              <span className="truncate max-w-[120px]">{e.category}</span>
+                            </div>
+                          </div>
+
+                          {/* Date + chevron */}
+                          <div className="text-right shrink-0 space-y-1">
+                            <p className="text-xs font-mono text-muted-foreground">{formatDate(e.date)}</p>
                             <ChevronRight
-                              className={`h-4 w-4 transition-transform ${
+                              className={`h-4 w-4 ml-auto transition-transform ${
                                 isSelected ? "rotate-90 text-primary" : "text-muted-foreground"
                               }`}
                             />
-                          </td>
-                        </tr>
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ── RIGHT: Event Context Panel ───────────────────────────────── */}
+          <div className="lg:sticky lg:top-4 space-y-4">
+            {!selEv ? (
+              /* Placeholder when nothing is selected */
+              <Card className="bg-gradient-card border-dashed border-border/60">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <MousePointerClick className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Select an event</p>
+                    <p className="text-xs text-muted-foreground mt-1">Click any row in the timeline to see event context, affected category, discount level, impacted platforms, and strategic implication.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+
+                {/* ── Context card ─────────────────────────────────────── */}
+                <Card className="bg-gradient-card border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {isFlashSale
+                          ? <Zap className="h-4 w-4 text-primary shrink-0" />
+                          : <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                        }
+                        <CardTitle className="text-base leading-snug">Event Context</CardTitle>
+                      </div>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-7 w-7 shrink-0 -mt-1 -mr-1"
+                        onClick={() => setSelectedEvent(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-0">
+                    {/* Description */}
+                    <p className="text-sm text-muted-foreground leading-relaxed">{selEv.description}</p>
+
+                    {/* Key fields grid */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                      <div className="flex items-start gap-2 col-span-2">
+                        <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Affected Category</p>
+                          <p className="text-sm font-semibold">{selEv.category}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Percent className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Discount Level</p>
+                          <p className="text-sm font-semibold">
+                            {selEv.discount_percent != null && selEv.discount_percent > 0
+                              ? `${selEv.discount_percent}%`
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Layers className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Impacted Platform</p>
+                          <p className="text-sm font-semibold">{selEv.platform}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Severity</p>
+                          <p className="text-sm font-semibold">{selEv.severity ?? "Low"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Activity className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Market Scope</p>
+                          <p className="text-sm font-semibold">
+                            {selEv.market_scope
+                              ? selEv.market_scope.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Strategic Implication */}
+                    <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                      <Lightbulb className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Strategic Implication</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {isFlashSale
+                            ? `${selEv.platform} is running a flash promotion in ${selEv.city} for ${selEv.category}${selEv.discount_percent > 0 ? ` at ${selEv.discount_percent}% off` : ""}. Monitor competitor response and consider matching or countering the offer to protect share.`
+                            : `A critical stockout was detected on ${selEv.platform} in ${selEv.city} for ${selEv.category}. ${selEv.market_scope === "stockout_cluster" ? "This cluster-level event signals a possible supply chain issue — escalate to procurement immediately." : "This is an isolated event — track for 48 hours before escalating."}`
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Promo intensity (flash sales only) */}
+                    {isFlashSale && selEv.platform_promo_share != null && selEv.market_avg_promo != null && (
+                      <div className="border border-border/60 rounded-lg p-3 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Promotion Intensity</p>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs w-20 text-muted-foreground shrink-0">{selEv.platform}</span>
+                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(selEv.platform_promo_share * 100, 100)}%` }} />
+                            </div>
+                            <span className="text-xs font-mono w-9 text-right">{(selEv.platform_promo_share * 100).toFixed(0)}%</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs w-20 text-muted-foreground shrink-0">Market avg</span>
+                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                              <div className="h-full rounded-full bg-muted-foreground/50" style={{ width: `${Math.min(selEv.market_avg_promo * 100, 100)}%` }} />
+                            </div>
+                            <span className="text-xs font-mono w-9 text-right">{(selEv.market_avg_promo * 100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                        {promoIntensity && (
+                          <div className={`flex items-center gap-1.5 text-xs font-semibold mt-1 ${
+                            promoIntensity === "above" ? "text-destructive" :
+                            promoIntensity === "below" ? "text-status-low" : "text-muted-foreground"
+                          }`}>
+                            {promoIntensity === "above" ? <TrendingDown className="h-3.5 w-3.5" /> :
+                             promoIntensity === "below" ? <TrendingDown className="h-3.5 w-3.5 rotate-180" /> :
+                             <Minus className="h-3.5 w-3.5" />}
+                            {promoIntensity === "above" ? "Above market baseline" :
+                             promoIntensity === "below" ? "Below market baseline" : "Inline with market"}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Stockout alert */}
+                    {isStockout && (
+                      <div className="border border-destructive/30 rounded-lg p-3 bg-destructive/5">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertTriangle className="h-4 w-4 shrink-0" />
+                          <p className="text-sm font-semibold">Must-have SKU availability drop</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {selEv.market_scope === "stockout_cluster"
+                            ? "Stockout cluster across the city — possible supply chain disruption."
+                            : "Isolated stockout — monitor for escalation."}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* ── Market Comparison card ───────────────────────────── */}
+                <Card className="bg-gradient-card border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <BarChart2 className="h-4 w-4 text-primary" />
+                      <CardTitle className="text-base">Market Comparison</CardTitle>
+                    </div>
+                    <CardDescription className="text-xs">
+                      {selEv.city} · {selEv.category} · {formatDate(selEv.date)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {isFlashSale ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border text-left">
+                              <th className="py-2 pr-3 font-medium text-muted-foreground">Platform</th>
+                              <th className="py-2 pr-3 font-medium text-muted-foreground text-right">Promo</th>
+                              <th className="py-2 pr-3 font-medium text-muted-foreground text-right">Disc.</th>
+                              <th className="py-2 font-medium text-muted-foreground text-right">Price</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {marketComparison.map((row) => {
+                              const isEventPlatform = row.platform === selEv.platform;
+                              return (
+                                <tr key={row.platform} className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-primary/5 font-semibold" : ""}`}>
+                                  <td className="py-2 pr-3">
+                                    <span className="flex items-center gap-1.5">
+                                      {isEventPlatform && <Zap className="h-3 w-3 text-primary shrink-0" />}
+                                      <span className={`text-xs ${isEventPlatform ? "text-primary" : ""}`}>{row.platform}</span>
+                                    </span>
+                                  </td>
+                                  <td className="py-2 pr-3 text-right font-mono text-xs">
+                                    {row.promoRate != null ? <span className={row.promoRate > 20 ? "text-destructive font-bold" : ""}>{row.promoRate}%</span> : <span className="text-muted-foreground">—</span>}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right font-mono text-xs">
+                                    {row.avgDiscount != null ? `${row.avgDiscount}%` : <span className="text-muted-foreground">—</span>}
+                                  </td>
+                                  <td className="py-2 text-right font-mono text-xs">
+                                    {row.avgPrice != null ? `₹${row.avgPrice}` : <span className="text-muted-foreground">—</span>}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {marketComparison.every((r) => r.promoRate == null) && (
+                          <p className="text-xs text-muted-foreground text-center py-4">No price data for this date, city &amp; category.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border text-left">
+                              <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
+                              <th className="py-2 font-medium text-muted-foreground text-right">Availability</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {marketComparison.map((row) => {
+                              const isEventPlatform = row.platform === selEv.platform;
+                              const band = row.availRate != null ? riskBand(row.availRate / 100) : null;
+                              return (
+                                <tr key={row.platform} className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-destructive/5 font-semibold" : ""}`}>
+                                  <td className="py-2.5 pr-4">
+                                    <span className="flex items-center gap-1.5">
+                                      {isEventPlatform && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                                      <span className={`text-xs ${isEventPlatform ? "text-destructive" : ""}`}>{row.platform}</span>
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 text-right">
+                                    {row.availRate != null ? (
+                                      <span className="inline-flex items-center gap-2 justify-end">
+                                        <span className="font-mono text-xs">{row.availRate}%</span>
+                                        {band && <Badge variant={band.variant} className="text-xs py-0 h-5">{band.label}</Badge>}
+                                      </span>
+                                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {marketComparison.every((r) => r.availRate == null) && (
+                          <p className="text-xs text-muted-foreground text-center py-4">No availability data for this date, city &amp; category.</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* ── 2 + 3. Event Context + Market Comparison (when row selected) ─── */}
-        {selEv && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-
-            {/* Event Context Panel */}
-            <Card className="bg-gradient-card border-primary/20">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    {isFlashSale
-                      ? <Zap className="h-4 w-4 text-primary shrink-0" />
-                      : <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                    }
-                    <CardTitle className="text-base leading-snug">Event Context</CardTitle>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 -mt-1 -mr-1"
-                    onClick={() => setSelectedEvent(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <CardDescription className="text-xs mt-1">{selEv.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Key fields */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Platform",    value: selEv.platform },
-                    { label: "City",        value: selEv.city },
-                    { label: "Category",    value: selEv.category },
-                    { label: "Date",        value: formatDate(selEv.date) },
-                    { label: "Market Scope", value: selEv.market_scope
-                        ? selEv.market_scope.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-                        : "—" },
-                    { label: "Severity",   value: selEv.severity ?? "Low" },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground">{label}</p>
-                      <p className="text-sm font-medium">{value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Flash Sale: promo share metrics */}
-                {isFlashSale && selEv.platform_promo_share != null && selEv.market_avg_promo != null && (
-                  <div className="border border-border/60 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Promotion Intensity</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Platform Promo Share</p>
-                        <p className="text-lg font-bold">
-                          {(selEv.platform_promo_share * 100).toFixed(0)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Market Average</p>
-                        <p className="text-lg font-bold text-muted-foreground">
-                          {(selEv.market_avg_promo * 100).toFixed(0)}%
-                        </p>
-                      </div>
-                    </div>
-                    {/* Bar comparison */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs w-20 text-muted-foreground shrink-0">{selEv.platform}</span>
-                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-primary"
-                            style={{ width: `${Math.min(selEv.platform_promo_share * 100, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-mono w-9 text-right">{(selEv.platform_promo_share * 100).toFixed(0)}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs w-20 text-muted-foreground shrink-0">Market avg</span>
-                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-muted-foreground/50"
-                            style={{ width: `${Math.min(selEv.market_avg_promo * 100, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-mono w-9 text-right">{(selEv.market_avg_promo * 100).toFixed(0)}%</span>
-                      </div>
-                    </div>
-                    {/* Indicator */}
-                    {promoIntensity && (
-                      <div className={`flex items-center gap-1.5 text-xs font-semibold mt-1 ${
-                        promoIntensity === "above" ? "text-destructive" :
-                        promoIntensity === "below" ? "text-green-600" : "text-muted-foreground"
-                      }`}>
-                        {promoIntensity === "above" ? <TrendingDown className="h-3.5 w-3.5" /> :
-                         promoIntensity === "below" ? <TrendingDown className="h-3.5 w-3.5 rotate-180" /> :
-                         <Minus className="h-3.5 w-3.5" />}
-                        {promoIntensity === "above" ? "Promotion intensity above market baseline" :
-                         promoIntensity === "below" ? "Promotion intensity below market baseline" :
-                         "Promotion inline with market"}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Stockout: must-have indicator */}
-                {isStockout && (
-                  <div className="border border-destructive/30 rounded-lg p-3 bg-destructive/5">
-                    <div className="flex items-center gap-2 text-destructive">
-                      <AlertTriangle className="h-4 w-4 shrink-0" />
-                      <p className="text-sm font-semibold">Must-have SKU availability drop detected</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {selEv.market_scope === "stockout_cluster"
-                        ? "Stockout cluster detected across the city — this may indicate a supply chain disruption or demand surge."
-                        : "Isolated stockout event — monitor for escalation."}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Market Comparison Panel */}
-            <Card className="bg-gradient-card border-primary/20">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <BarChart2 className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Market Comparison on Event Date</CardTitle>
-                </div>
-                <CardDescription className="text-xs">
-                  {selEv.city} · {selEv.category} · {formatDate(selEv.date)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isFlashSale ? (
-                  /* Flash Sale: promo / discount / price table */
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-left">
-                          <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                          <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Promo Rate</th>
-                          <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Avg Discount</th>
-                          <th className="py-2 font-medium text-muted-foreground text-right">Avg Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {marketComparison.map((row) => {
-                          const isEventPlatform = row.platform === selEv.platform;
-                          return (
-                            <tr
-                              key={row.platform}
-                              className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-primary/5 font-semibold" : ""}`}
-                            >
-                              <td className="py-2.5 pr-4">
-                                <span className="flex items-center gap-1.5">
-                                  {isEventPlatform && <Zap className="h-3 w-3 text-primary shrink-0" />}
-                                  <span className={isEventPlatform ? "text-primary" : ""}>{row.platform}</span>
-                                </span>
-                              </td>
-                              <td className="py-2.5 pr-4 text-right font-mono text-xs">
-                                {row.promoRate != null ? (
-                                  <span className={row.promoRate > 20 ? "text-destructive font-bold" : ""}>
-                                    {row.promoRate}%
-                                  </span>
-                                ) : <span className="text-muted-foreground">—</span>}
-                              </td>
-                              <td className="py-2.5 pr-4 text-right font-mono text-xs">
-                                {row.avgDiscount != null ? `${row.avgDiscount}%` : <span className="text-muted-foreground">—</span>}
-                              </td>
-                              <td className="py-2.5 text-right font-mono text-xs">
-                                {row.avgPrice != null ? `₹${row.avgPrice}` : <span className="text-muted-foreground">—</span>}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    {marketComparison.every((r) => r.promoRate == null) && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
-                        No price tracking data found for this exact date, city, and category combination.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  /* Stockout: availability table */
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-left">
-                          <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                          <th className="py-2 font-medium text-muted-foreground text-right">Availability Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {marketComparison.map((row) => {
-                          const isEventPlatform = row.platform === selEv.platform;
-                          const band = row.availRate != null ? riskBand(row.availRate / 100) : null;
-                          return (
-                            <tr
-                              key={row.platform}
-                              className={`border-b border-border/50 last:border-0 ${isEventPlatform ? "bg-destructive/5 font-semibold" : ""}`}
-                            >
-                              <td className="py-2.5 pr-4">
-                                <span className="flex items-center gap-1.5">
-                                  {isEventPlatform && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
-                                  <span className={isEventPlatform ? "text-destructive" : ""}>{row.platform}</span>
-                                </span>
-                              </td>
-                              <td className="py-2.5 text-right">
-                                {row.availRate != null ? (
-                                  <span className="inline-flex items-center gap-2 justify-end">
-                                    <span className="font-mono text-xs">{row.availRate}%</span>
-                                    {band && <Badge variant={band.variant} className="text-xs py-0 h-5">{band.label}</Badge>}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    {marketComparison.every((r) => r.availRate == null) && (
-                      <p className="text-xs text-muted-foreground text-center py-4">
-                        No availability data found for this exact date, city, and category combination.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
-        )}
+        </div>
       </section>
 
       {/* ─── Price Volatility Monitor ─────────────────────────────────────── */}
