@@ -431,8 +431,9 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
             </div>
           )}
 
-          {/* ── Platform comparison table ── */}
-          {!selectedSkuId ? (
+          {/* ── Platform comparison table (default mode only) ── */}
+          {mode !== "hyperlocal" && (
+          !selectedSkuId ? (
             <p className="text-sm text-muted-foreground text-center py-6">
               Select a category and product above to compare pricing across platforms.
             </p>
