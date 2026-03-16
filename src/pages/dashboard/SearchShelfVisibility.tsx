@@ -204,44 +204,6 @@ const SearchShelfVisibility = () => {
         </Card>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Keyword Shelf Position Tracker</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>Keyword Shelf Position Tracker</CardTitle>
-            <CardDescription>Search rank for top keywords across platforms</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Keyword</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Rank</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Brand</th>
-                    <th className="py-2 font-medium text-muted-foreground">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {shelfRows.map((row, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4 font-mono text-xs">{row.keyword}</td>
-                      <td className="py-2 pr-4">{row.platform}</td>
-                      <td className="py-2 pr-4 font-bold">#{row.rank}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{row.brand}</td>
-                      <td className="py-2">
-                        <Badge variant={row.sponsored ? "destructive" : "outline"} className="text-xs">{row.sponsored ? "Sponsored" : "Organic"}</Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       <CompetitiveSearchAdvantage filters={filters} />
     </div>
   );

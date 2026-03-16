@@ -232,41 +232,6 @@ const AvailabilityIntelligence = () => {
         </Card>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Stockout Events</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>Active Stockout Events</CardTitle>
-            <CardDescription>Current stockouts by platform and city</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Product</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 font-medium text-muted-foreground">City</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockoutRows.map((row, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4">
-                        <div className="font-medium">{row.name}</div>
-                        <div className="text-xs font-mono text-muted-foreground">{row.sku}</div>
-                      </td>
-                      <td className="py-2 pr-4">{row.platform}</td>
-                      <td className="py-2 text-muted-foreground">{row.city}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       <StockoutImpactAnalysis filters={filters} />
     </div>
   );

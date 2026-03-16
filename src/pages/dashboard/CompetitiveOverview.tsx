@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import { useOutletContext } from "react-router-dom";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { CategoryLevelRollup } from "@/components/dashboard/CategoryLevelRollup";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutDashboard } from "lucide-react";
 import {
