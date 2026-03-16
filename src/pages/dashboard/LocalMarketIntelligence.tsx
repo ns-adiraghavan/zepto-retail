@@ -214,6 +214,11 @@ const LocalMarketIntelligence = () => {
         </Card>
       </section>
 
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City × Pincode Breakdown</h2>
+        <CityPincodeTreeTable filters={{ platform, dateFrom, dateTo, category }} />
+      </section>
+
       <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} mode="hyperlocal" />
     </div>
   );
