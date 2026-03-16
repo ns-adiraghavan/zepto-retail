@@ -430,7 +430,6 @@ const CompetitiveOverview = () => {
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{i + 1}</td>
                           <td className="py-2 pr-3 font-medium max-w-[200px]">
                             <div className="truncate">{row.product_name}</div>
-                            <div className="text-xs font-mono text-muted-foreground">{row.sku_id}</div>
                           </td>
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{row.category}</td>
                           <td className="py-2 pr-3 text-xs">{row.platform}</td>
