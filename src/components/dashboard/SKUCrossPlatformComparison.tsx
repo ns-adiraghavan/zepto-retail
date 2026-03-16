@@ -74,7 +74,7 @@ function discountColor(pct: number) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function SKUCrossPlatformComparison({ filters }: Props) {
+export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props) {
   const categories = useMemo(
     () =>
       Array.from(new Set(datasets.skuMaster.map((s) => s.category))).sort(),
