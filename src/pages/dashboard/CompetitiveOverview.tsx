@@ -264,8 +264,7 @@ const CompetitiveOverview = () => {
         const gapPct = parseFloat(((compAvg - zeptoAvg) / zeptoAvg * 100).toFixed(1));
         return { category, zepto_avg_price: parseFloat(zeptoAvg.toFixed(2)), competitor_avg_price: parseFloat(compAvg.toFixed(2)), price_gap_pct: gapPct };
       })
-      .sort((a, b) => Math.abs(b.price_gap_pct) - Math.abs(a.price_gap_pct))
-      .slice(0, 6);
+      .sort((a, b) => Math.abs(b.price_gap_pct) - Math.abs(a.price_gap_pct));
   }, [priceData]);
 
   const getRiskLevel = (gap: number): "Critical" | "High" | "Medium" | "Low" => {
