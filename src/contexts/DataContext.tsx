@@ -79,7 +79,8 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
       // that haven't been uploaded to storage yet (e.g. large pincode-level files).
       const storageUrl = `${STORAGE_BASE}/${key}.json`;
       const localUrl   = `/data/${key}.json`;
-      let raw: unknown;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let raw: any[];
       try {
         const res = await fetch(storageUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
