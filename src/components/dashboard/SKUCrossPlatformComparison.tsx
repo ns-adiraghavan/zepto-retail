@@ -433,77 +433,85 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
 
           {/* ── Platform comparison table (default mode only) ── */}
           {mode !== "hyperlocal" && (
-          !selectedSkuId ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Select a category and product above to compare pricing across platforms.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-border">
-                    {[
-                      { label: "Platform", align: "left", w: "min-w-[140px]" },
-                      { label: "Price (₹)", align: "right", w: "min-w-[90px]" },
-                      { label: "Discount %", align: "right", w: "min-w-[90px]" },
-                      { label: "Promotion", align: "center", w: "min-w-[90px]" },
-                      { label: "Promo Type", align: "left", w: "min-w-[120px]" },
-                      { label: "Availability", align: "center", w: "min-w-[110px]" },
-                    ].map((h) => (
-                      <th
-                        key={h.label}
-                        className={`text-${h.align} py-2 px-3 font-medium text-muted-foreground ${h.w}`}
-                      >
-                        {h.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonRows.map((row) => {
-                    if (!row.listed) {
+            !selectedSkuId ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Select a category and product above to compare pricing across platforms.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      {[
+                        { label: "Platform", align: "left", w: "min-w-[140px]" },
+                        { label: "Price (₹)", align: "right", w: "min-w-[90px]" },
+                        { label: "Discount %", align: "right", w: "min-w-[90px]" },
+                        { label: "Promotion", align: "center", w: "min-w-[90px]" },
+                        { label: "Promo Type", align: "left", w: "min-w-[120px]" },
+                        { label: "Availability", align: "center", w: "min-w-[110px]" },
+                      ].map((h) => (
+                        <th
+                          key={h.label}
+                          className={`text-${h.align} py-2 px-3 font-medium text-muted-foreground ${h.w}`}
+                        >
+                          {h.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonRows.map((row) => {
+                      if (!row.listed) {
+                        return (
+                          <tr
+                            key={row.platform}
+                            className="border-b border-border/40 last:border-0 opacity-50"
+                          >
+                            <td className="py-2.5 px-3 font-medium">{row.platform}</td>
+                            <td
+                              colSpan={5}
+                              className="py-2.5 px-3 text-center text-xs text-muted-foreground italic"
+                            >
+                              Not Listed
+                            </td>
+                          </tr>
+                        );
+                      }
                       return (
                         <tr
                           key={row.platform}
-                          className="border-b border-border/40 last:border-0 opacity-50"
+                          className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
                         >
-                          <td className="py-2.5 px-3 font-medium">{row.platform}</td>
-                          <td
-                            colSpan={5}
-                            className="py-2.5 px-3 text-center text-xs text-muted-foreground italic"
-                          >
-                            Not Listed
+                          <td className="py-2.5 px-3 font-semibold">{row.platform}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-medium">
+                            ₹{row.salePrice.toFixed(2)}
+                          </td>
+                          <td className={`py-2.5 px-3 text-right ${discountColor(row.discountPct)}`}>
+                            {row.discountPct.toFixed(1)}%
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <PromoBadge flag={row.promoFlag} />
+                          </td>
+                          <td className="py-2.5 px-3 text-xs text-muted-foreground">
+                            {row.promoFlag >= 0.5 ? row.promoType : "—"}
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <AvailBadge flag={row.availFlag} />
                           </td>
                         </tr>
                       );
-                    }
-                    return (
-                      <tr
-                        key={row.platform}
-                        className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2.5 px-3 font-semibold">{row.platform}</td>
-                        <td className="py-2.5 px-3 text-right font-mono font-medium">
-                          ₹{row.salePrice.toFixed(2)}
-                        </td>
-                        <td className={`py-2.5 px-3 text-right ${discountColor(row.discountPct)}`}>
-                          {row.discountPct.toFixed(1)}%
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <PromoBadge flag={row.promoFlag} />
-                        </td>
-                        <td className="py-2.5 px-3 text-xs text-muted-foreground">
-                          {row.promoFlag >= 0.5 ? row.promoType : "—"}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <AvailBadge flag={row.availFlag} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
+
+          {/* ── Hyperlocal mode: prompt if no product selected ── */}
+          {mode === "hyperlocal" && !selectedSkuId && (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Select a category and product above to view hyperlocal price competition across pincodes.
+            </p>
           )}
 
           {/* ── Hyperlocal Price Context (default mode) / Pincode Competition (hyperlocal mode) ── */}
