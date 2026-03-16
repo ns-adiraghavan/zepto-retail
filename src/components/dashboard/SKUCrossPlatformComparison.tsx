@@ -205,6 +205,7 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
 
   // ── Hyperlocal pincode competition rows (hyperlocal mode) ─────────────────
   type PincodePriceRow = {
+    city: string;
     pincode: string;
     platformPrices: Record<string, number | null>;
     avgPrice: number;
@@ -227,14 +228,13 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
 
     if (allSkuRows.length === 0) return [];
 
-    // Support numeric pincodes stored as numbers in JSON
+    // Normalize pincodes to strings, keep city
     const priceBase = allSkuRows
       .map((r) => ({ ...r, pincode: r.pincode != null ? String(r.pincode) : undefined }))
-      .filter((r) => r.pincode && r.pincode !== "undefined" && r.pincode !== "null");
+      .filter((r) => r.pincode && r.pincode !== "undefined" && r.pincode !== "null" && r.city);
 
     // If no pincode data exists, fall back to city-level grouping
     if (priceBase.length === 0) {
-      // Group by city as proxy for locality
       const cityAvg = avg(allSkuRows.map((r) => r.sale_price));
       const cities = [...new Set(allSkuRows.map((r) => r.city))];
       return cities
@@ -250,18 +250,22 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
           const delta = cityAvg > 0 ? ((avgPrice - cityAvg) / cityAvg) * 100 : 0;
           const signal: PincodePriceRow["signal"] =
             delta <= -3 ? "Undercutting Market" : delta >= 3 ? "Premium Locality" : "In Line";
-          return { pincode: city, platformPrices, avgPrice, cityAvgDelta: delta, signal };
+          return { city, pincode: "—", platformPrices, avgPrice, cityAvgDelta: delta, signal };
         })
-        .sort((a, b) => a.avgPrice - b.avgPrice);
+        .sort((a, b) => a.city.localeCompare(b.city) || a.avgPrice - b.avgPrice);
     }
 
-    const cityAvg = avg(priceBase.map((r) => r.sale_price));
+    // Group by city+pincode, compute per-city average for delta
+    const cityGroups = [...new Set(priceBase.map((r) => r.city))];
+    const rows: PincodePriceRow[] = [];
 
-    const pincodes = [...new Set(priceBase.map((r) => r.pincode))];
+    for (const city of cityGroups) {
+      const cityRows = priceBase.filter((r) => r.city === city);
+      const cityAvg = avg(cityRows.map((r) => r.sale_price));
+      const pincodes = [...new Set(cityRows.map((r) => r.pincode))];
 
-    return pincodes
-      .map((pincode) => {
-        const pinRows = priceBase.filter((r) => r.pincode === pincode);
+      for (const pincode of pincodes) {
+        const pinRows = cityRows.filter((r) => r.pincode === pincode);
 
         const platformPrices: Record<string, number | null> = {};
         for (const platform of PLATFORMS) {
@@ -276,9 +280,11 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
         const signal: PincodePriceRow["signal"] =
           delta <= -3 ? "Undercutting Market" : delta >= 3 ? "Premium Locality" : "In Line";
 
-        return { pincode, platformPrices, avgPrice, cityAvgDelta: delta, signal };
-      })
-      .sort((a, b) => a.avgPrice - b.avgPrice);
+        rows.push({ city, pincode: pincode!, platformPrices, avgPrice, cityAvgDelta: delta, signal });
+      }
+    }
+
+    return rows.sort((a, b) => a.city.localeCompare(b.city) || a.avgPrice - b.avgPrice);
   }, [selectedSkuId, filters, mode]);
 
   // ── Promotion Benchmark rows ──────────────────────────────────────────────
