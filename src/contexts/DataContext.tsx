@@ -90,7 +90,9 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
         // Fall back to local public file
         const localRes = await fetch(localUrl);
         if (!localRes.ok) throw new Error(`Local fallback failed: ${localRes.status}`);
-        raw = await localRes.json();
+        const localJson = await localRes.json();
+        if (!Array.isArray(localJson)) throw new Error("Local fallback also returned non-array");
+        raw = localJson;
       }
 
       // Normalize pincode to string for every dataset so that filters
@@ -116,7 +118,11 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
           break;
       }
       fetchedDatasets.add(key);
-    })();
+    })().catch((err) => {
+      // Clear the failed promise so it can be retried on next navigation
+      delete fetchPromises[key];
+      throw err;
+    });
   }
 
   return fetchPromises[key];
