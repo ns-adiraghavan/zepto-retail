@@ -75,8 +75,6 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
   // Deduplicate concurrent fetches for the same key
   if (!fetchPromises[key]) {
     fetchPromises[key] = (async () => {
-      // Try cloud storage; fall back to the local public file for datasets
-      // that haven't been uploaded to storage yet (e.g. large pincode-level files).
       const storageUrl = `${STORAGE_BASE}/${key}.json`;
       const localUrl   = `/data/${key}.json`;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,10 +82,15 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
       try {
         const res = await fetch(storageUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        raw = await res.json();
+        const json = await res.json();
+        // Guard against redirect stubs like {"_fetch_from": "..."} returned with 200
+        if (!Array.isArray(json)) throw new Error("Storage returned non-array (stub or redirect)");
+        raw = json;
       } catch {
         // Fall back to local public file
-        raw = await fetch(localUrl).then((r) => r.json());
+        const localRes = await fetch(localUrl);
+        if (!localRes.ok) throw new Error(`Local fallback failed: ${localRes.status}`);
+        raw = await localRes.json();
       }
 
       // Normalize pincode to string for every dataset so that filters
