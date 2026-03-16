@@ -250,7 +250,7 @@ const LocalMarketIntelligence = () => {
         </Card>
       </section>
 
-      <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} />
+      <SKUCrossPlatformComparison filters={{ city, pincode, category, dateFrom, dateTo }} mode="hyperlocal" />
     </div>
   );
 };

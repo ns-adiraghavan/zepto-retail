@@ -21,6 +21,8 @@ const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
 
 interface Props {
   filters: Partial<GlobalFilters>;
+  /** When "hyperlocal", the SKU comparison table groups by pincode with platform columns */
+  mode?: "default" | "hyperlocal";
 }
 
 function avg(arr: number[]): number {
@@ -72,7 +74,7 @@ function discountColor(pct: number) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function SKUCrossPlatformComparison({ filters }: Props) {
+export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props) {
   const categories = useMemo(
     () =>
       Array.from(new Set(datasets.skuMaster.map((s) => s.category))).sort(),
@@ -165,7 +167,7 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
     });
   }, [selectedSkuId, filters]);
 
-  // ── Hyperlocal price context rows ─────────────────────────────────────────
+  // ── Hyperlocal price context rows (default mode) ──────────────────────────
   type HyperlocalRow = {
     city: string;
     pincode: string;
@@ -200,6 +202,56 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
       })
       .sort((a, b) => a.city.localeCompare(b.city) || a.pincode.localeCompare(b.pincode));
   }, [selectedSkuId, filters]);
+
+  // ── Hyperlocal pincode competition rows (hyperlocal mode) ─────────────────
+  type PincodePriceRow = {
+    pincode: string;
+    platformPrices: Record<string, number | null>;
+    avgPrice: number;
+    cityAvgDelta: number;
+    signal: "Undercutting Market" | "Premium Locality" | "In Line";
+  };
+
+  const pincodePriceRows = useMemo((): PincodePriceRow[] => {
+    if (!selectedSkuId || mode !== "hyperlocal") return [];
+
+    const baseFilters: Partial<GlobalFilters> = {
+      city: filters.city,
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+    };
+
+    const priceBase = applyFilters(datasets.priceTracking, baseFilters).filter(
+      (r) => r.sku_id === selectedSkuId && r.pincode
+    );
+
+    if (priceBase.length === 0) return [];
+
+    const cityAvg = avg(priceBase.map((r) => r.sale_price));
+
+    const pincodes = [...new Set(priceBase.map((r) => r.pincode))];
+
+    return pincodes
+      .map((pincode) => {
+        const pinRows = priceBase.filter((r) => r.pincode === pincode);
+
+        const platformPrices: Record<string, number | null> = {};
+        for (const platform of PLATFORMS) {
+          const pRows = pinRows.filter((r) => r.platform === platform);
+          platformPrices[platform] = pRows.length > 0 ? avg(pRows.map((r) => r.sale_price)) : null;
+        }
+
+        const validPrices = Object.values(platformPrices).filter((v): v is number => v !== null);
+        const avgPrice = avg(validPrices);
+        const delta = cityAvg > 0 ? ((avgPrice - cityAvg) / cityAvg) * 100 : 0;
+
+        const signal: PincodePriceRow["signal"] =
+          delta <= -3 ? "Undercutting Market" : delta >= 3 ? "Premium Locality" : "In Line";
+
+        return { pincode, platformPrices, avgPrice, cityAvgDelta: delta, signal };
+      })
+      .sort((a, b) => a.avgPrice - b.avgPrice);
+  }, [selectedSkuId, filters, mode]);
 
   // ── Promotion Benchmark rows ──────────────────────────────────────────────
   const promotionBenchmarkRows = useMemo(() => {
@@ -267,18 +319,24 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
   return (
     <section className="space-y-2">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        Cross-Platform Product Comparison
+        {mode === "hyperlocal" ? "Hyperlocal Price Competition" : "Cross-Platform Product Comparison"}
       </h2>
       <Card className="bg-gradient-card">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ArrowLeftRight className="h-4 w-4 text-primary" />
+            {mode === "hyperlocal" ? (
+              <MapPin className="h-4 w-4 text-primary" />
+            ) : (
+              <ArrowLeftRight className="h-4 w-4 text-primary" />
+            )}
             <div>
-              <CardTitle>Cross-Platform Product Comparison</CardTitle>
+              <CardTitle>
+                {mode === "hyperlocal" ? "Hyperlocal Price Competition" : "Cross-Platform Product Comparison"}
+              </CardTitle>
               <CardDescription>
-                Select a category and product to compare price, discount,
-                promotions, and availability across all platforms — filtered by
-                active city, pincode, and date selection
+                {mode === "hyperlocal"
+                  ? "Compare how the selected product is priced across pincodes within the city and identify localities where competitors are undercutting the market."
+                  : "Select a category and product to compare price, discount, promotions, and availability across all platforms — filtered by active city, pincode, and date selection"}
               </CardDescription>
             </div>
           </div>
@@ -447,52 +505,113 @@ export function SKUCrossPlatformComparison({ filters }: Props) {
             </div>
           )}
 
-          {/* ── Hyperlocal Price Context ── */}
-          {hyperlocalRows.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Hyperlocal Price Context
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Average sale price by city · pincode · platform for the selected product
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {["City", "Pincode", "Platform", "Avg Price"].map((h) => (
-                        <th
-                          key={h}
-                          className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${
-                            h === "Avg Price" ? "text-right" : "text-left"
-                          }`}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hyperlocalRows.map((r, i) => (
-                      <tr
-                        key={i}
-                        className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-xs">{r.city}</td>
-                        <td className="py-2 px-3 font-mono text-xs">{r.pincode}</td>
-                        <td className="py-2 px-3 text-xs">{r.platform}</td>
-                        <td className="py-2 px-3 text-right font-mono text-xs font-medium">
-                          ₹{r.avgPrice.toFixed(2)}
-                        </td>
+          {/* ── Hyperlocal Price Context (default mode) / Pincode Competition (hyperlocal mode) ── */}
+          {mode === "hyperlocal" ? (
+            pincodePriceRows.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-left min-w-[90px]">Pincode</th>
+                        {PLATFORMS.map((p) => (
+                          <th key={p} className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[110px]">{p}</th>
+                        ))}
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[100px]">Avg Price</th>
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[110px]">City Avg Δ</th>
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-center min-w-[150px]">Undercut Signal</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {pincodePriceRows.map((row, i) => (
+                        <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                          <td className="py-2.5 px-3 font-mono text-xs font-semibold">{row.pincode}</td>
+                          {PLATFORMS.map((p) => (
+                            <td key={p} className="py-2.5 px-3 text-right font-mono text-xs">
+                              {row.platformPrices[p] != null ? `₹${row.platformPrices[p]!.toFixed(2)}` : <span className="text-muted-foreground">—</span>}
+                            </td>
+                          ))}
+                          <td className="py-2.5 px-3 text-right font-mono text-xs font-medium">
+                            ₹{row.avgPrice.toFixed(2)}
+                          </td>
+                          <td className={`py-2.5 px-3 text-right font-mono text-xs font-medium ${
+                            row.cityAvgDelta <= -3 ? "text-status-low" :
+                            row.cityAvgDelta >= 3 ? "text-status-medium" :
+                            "text-muted-foreground"
+                          }`}>
+                            {row.cityAvgDelta > 0 ? "+" : ""}{row.cityAvgDelta.toFixed(1)}%
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            {row.signal === "Undercutting Market" && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-status-low">
+                                <TrendingDown className="h-3 w-3" /> Undercutting Market
+                              </span>
+                            )}
+                            {row.signal === "Premium Locality" && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-status-medium">
+                                <TrendingUp className="h-3 w-3" /> Premium Locality
+                              </span>
+                            )}
+                            {row.signal === "In Line" && (
+                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <Minus className="h-3 w-3" /> In Line
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )
+          ) : (
+            hyperlocalRows.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Hyperlocal Price Context
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Average sale price by city · pincode · platform for the selected product
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {["City", "Pincode", "Platform", "Avg Price"].map((h) => (
+                          <th
+                            key={h}
+                            className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${
+                              h === "Avg Price" ? "text-right" : "text-left"
+                            }`}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hyperlocalRows.map((r, i) => (
+                        <tr
+                          key={i}
+                          className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
+                        >
+                          <td className="py-2 px-3 text-xs">{r.city}</td>
+                          <td className="py-2 px-3 font-mono text-xs">{r.pincode}</td>
+                          <td className="py-2 px-3 text-xs">{r.platform}</td>
+                          <td className="py-2 px-3 text-right font-mono text-xs font-medium">
+                            ₹{r.avgPrice.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
           )}
           {/* ── Promotion Benchmark Panel ── */}
           {promotionBenchmarkRows.length > 0 && (
