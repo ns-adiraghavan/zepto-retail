@@ -21,6 +21,7 @@ import {
   getAvailabilityData,
   getSearchData,
   getAssortmentData,
+  datasets,
 } from "@/data/dataLoader";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,15 @@ const CompetitiveOverview = () => {
   const availData = useMemo(() => getAvailabilityData(filters), [filters]);
   const searchData = useMemo(() => getSearchData(filters), [filters]);
   const assortmentData = useMemo(() => getAssortmentData(filters), [filters]);
+
+  // Build SKU master lookup: sku_id → product_name
+  const skuNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const sku of datasets.skuMaster) {
+      map[sku.sku_id] = sku.product_name;
+    }
+    return map;
+  }, []);
 
   const priceGapByPlatform = useMemo(() => computePriceGapByPlatform(priceData), [priceData]);
 
@@ -209,9 +219,9 @@ const CompetitiveOverview = () => {
   };
 
   const topPriceGapSKUs = useMemo(() => {
-    const skuAvg: Record<string, { sum: number; count: number; product_name: string; category: string }> = {};
+    const skuAvg: Record<string, { sum: number; count: number; category: string }> = {};
     for (const row of priceData) {
-      if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0, product_name: row.product_name ?? row.sku_id, category: row.category };
+      if (!skuAvg[row.sku_id]) skuAvg[row.sku_id] = { sum: 0, count: 0, category: row.category };
       skuAvg[row.sku_id].sum += row.sale_price;
       skuAvg[row.sku_id].count++;
     }
@@ -227,15 +237,17 @@ const CompetitiveOverview = () => {
       const meta = skuAvg[skuId];
       if (!meta) continue;
       const overallAvg = meta.sum / meta.count;
+      // Resolve name from SKU master; fall back to sku_id only if truly missing
+      const product_name = skuNameMap[skuId] ?? skuId;
       for (const [platform, { sum, count }] of Object.entries(platMap)) {
         const platAvg = sum / count;
         if (overallAvg === 0) continue;
         const gapPct = ((platAvg - overallAvg) / overallAvg) * 100;
-        if (gapPct > 0) items.push({ sku_id: skuId, product_name: meta.product_name, category: meta.category, platform, platformPrice: platAvg, competitorAvg: overallAvg, gapPct });
+        if (gapPct > 0) items.push({ sku_id: skuId, product_name, category: meta.category, platform, platformPrice: platAvg, competitorAvg: overallAvg, gapPct });
       }
     }
     return items.sort((a, b) => b.gapPct - a.gapPct).slice(0, 10);
-  }, [priceData]);
+  }, [priceData, skuNameMap]);
 
   const categoryPricePressure = useMemo(() => {
     const catData: Record<string, { zeptoSum: number; zeptoCount: number; compSum: number; compCount: number }> = {};
