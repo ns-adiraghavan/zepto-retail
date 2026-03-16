@@ -12,6 +12,9 @@ const DATASETS = [
   { key: "availability_tracking.json", label: "Availability Tracking", description: "SKU availability flags per platform & city" },
   { key: "search_rank_tracking.json",  label: "Search Rank Tracking",  description: "Keyword search ranks & visibility scores" },
   { key: "assortment_tracking.json",   label: "Assortment Tracking",   description: "SKU listing status per platform & city" },
+  { key: "sku_master.json",            label: "SKU Master",            description: "Master list of all SKUs with metadata (name, brand, category, etc.)" },
+  { key: "competitor_events.json",     label: "Competitor Events",     description: "Competitor promotional and pricing event records" },
+  { key: "platform_summary.json",      label: "Platform Summary",      description: "Aggregated platform-level availability, search visibility & competitiveness scores" },
 ];
 
 type UploadState = "idle" | "uploading" | "done" | "error";
