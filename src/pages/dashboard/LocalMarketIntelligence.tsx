@@ -8,6 +8,7 @@ import { SKUCrossPlatformComparison } from "@/components/dashboard/SKUCrossPlatf
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
+import { CityPincodeTreeTable } from "@/components/dashboard/CityPincodeTreeTable";
 
 const CITIES = ["Bangalore", "Mumbai", "Delhi NCR", "Pune", "Hyderabad"];
 
