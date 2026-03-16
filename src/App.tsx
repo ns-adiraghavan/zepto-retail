@@ -15,6 +15,7 @@ import AvailabilityIntelligence from "./pages/dashboard/AvailabilityIntelligence
 import LocalMarketIntelligence from "./pages/dashboard/LocalMarketIntelligence";
 import CompetitiveEvents from "./pages/dashboard/CompetitiveEvents";
 import AnalyticsTaxonomy from "./pages/AnalyticsTaxonomy";
+import ManageDatasets from "./pages/ManageDatasets";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
