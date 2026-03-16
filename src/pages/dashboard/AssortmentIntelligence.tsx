@@ -20,7 +20,7 @@ const AssortmentIntelligence = () => {
   const categoryCount = new Set(assortmentData.map((r) => r.category)).size;
 
   const kpis = [
-    { title: "SKU Coverage", value: `${coverageRate.toFixed(1)}%`, change: coverageRate, changeType: "percentage" as const, trend: coverageRate > 80 ? ("up" as const) : ("neutral" as const), tooltip: "Share of SKUs listed across tracked platforms" },
+    { title: "SKU Coverage", value: `${coverageRate.toFixed(1)}%`, trend: "neutral" as const, tooltip: "Share of SKUs listed across tracked platforms" },
     { title: "Listed SKUs", value: listedCount.toLocaleString(), trend: "neutral" as const, tooltip: "Number of SKUs currently listed (listing_status = 1)" },
     { title: "Missing SKUs", value: missingCount.toLocaleString(), trend: "down" as const, tooltip: "Number of SKUs missing from the selected platform" },
     { title: "Categories Covered", value: categoryCount.toLocaleString(), trend: "neutral" as const, tooltip: "Distinct product categories tracked" },
