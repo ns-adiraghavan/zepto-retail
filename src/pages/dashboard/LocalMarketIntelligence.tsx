@@ -109,9 +109,6 @@ const LocalMarketIntelligence = () => {
     "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
   }));
 
-  const barColor = (score: number) =>
-    score >= 80 ? "bg-status-low" : score >= 70 ? "bg-status-medium" : "bg-status-high";
-
   // ── Strategic Insights ───────────────────────────────────────────────────────
   const topCity = sortedByScore[0];
   
@@ -179,40 +176,6 @@ const LocalMarketIntelligence = () => {
                 <Bar dataKey="Price Competitiveness"   fill="hsl(var(--status-medium))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">City Intelligence Scores</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>City Intelligence Scores</CardTitle>
-            <CardDescription>Market Competition Index = 35% Promotion Share + 25% Discount Depth + 20% Top-10 Presence + 20% SKU Availability (platform × pincode aggregation)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {cityScores.map((c) => (
-                <div key={c.city} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">{c.city}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>Avail {c.availability.toFixed(0)}%</span>
-                      <span>Disc {c.discount.toFixed(1)}%</span>
-                      <span>Promo {c.promoRate.toFixed(0)}%</span>
-                      <span>±₹{c.priceVariance}</span>
-                      <span className="font-semibold text-foreground">{c.score.toFixed(1)}/100</span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full rounded-full ${barColor(c.score)}`} style={{ width: `${c.score}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </section>

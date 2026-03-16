@@ -329,16 +329,6 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
     }[];
   }, [selectedSkuId, selectedCategory, filters]);
 
-  // Overall benchmark signal (majority vote across platforms)
-  const overallBenchmark = useMemo(() => {
-    const rows = promotionBenchmarkRows.filter((r) => r.indicator !== "no-data");
-    if (rows.length === 0) return null;
-    const above = rows.filter((r) => r.indicator === "above").length;
-    const below = rows.filter((r) => r.indicator === "below").length;
-    if (above > below) return "above";
-    if (below > above) return "below";
-    return "equal";
-  }, [promotionBenchmarkRows]);
 
   const hasActiveFilters =
     (filters.city && filters.city !== "All Cities") ||
@@ -649,117 +639,6 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
                 </div>
               </div>
             )
-          )}
-          {/* ── Promotion Benchmark Panel ── */}
-          {promotionBenchmarkRows.length > 0 && (
-            <div className="space-y-3 pt-2 border-t border-border">
-              {/* Header row */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Category Promotion Benchmark
-                  </span>
-                </div>
-                {overallBenchmark && (
-                  <div className="flex items-center gap-1.5">
-                    {overallBenchmark === "above" && (
-                      <>
-                        <TrendingUp className="h-3.5 w-3.5 text-status-critical" />
-                        <span className="text-xs font-semibold text-status-critical">
-                          Above Category Promotion
-                        </span>
-                      </>
-                    )}
-                    {overallBenchmark === "below" && (
-                      <>
-                        <TrendingDown className="h-3.5 w-3.5 text-status-low" />
-                        <span className="text-xs font-semibold text-status-low">
-                          Below Category Promotion
-                        </span>
-                      </>
-                    )}
-                    {overallBenchmark === "equal" && (
-                      <>
-                        <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          In Line with Category
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                How the selected product's promotion intensity compares to the{" "}
-                <span className="font-medium text-foreground">{selectedCategory}</span> category average per platform
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {[
-                        { label: "Platform", align: "left", w: "min-w-[140px]" },
-                        { label: "SKU Promo %", align: "right", w: "min-w-[100px]" },
-                        { label: "Category Promo %", align: "right", w: "min-w-[120px]" },
-                        { label: "SKU Discount", align: "right", w: "min-w-[100px]" },
-                        { label: "Category Discount", align: "right", w: "min-w-[120px]" },
-                        { label: "Signal", align: "center", w: "min-w-[110px]" },
-                      ].map((h) => (
-                        <th
-                          key={h.label}
-                          className={`text-${h.align} py-2 px-3 font-medium text-muted-foreground text-xs ${h.w}`}
-                        >
-                          {h.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {promotionBenchmarkRows.map((row) => (
-                      <tr
-                        key={row.platform}
-                        className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2.5 px-3 font-semibold text-sm">{row.platform}</td>
-                        <td className="py-2.5 px-3 text-right font-mono text-sm">
-                          {row.hasSkuData ? `${row.skuPromoRate.toFixed(0)}%` : <span className="text-muted-foreground text-xs">—</span>}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-sm text-muted-foreground">
-                          {row.catPromoRate.toFixed(0)}%
-                        </td>
-                        <td className={`py-2.5 px-3 text-right font-mono text-sm ${row.hasSkuData ? discountColor(row.skuDiscount) : "text-muted-foreground"}`}>
-                          {row.hasSkuData ? `${row.skuDiscount.toFixed(1)}%` : "—"}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-sm text-muted-foreground">
-                          {row.catAvgDiscount.toFixed(1)}%
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          {row.indicator === "above" && (
-                            <Badge className="bg-status-critical/10 text-status-critical border border-status-critical/20 text-xs gap-1">
-                              <TrendingUp className="h-3 w-3" /> Above
-                            </Badge>
-                          )}
-                          {row.indicator === "below" && (
-                            <Badge className="bg-status-low/10 text-status-low border border-status-low/20 text-xs gap-1">
-                              <TrendingDown className="h-3 w-3" /> Below
-                            </Badge>
-                          )}
-                          {row.indicator === "equal" && (
-                            <Badge variant="secondary" className="text-xs gap-1">
-                              <Minus className="h-3 w-3" /> In Line
-                            </Badge>
-                          )}
-                          {row.indicator === "no-data" && (
-                            <span className="text-xs text-muted-foreground">No Data</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           )}
         </CardContent>
       </Card>

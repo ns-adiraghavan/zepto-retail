@@ -2,21 +2,12 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform, getEliteRankShareByPlatform, GlobalFilters } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
 import { CompetitiveSearchAdvantage } from "@/components/dashboard/CompetitiveSearchAdvantage";
 
-const shelfRows = [
-  { keyword: "milk 1 litre", platform: "Zepto", rank: 1, sponsored: false, brand: "Amul" },
-  { keyword: "milk 1 litre", platform: "Blinkit", rank: 3, sponsored: true, brand: "Mother Dairy" },
-  { keyword: "tomatoes 500g", platform: "Swiggy Instamart", rank: 2, sponsored: false, brand: "Fresh Daily" },
-  { keyword: "lays classic", platform: "BigBasket Now", rank: 5, sponsored: true, brand: "PepsiCo" },
-  { keyword: "head shoulders", platform: "Zepto", rank: 4, sponsored: false, brand: "P&G" },
-  { keyword: "tata salt 1kg", platform: "Blinkit", rank: 1, sponsored: false, brand: "Tata" },
-];
 
 const SearchShelfVisibility = () => {
   const filters = useOutletContext<GlobalFilters>();
@@ -199,44 +190,6 @@ const SearchShelfVisibility = () => {
                 <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-high" />Sponsored</div>
                 <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-status-low" />Organic</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Keyword Shelf Position Tracker</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>Keyword Shelf Position Tracker</CardTitle>
-            <CardDescription>Search rank for top keywords across platforms</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Keyword</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Rank</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Brand</th>
-                    <th className="py-2 font-medium text-muted-foreground">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {shelfRows.map((row, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4 font-mono text-xs">{row.keyword}</td>
-                      <td className="py-2 pr-4">{row.platform}</td>
-                      <td className="py-2 pr-4 font-bold">#{row.rank}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{row.brand}</td>
-                      <td className="py-2">
-                        <Badge variant={row.sponsored ? "destructive" : "outline"} className="text-xs">{row.sponsored ? "Sponsored" : "Organic"}</Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </CardContent>
         </Card>

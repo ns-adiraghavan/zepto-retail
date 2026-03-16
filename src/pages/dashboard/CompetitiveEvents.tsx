@@ -18,7 +18,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Activity,
   TrendingDown,
-  Search,
   ShieldAlert,
   Zap,
   AlertTriangle,
@@ -50,10 +49,6 @@ function formatDate(dateStr: string) {
   }
 }
 
-function avg(arr: number[]): number {
-  if (!arr.length) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
 
 function stddev(values: number[]): number {
   if (values.length < 2) return 0;
@@ -316,8 +311,6 @@ const CompetitiveEvents = () => {
     { title: "Critical Severity", value: criticalCount.toString(),      trend: criticalCount > 0 ? "down" as const : "neutral" as const,  status: criticalCount > 0   ? "high"   as const : "low" as const, tooltip: "Events flagged as Critical severity" },
   ];
 
-  const maxVolatility = priceVolatility[0]?.price_volatility ?? 1;
-  const maxRankVol    = searchVolatility[0]?.rank_volatility  ?? 1;
 
   const selEv = selectedEvent as unknown as (CompetitorEvent & {
     severity?: string; market_scope?: string;
@@ -751,171 +744,6 @@ const CompetitiveEvents = () => {
         </div>
       </section>
 
-      {/* ─── Price Volatility Monitor ─────────────────────────────────────── */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-2">
-          <TrendingDown className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Price Volatility Monitor</h2>
-        </div>
-        <Card className="bg-gradient-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top 10 SKUs by Price Volatility</CardTitle>
-            <CardDescription>Standard deviation of sale price across observations (higher = more volatile)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {priceVolatility.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No price data available for selected filters.</p>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  {priceVolatility.map((row, i) => (
-                    <div key={row.sku_id} className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground w-5 shrink-0 text-right">{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="text-xs font-medium truncate">{row.product_name}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">σ ₹{row.price_volatility}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-status-medium transition-all"
-                              style={{ width: `${(row.price_volatility / maxVolatility) * 100}%` }}
-                            />
-                          </div>
-                          <Badge variant="outline" className="text-xs py-0 h-5">{row.category}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border/50">
-                  Higher volatility indicates frequent price changes or aggressive promotion competition.
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* ─── Search Rank Volatility ───────────────────────────────────────── */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Search Rank Volatility</h2>
-        </div>
-        <Card className="bg-gradient-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top 10 Keywords by Rank Volatility</CardTitle>
-            <CardDescription>Standard deviation of search rank — high values mean unstable positioning</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {searchVolatility.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No search data available for selected filters.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left">
-                      <th className="py-2 pr-3 font-medium text-muted-foreground w-8">#</th>
-                      <th className="py-2 pr-4 font-medium text-muted-foreground">Keyword</th>
-                      <th className="py-2 pr-4 font-medium text-muted-foreground">Rank Volatility (σ)</th>
-                      <th className="py-2 font-medium text-muted-foreground text-right">Observations</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchVolatility.map((row, i) => (
-                      <tr key={row.keyword} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
-                        <td className="py-2 pr-3 text-xs text-muted-foreground">{i + 1}</td>
-                        <td className="py-2 pr-4 font-medium">{row.keyword}</td>
-                        <td className="py-2 pr-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-primary transition-all"
-                                style={{ width: `${(row.rank_volatility / maxRankVol) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-xs font-mono">{row.rank_volatility}</span>
-                          </div>
-                        </td>
-                        <td className="py-2 text-xs text-muted-foreground text-right">{row.observations}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* ─── SKU Availability Risk ────────────────────────────────────────── */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">SKU Availability Risk</h2>
-        </div>
-        <Card className="bg-gradient-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top 20 At-Risk SKUs</CardTitle>
-            <CardDescription>SKUs ranked by lowest average availability — High Risk &lt; 80% · Medium Risk 80–90% · Stable ≥ 90%</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {availRisk.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No availability data for selected filters.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left">
-                      <th className="py-2 pr-3 font-medium text-muted-foreground w-8">#</th>
-                      <th className="py-2 pr-4 font-medium text-muted-foreground">Product Name</th>
-                      <th className="py-2 pr-4 font-medium text-muted-foreground">Category</th>
-                      <th className="py-2 pr-4 font-medium text-muted-foreground">Availability</th>
-                      <th className="py-2 font-medium text-muted-foreground">Risk Band</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {availRisk.map((row, i) => {
-                      const band = riskBand(row.availability_ratio);
-                      return (
-                        <tr key={row.sku_id} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
-                          <td className="py-2 pr-3 text-xs text-muted-foreground">{i + 1}</td>
-                          <td className="py-2 pr-4 font-medium max-w-[200px] truncate">{row.product_name}</td>
-                          <td className="py-2 pr-4 text-xs text-muted-foreground">{row.category}</td>
-                          <td className="py-2 pr-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${row.availability_ratio * 100}%`,
-                                    backgroundColor:
-                                      row.availability_ratio < 0.8
-                                        ? "hsl(var(--status-high))"
-                                        : row.availability_ratio < 0.9
-                                        ? "hsl(var(--status-medium))"
-                                        : "hsl(var(--status-low))",
-                                  }}
-                                />
-                              </div>
-                              <span className="text-xs font-mono">{(row.availability_ratio * 100).toFixed(1)}%</span>
-                            </div>
-                          </td>
-                          <td className="py-2">
-                            <Badge variant={band.variant} className="text-xs">{band.label}</Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
 };

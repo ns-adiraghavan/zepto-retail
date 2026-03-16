@@ -8,13 +8,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
-const stockoutRows = [
-  { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR" },
-  { sku: "FRV-TOM-KG", name: "Tomatoes 1 kg", platform: "Blinkit", city: "Pune" },
-  { sku: "SNK-LAY-CLR-40", name: "Lays Classic 40g", platform: "Swiggy Instamart", city: "Hyderabad" },
-  { sku: "GRC-TTM-SFW-1KG", name: "Tata Salt 1 kg", platform: "BigBasket Now", city: "Mumbai" },
-  { sku: "HPC-HHD-500", name: "Head & Shoulders 500ml", platform: "Zepto", city: "Bangalore" },
-];
 
 const AvailabilityIntelligence = () => {
   const filters = useOutletContext<GlobalFilters>();
@@ -227,41 +220,6 @@ const AvailabilityIntelligence = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Stockout Events</h2>
-        <Card className="bg-gradient-card">
-          <CardHeader>
-            <CardTitle>Active Stockout Events</CardTitle>
-            <CardDescription>Current stockouts by platform and city</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Product</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Platform</th>
-                    <th className="py-2 font-medium text-muted-foreground">City</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockoutRows.map((row, i) => (
-                    <tr key={i} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4">
-                        <div className="font-medium">{row.name}</div>
-                        <div className="text-xs font-mono text-muted-foreground">{row.sku}</div>
-                      </td>
-                      <td className="py-2 pr-4">{row.platform}</td>
-                      <td className="py-2 text-muted-foreground">{row.city}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </CardContent>
         </Card>
