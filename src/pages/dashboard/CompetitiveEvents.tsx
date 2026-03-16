@@ -315,8 +315,6 @@ const CompetitiveEvents = () => {
     { title: "Critical Severity", value: criticalCount.toString(),      trend: criticalCount > 0 ? "down" as const : "neutral" as const,  status: criticalCount > 0   ? "high"   as const : "low" as const, tooltip: "Events flagged as Critical severity" },
   ];
 
-  const maxVolatility = priceVolatility[0]?.price_volatility ?? 1;
-  const maxRankVol    = searchVolatility[0]?.rank_volatility  ?? 1;
 
   const selEv = selectedEvent as unknown as (CompetitorEvent & {
     severity?: string; market_scope?: string;
