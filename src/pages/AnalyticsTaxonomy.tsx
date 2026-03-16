@@ -1,7 +1,10 @@
-import { BookOpen, Search } from "lucide-react";
+import { BookOpen, Search, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 
 interface KPI {
   name: string;
@@ -198,6 +201,7 @@ const MODULE_COLORS: Record<string, string> = {
 const ALL_MODULES = Object.keys(MODULE_COLORS);
 
 const AnalyticsTaxonomy = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [activeModule, setActiveModule] = useState<string | null>(null);
 
@@ -215,6 +219,17 @@ const AnalyticsTaxonomy = () => {
 
   return (
     <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/dashboard")}
+        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Return to Dashboard
+      </Button>
+
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-primary shrink-0">
