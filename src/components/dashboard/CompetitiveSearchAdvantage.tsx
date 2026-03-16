@@ -16,14 +16,6 @@ const avg = (arr: number[]) => (arr.length ? arr.reduce((s, v) => s + v, 0) / ar
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 const fmt = (v: number) => v.toFixed(1);
 
-// rank-cell colour: green ≤2, lime ≤4, yellow ≤7, orange ≤12, red >12
-function rankBg(rank: number) {
-  if (rank <= 2)  return "bg-status-low/20 text-status-low";
-  if (rank <= 4)  return "bg-[hsl(var(--status-low)/0.1)] text-status-low";
-  if (rank <= 7)  return "bg-status-medium/20 text-status-medium";
-  if (rank <= 12) return "bg-status-high/20 text-status-high";
-  return "bg-status-critical/20 text-status-critical";
-}
 
 export function CompetitiveSearchAdvantage({ filters }: Props) {
   const searchData = useMemo(() => applyFilters(datasets.searchRankTracking, filters), [filters]);
