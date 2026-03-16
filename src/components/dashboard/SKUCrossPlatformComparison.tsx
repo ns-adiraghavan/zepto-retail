@@ -505,52 +505,113 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
             </div>
           )}
 
-          {/* ── Hyperlocal Price Context ── */}
-          {hyperlocalRows.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Hyperlocal Price Context
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Average sale price by city · pincode · platform for the selected product
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {["City", "Pincode", "Platform", "Avg Price"].map((h) => (
-                        <th
-                          key={h}
-                          className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${
-                            h === "Avg Price" ? "text-right" : "text-left"
-                          }`}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hyperlocalRows.map((r, i) => (
-                      <tr
-                        key={i}
-                        className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-xs">{r.city}</td>
-                        <td className="py-2 px-3 font-mono text-xs">{r.pincode}</td>
-                        <td className="py-2 px-3 text-xs">{r.platform}</td>
-                        <td className="py-2 px-3 text-right font-mono text-xs font-medium">
-                          ₹{r.avgPrice.toFixed(2)}
-                        </td>
+          {/* ── Hyperlocal Price Context (default mode) / Pincode Competition (hyperlocal mode) ── */}
+          {mode === "hyperlocal" ? (
+            pincodePriceRows.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-left min-w-[90px]">Pincode</th>
+                        {PLATFORMS.map((p) => (
+                          <th key={p} className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[110px]">{p}</th>
+                        ))}
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[100px]">Avg Price</th>
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-right min-w-[110px]">City Avg Δ</th>
+                        <th className="py-2 px-3 font-medium text-muted-foreground text-xs text-center min-w-[150px]">Undercut Signal</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {pincodePriceRows.map((row, i) => (
+                        <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                          <td className="py-2.5 px-3 font-mono text-xs font-semibold">{row.pincode}</td>
+                          {PLATFORMS.map((p) => (
+                            <td key={p} className="py-2.5 px-3 text-right font-mono text-xs">
+                              {row.platformPrices[p] != null ? `₹${row.platformPrices[p]!.toFixed(2)}` : <span className="text-muted-foreground">—</span>}
+                            </td>
+                          ))}
+                          <td className="py-2.5 px-3 text-right font-mono text-xs font-medium">
+                            ₹{row.avgPrice.toFixed(2)}
+                          </td>
+                          <td className={`py-2.5 px-3 text-right font-mono text-xs font-medium ${
+                            row.cityAvgDelta <= -3 ? "text-status-low" :
+                            row.cityAvgDelta >= 3 ? "text-status-medium" :
+                            "text-muted-foreground"
+                          }`}>
+                            {row.cityAvgDelta > 0 ? "+" : ""}{row.cityAvgDelta.toFixed(1)}%
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            {row.signal === "Undercutting Market" && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-status-low">
+                                <TrendingDown className="h-3 w-3" /> Undercutting Market
+                              </span>
+                            )}
+                            {row.signal === "Premium Locality" && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-status-medium">
+                                <TrendingUp className="h-3 w-3" /> Premium Locality
+                              </span>
+                            )}
+                            {row.signal === "In Line" && (
+                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <Minus className="h-3 w-3" /> In Line
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )
+          ) : (
+            hyperlocalRows.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Hyperlocal Price Context
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Average sale price by city · pincode · platform for the selected product
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {["City", "Pincode", "Platform", "Avg Price"].map((h) => (
+                          <th
+                            key={h}
+                            className={`py-1.5 px-3 font-medium text-muted-foreground text-xs ${
+                              h === "Avg Price" ? "text-right" : "text-left"
+                            }`}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hyperlocalRows.map((r, i) => (
+                        <tr
+                          key={i}
+                          className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
+                        >
+                          <td className="py-2 px-3 text-xs">{r.city}</td>
+                          <td className="py-2 px-3 font-mono text-xs">{r.pincode}</td>
+                          <td className="py-2 px-3 text-xs">{r.platform}</td>
+                          <td className="py-2 px-3 text-right font-mono text-xs font-medium">
+                            ₹{r.avgPrice.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
           )}
           {/* ── Promotion Benchmark Panel ── */}
           {promotionBenchmarkRows.length > 0 && (
