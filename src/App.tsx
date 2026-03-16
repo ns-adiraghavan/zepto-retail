@@ -40,6 +40,7 @@ const App = () => (
                 <Route path="events" element={<CompetitiveEvents />} />
               </Route>
               <Route path="/analytics-taxonomy" element={<AnalyticsTaxonomy />} />
+              <Route path="/manage-datasets" element={<ManageDatasets />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
