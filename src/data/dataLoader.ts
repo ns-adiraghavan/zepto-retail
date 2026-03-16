@@ -1,6 +1,4 @@
-import skuMaster from "./sku_master.json";
-import platformSummary from "./platform_summary.json";
-import competitorEvents from "./competitor_events.json";
+// Static imports removed — all datasets are hydrated at runtime from /data/*.json.gz via DataContext
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,13 +113,13 @@ export const DEFAULT_FILTERS: GlobalFilters = {
 // ─── Mutable dataset bundle (populated by DataContext at runtime) ─────────────
 
 export const datasets = {
-  skuMaster: skuMaster as unknown as SKUMaster[],
+  skuMaster: [] as SKUMaster[],
   assortmentTracking: [] as AssortmentRecord[],
   priceTracking: [] as PriceRecord[],
   availabilityTracking: [] as AvailabilityRecord[],
   searchRankTracking: [] as SearchRankRecord[],
-  platformSummary: platformSummary as unknown as PlatformSummary[],
-  competitorEvents: competitorEvents as unknown as CompetitorEvent[],
+  platformSummary: [] as PlatformSummary[],
+  competitorEvents: [] as CompetitorEvent[],
 };
 
 /** Called once by DataContext after all fetches complete */
