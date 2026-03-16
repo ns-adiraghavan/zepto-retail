@@ -50,10 +50,8 @@ export function CompetitorTable({ skuId, category }: CompetitorTableProps) {
     }
   ];
 
-  const getCompetitorSkuName = (compName: string) => {
-    const entry = competitorSkuNames.find(s => s.sku === skuId);
-    return entry?.competitors.find(c => c.name === compName)?.skuName;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getCompetitorSkuName = (_compName: string) => undefined;
 
   const getGapColor = (gap: number) => {
     if (gap < -5) return "text-green-600";
