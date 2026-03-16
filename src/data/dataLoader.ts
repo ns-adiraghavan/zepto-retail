@@ -113,13 +113,13 @@ export const DEFAULT_FILTERS: GlobalFilters = {
 // ─── Mutable dataset bundle (populated by DataContext at runtime) ─────────────
 
 export const datasets = {
-  skuMaster: skuMaster as unknown as SKUMaster[],
+  skuMaster: [] as SKUMaster[],
   assortmentTracking: [] as AssortmentRecord[],
   priceTracking: [] as PriceRecord[],
   availabilityTracking: [] as AvailabilityRecord[],
   searchRankTracking: [] as SearchRankRecord[],
-  platformSummary: platformSummary as unknown as PlatformSummary[],
-  competitorEvents: competitorEvents as unknown as CompetitorEvent[],
+  platformSummary: [] as PlatformSummary[],
+  competitorEvents: [] as CompetitorEvent[],
 };
 
 /** Called once by DataContext after all fetches complete */
