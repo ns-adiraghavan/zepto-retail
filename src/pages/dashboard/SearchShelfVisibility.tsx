@@ -8,14 +8,6 @@ import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/Str
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
 import { CompetitiveSearchAdvantage } from "@/components/dashboard/CompetitiveSearchAdvantage";
 
-const shelfRows = [
-  { keyword: "milk 1 litre", platform: "Zepto", rank: 1, sponsored: false, brand: "Amul" },
-  { keyword: "milk 1 litre", platform: "Blinkit", rank: 3, sponsored: true, brand: "Mother Dairy" },
-  { keyword: "tomatoes 500g", platform: "Swiggy Instamart", rank: 2, sponsored: false, brand: "Fresh Daily" },
-  { keyword: "lays classic", platform: "BigBasket Now", rank: 5, sponsored: true, brand: "PepsiCo" },
-  { keyword: "head shoulders", platform: "Zepto", rank: 4, sponsored: false, brand: "P&G" },
-  { keyword: "tata salt 1kg", platform: "Blinkit", rank: 1, sponsored: false, brand: "Tata" },
-];
 
 const SearchShelfVisibility = () => {
   const filters = useOutletContext<GlobalFilters>();

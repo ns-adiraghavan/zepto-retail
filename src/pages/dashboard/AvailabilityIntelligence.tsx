@@ -8,13 +8,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
 
-const stockoutRows = [
-  { sku: "DRY-MLK-AML", name: "Amul Full Cream Milk 1L", platform: "Zepto", city: "Delhi NCR" },
-  { sku: "FRV-TOM-KG", name: "Tomatoes 1 kg", platform: "Blinkit", city: "Pune" },
-  { sku: "SNK-LAY-CLR-40", name: "Lays Classic 40g", platform: "Swiggy Instamart", city: "Hyderabad" },
-  { sku: "GRC-TTM-SFW-1KG", name: "Tata Salt 1 kg", platform: "BigBasket Now", city: "Mumbai" },
-  { sku: "HPC-HHD-500", name: "Head & Shoulders 500ml", platform: "Zepto", city: "Bangalore" },
-];
 
 const AvailabilityIntelligence = () => {
   const filters = useOutletContext<GlobalFilters>();

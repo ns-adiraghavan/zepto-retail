@@ -109,9 +109,6 @@ const LocalMarketIntelligence = () => {
     "Price Competitiveness": parseFloat((100 - c.discount).toFixed(1)),
   }));
 
-  const barColor = (score: number) =>
-    score >= 80 ? "bg-status-low" : score >= 70 ? "bg-status-medium" : "bg-status-high";
-
   // ── Strategic Insights ───────────────────────────────────────────────────────
   const topCity = sortedByScore[0];
   

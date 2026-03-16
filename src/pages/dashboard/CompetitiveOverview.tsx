@@ -411,9 +411,6 @@ const CompetitiveOverview = () => {
         </Card>
       </section>
 
-      {/* Category Level Rollup */}
-      <CategoryLevelRollup />
-
       {/* Top Price Gap Items */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Top Price Gap Items</h2>
