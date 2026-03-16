@@ -1,6 +1,4 @@
-import skuMaster from "./sku_master.json";
-import platformSummary from "./platform_summary.json";
-import competitorEvents from "./competitor_events.json";
+// Static imports removed — all datasets are hydrated at runtime from /data/*.json.gz via DataContext
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
