@@ -21,6 +21,8 @@ const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
 
 interface Props {
   filters: Partial<GlobalFilters>;
+  /** When "hyperlocal", the SKU comparison table groups by pincode with platform columns */
+  mode?: "default" | "hyperlocal";
 }
 
 function avg(arr: number[]): number {
