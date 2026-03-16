@@ -2,7 +2,6 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { getSearchData, getSponsoredShareByPlatform, getTop10PresenceByPlatform, getEliteRankShareByPlatform, GlobalFilters } from "@/data/dataLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
