@@ -228,10 +228,8 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
 
     if (allSkuRows.length === 0) return [];
 
-    // Normalize pincodes to strings, keep city
-    const priceBase = allSkuRows
-      .map((r) => ({ ...r, pincode: r.pincode != null ? String(r.pincode) : undefined }))
-      .filter((r) => r.pincode && r.pincode !== "undefined" && r.pincode !== "null" && r.city);
+    // Pincodes are normalized to strings at load time in DataContext
+    const priceBase = allSkuRows.filter((r) => r.pincode && r.city);
 
     // If no pincode data exists, fall back to city-level grouping
     if (priceBase.length === 0) {

@@ -76,19 +76,28 @@ async function fetchAndHydrate(key: DatasetKey): Promise<void> {
   if (!fetchPromises[key]) {
     fetchPromises[key] = (async () => {
       const url = `${STORAGE_BASE}/${key}.json`;
-      const data = await fetch(url).then((r) => r.json());
+      const raw = await fetch(url).then((r) => r.json());
+
+      // Normalize pincode to string for every dataset so that filters
+      // and grouping logic can do reliable string comparisons.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const normalize = (rows: any[]) =>
+        rows.map((r) =>
+          r.pincode != null ? { ...r, pincode: String(r.pincode) } : r
+        );
+
       switch (key) {
         case "price_tracking":
-          datasets.priceTracking = data as PriceRecord[];
+          datasets.priceTracking = normalize(raw) as PriceRecord[];
           break;
         case "availability_tracking":
-          datasets.availabilityTracking = data as AvailabilityRecord[];
+          datasets.availabilityTracking = normalize(raw) as AvailabilityRecord[];
           break;
         case "search_rank_tracking":
-          datasets.searchRankTracking = data as SearchRankRecord[];
+          datasets.searchRankTracking = normalize(raw) as SearchRankRecord[];
           break;
         case "assortment_tracking":
-          datasets.assortmentTracking = data as AssortmentRecord[];
+          datasets.assortmentTracking = normalize(raw) as AssortmentRecord[];
           break;
       }
       fetchedDatasets.add(key);
