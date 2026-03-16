@@ -329,16 +329,6 @@ export function SKUCrossPlatformComparison({ filters, mode = "default" }: Props)
     }[];
   }, [selectedSkuId, selectedCategory, filters]);
 
-  // Overall benchmark signal (majority vote across platforms)
-  const overallBenchmark = useMemo(() => {
-    const rows = promotionBenchmarkRows.filter((r) => r.indicator !== "no-data");
-    if (rows.length === 0) return null;
-    const above = rows.filter((r) => r.indicator === "above").length;
-    const below = rows.filter((r) => r.indicator === "below").length;
-    if (above > below) return "above";
-    if (below > above) return "below";
-    return "equal";
-  }, [promotionBenchmarkRows]);
 
   const hasActiveFilters =
     (filters.city && filters.city !== "All Cities") ||
