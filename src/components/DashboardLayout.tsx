@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Layers, Hash, Tag } from "lucide-react";
+import { MapPin, Layers, Hash, Tag, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   GlobalFilters,
   DEFAULT_FILTERS,
