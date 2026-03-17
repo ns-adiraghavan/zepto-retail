@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Layers, Hash, Tag } from "lucide-react";
+import { MapPin, Layers, Hash, Tag, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   GlobalFilters,
   DEFAULT_FILTERS,
@@ -25,6 +26,7 @@ const PLATFORMS = ["All Platforms", "Zepto", "Blinkit", "Swiggy Instamart", "Big
 
 export function DashboardLayout() {
   const { loaded } = useData();
+  const navigate = useNavigate();
 
   const [filters, setFilters] = useState<GlobalFilters>(DEFAULT_FILTERS);
   const [pincodeOptions, setPincodeOptions] = useState<string[]>([]);
@@ -123,9 +125,20 @@ export function DashboardLayout() {
               </div>
             )}
 
-            <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-              <span>Live</span>
+            <div className="ml-auto flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                <span>Live</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 rounded-full border border-border bg-muted/40 px-3 text-xs font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors"
+                onClick={() => navigate("/")}
+              >
+                <LogOut className="h-3.5 w-3.5 shrink-0" />
+                <span>Log Out</span>
+              </Button>
             </div>
           </header>
 
