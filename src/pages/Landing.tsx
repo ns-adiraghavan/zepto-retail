@@ -95,7 +95,7 @@ const Landing = () => {
           Real-time competitive intelligence across pricing, availability, search, and assortment — for Zepto, Blinkit, Swiggy Instamart, and BigBasket Now.
         </p>
         <Button size="lg" asChild>
-          <Link to="/dashboard">Open Dashboard →</Link>
+          <Link to="/login">Open Dashboard →</Link>
         </Button>
       </section>
 

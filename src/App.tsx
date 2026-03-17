@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { DataProvider } from "@/contexts/DataContext";
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import { DashboardLayout } from "./components/DashboardLayout";
 import CompetitiveOverview from "./pages/dashboard/CompetitiveOverview";
 import PricingPromoIntelligence from "./pages/dashboard/PricingPromoIntelligence";
@@ -30,6 +31,7 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<CompetitiveOverview />} />
                 <Route path="pricing" element={<PricingPromoIntelligence />} />
