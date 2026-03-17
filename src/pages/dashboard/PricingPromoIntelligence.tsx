@@ -247,11 +247,11 @@ const PricingPromoIntelligence = () => {
                    <Tooltip
                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                      labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
-                     formatter={(v: number, _name: string, props: { payload: { platform: string } }) => {
-                       const idx = promoActivityData.findIndex(d => d.platform === props.payload.platform);
-                       const color = PLATFORM_COLORS[idx % PLATFORM_COLORS.length];
-                       return [<span style={{ color }}>{v}%</span>, "Promotion Rate"];
-                     }}
+                      formatter={(v: number, _name: string, props: { payload: { platform: string } }) => {
+                        const idx = promoActivityData.findIndex(d => d.platform === props.payload.platform);
+                        const color = PLATFORM_COLORS[idx % PLATFORM_COLORS.length];
+                        return [<span style={{ color }}>{v}%</span>, <span style={{ color }}>Promotion Rate</span>];
+                      }}
                      cursor={{ fill: "hsl(var(--muted)/0.3)" }}
                    />
                   <Bar dataKey="Promotion Rate %" radius={[4, 4, 0, 0]}>
