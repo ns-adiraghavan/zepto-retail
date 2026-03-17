@@ -83,7 +83,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {/* Logo / Brand */}
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-3">
+        <Link to="/" className="flex items-center gap-2 px-2 py-3 hover:opacity-80 transition-opacity">
           {collapsed ? (
             <img
               src={theme === "dark" ? logoWhite : logoColor}
@@ -97,7 +97,7 @@ export function AppSidebar() {
               className="h-7 w-auto object-contain"
             />
           )}
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
