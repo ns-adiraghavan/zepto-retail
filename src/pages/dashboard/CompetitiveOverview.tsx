@@ -407,7 +407,7 @@ const CompetitiveOverview = () => {
                   formatter={(value: number, _name: string, props: { dataKey: string; payload: { platform: string } }) => {
                     const idx = platformCompData.findIndex(d => d.platform === props.payload.platform);
                     const color = CHART_COLORS[idx % CHART_COLORS.length];
-                    return [<span style={{ color }}>{value}/100</span>, "Score"];
+                    return [<span style={{ color }}>{value}/100</span>, <span style={{ color }}>Score</span>];
                   }}
                 />
                 <Bar dataKey="Score" radius={[4, 4, 0, 0]}>
