@@ -26,6 +26,7 @@ const PLATFORMS = ["All Platforms", "Zepto", "Blinkit", "Swiggy Instamart", "Big
 
 export function DashboardLayout() {
   const { loaded } = useData();
+  const navigate = useNavigate();
 
   const [filters, setFilters] = useState<GlobalFilters>(DEFAULT_FILTERS);
   const [pincodeOptions, setPincodeOptions] = useState<string[]>([]);
