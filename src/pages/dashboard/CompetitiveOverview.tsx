@@ -401,7 +401,15 @@ const CompetitiveOverview = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <RechartsTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                <RechartsTooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                  formatter={(value: number, _name: string, props: { dataKey: string; payload: { platform: string } }) => {
+                    const idx = platformCompData.findIndex(d => d.platform === props.payload.platform);
+                    const color = CHART_COLORS[idx % CHART_COLORS.length];
+                    return [<span style={{ color }}>{value}/100</span>, "Score"];
+                  }}
+                />
                 <Bar dataKey="Score" radius={[4, 4, 0, 0]}>
                   {platformCompData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Bar>

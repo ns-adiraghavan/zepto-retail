@@ -244,7 +244,16 @@ const PricingPromoIntelligence = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 25]} />
-                  <Tooltip formatter={(v: number) => [`${v}%`, "Promotion Rate"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "hsl(var(--muted)/0.3)" }} />
+                   <Tooltip
+                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                     formatter={(v: number, _name: string, props: { payload: { platform: string } }) => {
+                       const idx = promoActivityData.findIndex(d => d.platform === props.payload.platform);
+                       const color = PLATFORM_COLORS[idx % PLATFORM_COLORS.length];
+                       return [<span style={{ color }}>{v}%</span>, "Promotion Rate"];
+                     }}
+                     cursor={{ fill: "hsl(var(--muted)/0.3)" }}
+                   />
                   <Bar dataKey="Promotion Rate %" radius={[4, 4, 0, 0]}>
                     {promoActivityData.map((_, i) => <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />)}
                   </Bar>
