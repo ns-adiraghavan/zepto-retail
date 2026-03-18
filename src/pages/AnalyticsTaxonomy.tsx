@@ -24,10 +24,10 @@ const KPIS: KPI[] = [
     module: "Competitive Overview",
   },
   {
-    name: "Top-10 Presence",
-    formula: "SUM(top10_flag = 1) / COUNT(search observations) × 100",
+    name: "Avg. Top-10 Presence",
+    formula: "AVG per platform of [ SUM(top10_flag = 1) / COUNT(search observations) × 100 ] — averaged across all tracked platforms for Competitive Overview; per-platform in Search & Shelf Visibility",
     dataset: "search_rank_tracking",
-    usedIn: ["Competitive Overview", "Search & Shelf Visibility", "Local Market Intelligence"],
+    usedIn: ["Competitive Overview (cross-platform avg)", "Search & Shelf Visibility (per-platform)", "Local Market Intelligence"],
     module: "Competitive Overview",
   },
   {
@@ -74,13 +74,6 @@ const KPIS: KPI[] = [
     usedIn: ["Pricing & Promotion Intelligence"],
     module: "Pricing & Promotion Intelligence",
   },
-  {
-    name: "Weekend Flash Share",
-    formula: "COUNT(promotion_type = 'Weekend Flash') / COUNT(all promotions) × 100",
-    dataset: "price_tracking",
-    usedIn: ["Pricing & Promotion Intelligence"],
-    module: "Pricing & Promotion Intelligence",
-  },
 
   // ── Search & Shelf Visibility ─────────────────────────────────────────────────
   {
@@ -105,8 +98,8 @@ const KPIS: KPI[] = [
     module: "Search & Shelf Visibility",
   },
   {
-    name: "Top-20 Presence",
-    formula: "SUM(top20_flag = 1) / COUNT(observations) × 100",
+    name: "Top-10 Presence (per platform)",
+    formula: "SUM(top10_flag = 1) / COUNT(observations) × 100 — computed per platform for rank distribution and visibility charts",
     dataset: "search_rank_tracking",
     usedIn: ["Search & Shelf Visibility"],
     module: "Search & Shelf Visibility",
@@ -155,13 +148,6 @@ const KPIS: KPI[] = [
     formula: "SUM(availability_flag = 0) / COUNT(rows) × 100",
     dataset: "availability_tracking",
     usedIn: ["Availability Intelligence", "Competitive Overview"],
-    module: "Availability Intelligence",
-  },
-  {
-    name: "Active Stockout Events",
-    formula: "COUNT(distinct sku_id-platform combos where availability_flag = 0 on latest date)",
-    dataset: "availability_tracking",
-    usedIn: ["Availability Intelligence"],
     module: "Availability Intelligence",
   },
   {
