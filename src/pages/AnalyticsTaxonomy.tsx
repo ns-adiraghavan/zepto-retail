@@ -74,13 +74,6 @@ const KPIS: KPI[] = [
     usedIn: ["Pricing & Promotion Intelligence"],
     module: "Pricing & Promotion Intelligence",
   },
-  {
-    name: "Weekend Flash Share",
-    formula: "COUNT(promotion_type = 'Weekend Flash') / COUNT(all promotions) × 100",
-    dataset: "price_tracking",
-    usedIn: ["Pricing & Promotion Intelligence"],
-    module: "Pricing & Promotion Intelligence",
-  },
 
   // ── Search & Shelf Visibility ─────────────────────────────────────────────────
   {
