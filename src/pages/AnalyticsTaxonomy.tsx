@@ -24,10 +24,10 @@ const KPIS: KPI[] = [
     module: "Competitive Overview",
   },
   {
-    name: "Top-10 Presence",
-    formula: "SUM(top10_flag = 1) / COUNT(search observations) × 100",
+    name: "Avg. Top-10 Presence",
+    formula: "AVG per platform of [ SUM(top10_flag = 1) / COUNT(search observations) × 100 ] — averaged across all tracked platforms for Competitive Overview; per-platform in Search & Shelf Visibility",
     dataset: "search_rank_tracking",
-    usedIn: ["Competitive Overview", "Search & Shelf Visibility", "Local Market Intelligence"],
+    usedIn: ["Competitive Overview (cross-platform avg)", "Search & Shelf Visibility (per-platform)", "Local Market Intelligence"],
     module: "Competitive Overview",
   },
   {
