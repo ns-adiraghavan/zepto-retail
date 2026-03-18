@@ -495,5 +495,5 @@ const CompetitiveOverview = () => {
     </div>
   );
 };
-
+ 
 export default CompetitiveOverview;
