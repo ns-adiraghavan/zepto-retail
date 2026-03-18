@@ -158,13 +158,6 @@ const KPIS: KPI[] = [
     module: "Availability Intelligence",
   },
   {
-    name: "Active Stockout Events",
-    formula: "COUNT(distinct sku_id-platform combos where availability_flag = 0 on latest date)",
-    dataset: "availability_tracking",
-    usedIn: ["Availability Intelligence"],
-    module: "Availability Intelligence",
-  },
-  {
     name: "Category Availability Health",
     formula: "AVG(availability_flag) × 100 grouped by category — shows weakest category",
     dataset: "availability_tracking",
