@@ -164,11 +164,11 @@ const CompetitiveOverview = () => {
       tooltip: "SKU Availability Rate: % of tracked SKU observations where the product was in stock across selected filters.",
     },
     {
-      title: "Top-10 Presence",
+      title: "Avg. Top-10 Presence",
       value: `${avgSearchVisibility.toFixed(1)}%`,
       trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
       status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
-      tooltip: "Top-10 Presence: % of search observations where a product appeared in the first 10 results across tracked keywords.",
+      tooltip: "Avg. Top-10 Presence: Mean Top-10 search presence % averaged across all tracked platforms. Individual platform breakdowns are available in the Search & Shelf Visibility module.",
     },
     {
       title: "SKU Coverage",
