@@ -105,8 +105,8 @@ const KPIS: KPI[] = [
     module: "Search & Shelf Visibility",
   },
   {
-    name: "Top-20 Presence",
-    formula: "SUM(top20_flag = 1) / COUNT(observations) × 100",
+    name: "Top-10 Presence (per platform)",
+    formula: "SUM(top10_flag = 1) / COUNT(observations) × 100 — computed per platform for rank distribution and visibility charts",
     dataset: "search_rank_tracking",
     usedIn: ["Search & Shelf Visibility"],
     module: "Search & Shelf Visibility",
