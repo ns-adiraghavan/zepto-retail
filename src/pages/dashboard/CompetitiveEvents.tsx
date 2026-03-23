@@ -268,6 +268,11 @@ const CompetitiveEvents = () => {
       }, {})
     ).sort((a, b) => b[1] - a[1])[0];
 
+    // Top 3 Selection Gap events
+    const topSelectionGaps = allEvents
+      .filter((e) => e.event_type === "Selection Gap")
+      .slice(0, 3);
+
     const list: Insight[] = [];
     if (topVolatileSku) {
       list.push({
@@ -299,6 +304,14 @@ const CompetitiveEvents = () => {
         title: "Dominant Event Type",
         body: `"${mostFrequentEventType[0]}" is the most frequently detected competitive event (${mostFrequentEventType[1]} occurrences).`,
         type: "neutral",
+      });
+    }
+    if (topSelectionGaps.length > 0) {
+      list.push({
+        icon: "package",
+        title: "Top Selection Gaps",
+        body: topSelectionGaps.map((e) => e.description).join(" "),
+        type: "warning",
       });
     }
     return list;
