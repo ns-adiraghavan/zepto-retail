@@ -162,7 +162,9 @@ const CompetitiveOverview = () => {
   }, [zeptoPlatformSummary, searchByPlatform]);
 
   const skuCoverage = useMemo(() => {
-    if (zeptoPlatformSummary) return zeptoPlatformSummary.sku_count;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summaryCount = zeptoPlatformSummary ? (zeptoPlatformSummary as any).sku_count : undefined;
+    if (typeof summaryCount === "number") return summaryCount;
     const listedIds = new Set<string>();
     for (const row of assortmentData) {
       if (row.listing_status === 1) listedIds.add(row.sku_id);
