@@ -6,6 +6,7 @@ import { useOutletContext } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { StrategicInsightsPanel, type Insight } from "@/components/dashboard/StrategicInsightsPanel";
 import { PageControlBar } from "@/components/dashboard/PageControlBar";
+import { CrossPlatformSelectionBenchmarking } from "@/components/dashboard/CrossPlatformSelectionBenchmarking";
 
 
 const AssortmentIntelligence = () => {
@@ -255,6 +256,8 @@ const AssortmentIntelligence = () => {
           </CardContent>
         </Card>
       </section>
+
+      <CrossPlatformSelectionBenchmarking filters={filters} />
     </div>
   );
 };
