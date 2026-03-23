@@ -44,31 +44,19 @@ const AssortmentIntelligence = () => {
     coverageRaw[row.category][row.platform] = (coverageRaw[row.category][row.platform] ?? 0) + 1;
   });
 
-  // Build platform+category SKU counts from full dataset (unfiltered for cross-platform bar chart)
-  const categoryPlatformRaw: Record<string, Record<string, Set<string>>> = {};
+  // Build distinct SKU count per category (all platforms combined, unfiltered)
+  const categorySkuRaw: Record<string, Set<string>> = {};
   datasets.assortmentTracking
     .filter((r) => r.listing_status === 1)
     .forEach((r) => {
-      if (!categoryPlatformRaw[r.category]) categoryPlatformRaw[r.category] = {};
-      if (!categoryPlatformRaw[r.category][r.platform]) categoryPlatformRaw[r.category][r.platform] = new Set();
-      categoryPlatformRaw[r.category][r.platform].add(r.sku_id);
+      if (!categorySkuRaw[r.category]) categorySkuRaw[r.category] = new Set();
+      categorySkuRaw[r.category].add(r.sku_id);
     });
 
-  const categoryPlatformRows = Object.entries(categoryPlatformRaw)
-    .map(([category, platformMap]) => {
-      const row: Record<string, string | number> = { category };
-      let total = 0;
-      PLATFORMS_ALL.forEach((p) => {
-        const cnt = platformMap[p]?.size ?? 0;
-        row[p] = cnt;
-        total += cnt;
-      });
-      row._total = total;
-      return row;
-    })
-    .sort((a, b) => (b._total as number) - (a._total as number))
-    .slice(0, 8)
-    .map(({ _total, ...rest }) => rest);
+  const categoryPlatformRows = Object.entries(categorySkuRaw)
+    .map(([category, skuSet]) => ({ category, "Distinct SKUs": skuSet.size }))
+    .sort((a, b) => b["Distinct SKUs"] - a["Distinct SKUs"])
+    .slice(0, 8);
 
   const coverageGrid = Object.entries(coverageRaw)
     .map(([category, platforms]) => ({ category, ...platforms }))
