@@ -1,6 +1,7 @@
 import { KPICard } from "@/components/dashboard/KPICard";
 import { getAvailabilityByPlatform, getAvailabilityData, GlobalFilters } from "@/data/dataLoader";
 import { StockoutImpactAnalysis } from "@/components/dashboard/StockoutImpactAnalysis";
+import { HyperlocalAvailabilityTracker } from "@/components/dashboard/HyperlocalAvailabilityTracker";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
@@ -226,6 +227,8 @@ const AvailabilityIntelligence = () => {
       </section>
 
       <StockoutImpactAnalysis filters={filters} />
+
+      <HyperlocalAvailabilityTracker filters={filters} />
     </div>
   );
 };
