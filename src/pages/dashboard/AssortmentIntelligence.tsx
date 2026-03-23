@@ -29,13 +29,6 @@ const AssortmentIntelligence = () => {
 
   // ── Category SKU Coverage Grid ─────────────────────────────────────────────
   const PLATFORMS = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
-  const PLATFORMS_ALL = ["Zepto", "Blinkit", "Swiggy Instamart", "BigBasket Now"];
-  const PLATFORM_COLORS: Record<string, string> = {
-    "Zepto": "hsl(var(--chart-1))",
-    "Blinkit": "hsl(var(--chart-2))",
-    "Swiggy Instamart": "hsl(var(--chart-3))",
-    "BigBasket Now": "hsl(var(--chart-4))",
-  };
 
   const coverageRaw: Record<string, Record<string, number>> = {};
   assortmentData.forEach((row) => {
