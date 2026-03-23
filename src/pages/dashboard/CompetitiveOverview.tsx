@@ -148,18 +148,21 @@ const CompetitiveOverview = () => {
     []
   );
 
-  // Fall back to inline computation if platform_summary is not yet hydrated
+  // Availability Rate: % of Zepto observations where availability_flag = 1
   const avgAvailabilityRate = useMemo(() => {
-    if (zeptoPlatformSummary) return zeptoPlatformSummary.availability_rate * 100;
-    const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
-    return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-  }, [zeptoPlatformSummary, availByPlatform]);
+    const zeptoRows = availData.filter((r) => r.platform === "Zepto");
+    if (zeptoRows.length === 0) return 0;
+    const inStock = zeptoRows.filter((r) => r.availability_flag === 1).length;
+    return (inStock / zeptoRows.length) * 100;
+  }, [availData]);
 
+  // Search Visibility: % of Zepto search observations where search_rank <= 10
   const avgSearchVisibility = useMemo(() => {
-    if (zeptoPlatformSummary) return zeptoPlatformSummary.search_visibility * 100;
-    const rates = PLATFORMS.map((p) => searchByPlatform[p] ?? 0).filter((r) => r > 0);
-    return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-  }, [zeptoPlatformSummary, searchByPlatform]);
+    const zeptoRows = searchData.filter((r) => r.platform === "Zepto");
+    if (zeptoRows.length === 0) return 0;
+    const top10 = zeptoRows.filter((r) => r.search_rank <= 10).length;
+    return (top10 / zeptoRows.length) * 100;
+  }, [searchData]);
 
   const skuCoverage = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
