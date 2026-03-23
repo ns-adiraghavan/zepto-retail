@@ -67,11 +67,20 @@ const CompetitiveOverview = () => {
   const searchData = useMemo(() => getSearchData(filters), [filters]);
   const assortmentData = useMemo(() => getAssortmentData(filters), [filters]);
 
-  // Build SKU master lookup: sku_id → product_name
+  // Build SKU master lookup: sku_id → product_name and is_regional
   const skuNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const sku of datasets.skuMaster) {
       map[sku.sku_id] = sku.product_name;
+    }
+    return map;
+  }, []);
+
+  const skuRegionalMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const sku of datasets.skuMaster) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      map[sku.sku_id] = Boolean((sku as any).is_regional);
     }
     return map;
   }, []);
