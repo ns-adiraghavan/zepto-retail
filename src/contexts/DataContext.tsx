@@ -34,7 +34,7 @@ const PAGE_DATASETS: Record<string, DatasetKey[]> = {
   ],
   "/dashboard/pricing":      ["sku_master", "price_tracking"],
   "/dashboard/search":       ["sku_master", "search_rank_tracking"],
-  "/dashboard/assortment":   ["sku_master", "assortment_tracking"],
+  "/dashboard/assortment":   ["sku_master", "assortment_tracking", "availability_tracking"],
   "/dashboard/availability": ["sku_master", "availability_tracking"],
   "/dashboard/local": [
     "sku_master",
