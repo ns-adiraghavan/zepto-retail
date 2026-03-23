@@ -268,6 +268,11 @@ const CompetitiveEvents = () => {
       }, {})
     ).sort((a, b) => b[1] - a[1])[0];
 
+    // Top 3 Selection Gap events
+    const topSelectionGaps = allEvents
+      .filter((e) => e.event_type === "Selection Gap")
+      .slice(0, 3);
+
     const list: Insight[] = [];
     if (topVolatileSku) {
       list.push({
@@ -299,6 +304,14 @@ const CompetitiveEvents = () => {
         title: "Dominant Event Type",
         body: `"${mostFrequentEventType[0]}" is the most frequently detected competitive event (${mostFrequentEventType[1]} occurrences).`,
         type: "neutral",
+      });
+    }
+    if (topSelectionGaps.length > 0) {
+      list.push({
+        icon: "package",
+        title: "Top Selection Gaps",
+        body: topSelectionGaps.map((e) => e.description).join(" "),
+        type: "warning",
       });
     }
     return list;
@@ -430,15 +443,36 @@ const CompetitiveEvents = () => {
                 <ScrollArea className="h-[480px]">
                   <div className="space-y-0 px-4">
                     {filteredEvents.map((e, i) => {
-                      const ev = e as unknown as CompetitorEvent & { severity?: string };
+                       const ev = e as unknown as CompetitorEvent & { severity?: string };
                       const sevCfg = SEVERITY_CONFIG[ev.severity ?? "Low"] ?? SEVERITY_CONFIG["Low"];
                       const EventIcon = EVENT_ICONS[e.event_type] ?? Activity;
                       const isSelected = selectedEvent === e;
+
+                      // ── Display label + left-border override ──────────────
+                      const COMPETITOR_PLATFORMS = ["Blinkit", "Swiggy Instamart", "BigBasket Now"];
+                      const isSelectionGap = e.event_type === "Selection Gap";
+                      const isCompetitorStockout =
+                        e.event_type === "Critical Stockout" &&
+                        COMPETITOR_PLATFORMS.includes(e.platform);
+                      const displayLabel = isSelectionGap
+                        ? "Regional Selection Gap"
+                        : isCompetitorStockout
+                        ? "Competitor Stockout"
+                        : e.event_type;
+                      const leftBorderStyle = isSelectionGap
+                        ? { borderLeft: "3px solid hsl(var(--destructive))" }
+                        : isCompetitorStockout
+                        ? { borderLeft: "3px solid hsl(var(--status-medium))" }
+                        : {};
+
                       return (
                         <div
                           key={e.event_id ?? i}
                           onClick={() => setSelectedEvent(isSelected ? null : e)}
+                          style={leftBorderStyle}
                           className={`flex items-start gap-3 py-3 border-b border-border/50 last:border-0 cursor-pointer transition-colors rounded-sm px-2 -mx-2 ${
+                            isSelectionGap || isCompetitorStockout ? "pl-3" : ""
+                          } ${
                             isSelected
                               ? "bg-primary/8 ring-1 ring-inset ring-primary/20"
                               : "hover:bg-muted/30"
@@ -455,7 +489,7 @@ const CompetitiveEvents = () => {
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center justify-between gap-2">
                               <span className={`text-sm font-semibold truncate ${isSelected ? "text-primary" : ""}`}>
-                                {e.event_type}
+                                {displayLabel}
                               </span>
                               <Badge variant={sevCfg.variant} className="text-xs shrink-0 py-0 h-5">
                                 {ev.severity ?? "Low"}
