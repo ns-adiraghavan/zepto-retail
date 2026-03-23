@@ -227,6 +227,8 @@ const AvailabilityIntelligence = () => {
       </section>
 
       <StockoutImpactAnalysis filters={filters} />
+
+      <HyperlocalAvailabilityTracker filters={filters} />
     </div>
   );
 };
