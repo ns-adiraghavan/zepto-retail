@@ -462,9 +462,16 @@ const CompetitiveOverview = () => {
                       return (
                         <tr key={`${row.sku_id}-${row.platform}`} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{i + 1}</td>
-                          <td className="py-2 pr-3 font-medium max-w-[200px]">
-                            <div className="truncate">{row.product_name}</div>
-                          </td>
+                          <td className="py-2 pr-3 font-medium max-w-[220px]">
+                             <div className="flex items-center gap-1.5 flex-wrap">
+                               <span className="truncate">{row.product_name}</span>
+                               {skuRegionalMap[row.sku_id] && (
+                                 <span className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
+                                   Regional
+                                 </span>
+                               )}
+                             </div>
+                           </td>
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{row.category}</td>
                           <td className="py-2 pr-3 text-xs">{row.platform}</td>
                           <td className="py-2 pr-3 text-xs font-mono">₹{row.platformPrice.toFixed(2)}</td>
