@@ -146,12 +146,9 @@ const AssortmentIntelligence = () => {
                 <BarChart data={categoryPlatformRows} margin={{ top: 4, right: 16, left: 0, bottom: 90 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="category" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} angle={-45} textAnchor="end" interval={0} height={80} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} label={{ value: "Listed SKUs", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number, name: string) => [`${value} SKUs`, name]} />
-                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                  {PLATFORMS_ALL.map((platform) => (
-                    <Bar key={platform} dataKey={platform} fill={PLATFORM_COLORS[platform]} radius={[3, 3, 0, 0]} maxBarSize={20} />
-                  ))}
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} label={{ value: "Distinct SKUs", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number) => [`${value} SKUs`, "Distinct SKUs"]} />
+                  <Bar dataKey="Distinct SKUs" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             )}
