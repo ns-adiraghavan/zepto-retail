@@ -67,11 +67,20 @@ const CompetitiveOverview = () => {
   const searchData = useMemo(() => getSearchData(filters), [filters]);
   const assortmentData = useMemo(() => getAssortmentData(filters), [filters]);
 
-  // Build SKU master lookup: sku_id → product_name
+  // Build SKU master lookup: sku_id → product_name and is_regional
   const skuNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const sku of datasets.skuMaster) {
       map[sku.sku_id] = sku.product_name;
+    }
+    return map;
+  }, []);
+
+  const skuRegionalMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const sku of datasets.skuMaster) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      map[sku.sku_id] = Boolean((sku as any).is_regional);
     }
     return map;
   }, []);
@@ -133,23 +142,33 @@ const CompetitiveOverview = () => {
   }, [priceGapByPlatform, availByPlatform, searchByPlatform, assortByPlatform]);
 
 
+  // ── Zepto row from platform_summary (source of truth for KPI cards) ──────
+  const zeptoPlatformSummary = useMemo(
+    () => datasets.platformSummary.find((p) => p.platform === "Zepto") ?? null,
+    []
+  );
+
+  // Fall back to inline computation if platform_summary is not yet hydrated
   const avgAvailabilityRate = useMemo(() => {
+    if (zeptoPlatformSummary) return zeptoPlatformSummary.availability_rate * 100;
     const rates = PLATFORMS.map((p) => availByPlatform[p] ?? 0).filter((r) => r > 0);
     return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-  }, [availByPlatform]);
+  }, [zeptoPlatformSummary, availByPlatform]);
 
   const avgSearchVisibility = useMemo(() => {
+    if (zeptoPlatformSummary) return zeptoPlatformSummary.search_visibility * 100;
     const rates = PLATFORMS.map((p) => searchByPlatform[p] ?? 0).filter((r) => r > 0);
     return rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-  }, [searchByPlatform]);
+  }, [zeptoPlatformSummary, searchByPlatform]);
 
   const skuCoverage = useMemo(() => {
+    if (zeptoPlatformSummary) return zeptoPlatformSummary.sku_count;
     const listedIds = new Set<string>();
     for (const row of assortmentData) {
       if (row.listing_status === 1) listedIds.add(row.sku_id);
     }
     return listedIds.size;
-  }, [assortmentData]);
+  }, [zeptoPlatformSummary, assortmentData]);
 
   const top10PresenceForInsights = PLATFORMS
     .map((p) => ({ platform: p, pct: searchByPlatform[p] ?? 0 }))
@@ -157,25 +176,25 @@ const CompetitiveOverview = () => {
 
   const liveKPIs = [
     {
-      title: "SKU Availability Rate",
+      title: "Availability Rate",
       value: `${avgAvailabilityRate.toFixed(1)}%`,
       trend: avgAvailabilityRate >= 85 ? ("up" as const) : avgAvailabilityRate >= 70 ? ("neutral" as const) : ("down" as const),
       status: avgAvailabilityRate >= 85 ? ("low" as const) : avgAvailabilityRate >= 70 ? ("medium" as const) : ("high" as const),
-      tooltip: "SKU Availability Rate: % of tracked SKU observations where the product was in stock across selected filters.",
+      tooltip: "Availability Rate: Zepto SKU availability rate from platform_summary. Falls back to inline average across all platforms if summary data is unavailable.",
     },
     {
-      title: "Avg. Top-10 Presence",
+      title: "Search Visibility",
       value: `${avgSearchVisibility.toFixed(1)}%`,
       trend: avgSearchVisibility >= 80 ? ("up" as const) : ("neutral" as const),
       status: avgSearchVisibility >= 80 ? ("low" as const) : ("medium" as const),
-      tooltip: "Avg. Top-10 Presence: Mean Top-10 search presence % averaged across all tracked platforms. Individual platform breakdowns are available in the Search & Shelf Visibility module.",
+      tooltip: "Search Visibility: Zepto Top-10 search presence % from platform_summary. Falls back to cross-platform average if summary data is unavailable.",
     },
     {
-      title: "SKU Coverage",
+      title: "Selection Coverage",
       value: skuCoverage.toLocaleString(),
       trend: "neutral" as const,
       status: "low" as const,
-      tooltip: "SKU Coverage: Distinct SKUs listed at least once across tracked categories (listing_status = 1).",
+      tooltip: "Selection Coverage: Zepto SKU count from platform_summary. Falls back to distinct listed SKUs from assortment_tracking if unavailable.",
     },
   ];
 
@@ -443,9 +462,16 @@ const CompetitiveOverview = () => {
                       return (
                         <tr key={`${row.sku_id}-${row.platform}`} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{i + 1}</td>
-                          <td className="py-2 pr-3 font-medium max-w-[200px]">
-                            <div className="truncate">{row.product_name}</div>
-                          </td>
+                          <td className="py-2 pr-3 font-medium max-w-[220px]">
+                             <div className="flex items-center gap-1.5 flex-wrap">
+                               <span className="truncate">{row.product_name}</span>
+                               {skuRegionalMap[row.sku_id] && (
+                                 <span className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
+                                   Regional
+                                 </span>
+                               )}
+                             </div>
+                           </td>
                           <td className="py-2 pr-3 text-muted-foreground text-xs">{row.category}</td>
                           <td className="py-2 pr-3 text-xs">{row.platform}</td>
                           <td className="py-2 pr-3 text-xs font-mono">₹{row.platformPrice.toFixed(2)}</td>
